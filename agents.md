@@ -108,7 +108,7 @@ e no `<body class="font-sans bg-surface-page text-ink antialiased">`.
 ```ts
 export type Category = 'professional' | 'personal' | 'household';
 export type Urgency = 'critical' | 'high' | 'medium' | 'low';
-export type Status = 'todo' | 'in_progress' | 'done' | 'postponed';
+export type Status = 'todo' | 'in_progress' | 'done' | 'postponed' | 'expired';
 
 export interface ActivityEntry {
   id: string;
@@ -196,6 +196,7 @@ src/app/
     tasks/tasks.page.ts
     task-detail/task-detail.page.ts
     import/import.page.ts
+    categories/categories.page.ts
   app.routes.ts
   app.config.ts
   app.component.ts
@@ -210,6 +211,7 @@ Rotas:
 | `/tarefas` | Todas as tarefas (filtros) |
 | `/tarefas/:id` | Página de vida da tarefa |
 | `/importar` | Importar/exportar JSON |
+| `/categorias` | Gerir categorias |
 
 Usa **lazy loading** com `loadComponent`.
 
@@ -454,6 +456,8 @@ Igual, mas com: título editável, descrição, estado (select), urgência (sele
 8. Datas formatadas em `pt-PT` via `Intl.DateTimeFormat`. Nunca usar libs de datas.
 9. Toda a lista deve ter `track item.id` no `@for`.
 10. Acessibilidade: botões com `aria-label`, inputs com `<label>`, contraste AA.
+11. Regra de data de tarefa: não permitir criar tarefas com `dueDate` no passado. Se a data de prazo estiver no passado, a tarefa fica automaticamente com `status='expired'` (expirada).
+12. Categorias são geridas em `/categorias`: permitir adicionar e remover categorias personalizadas. As categorias padrão (`professional`, `personal`, `household`) não podem ser removidas.
 
 ---
 

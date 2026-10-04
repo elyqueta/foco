@@ -50,7 +50,7 @@ export class TaskDetailPage {
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = { todo: 'A fazer', in_progress: 'Em curso', postponed: 'Adiada', done: 'Concluída' };
+    const map: Record<string, string> = { todo: 'A fazer', in_progress: 'Em curso', postponed: 'Adiada', done: 'Concluída', expired: 'Expirada' };
     return map[status] ?? status;
   }
 
@@ -60,6 +60,7 @@ export class TaskDetailPage {
       in_progress: 'rounded-full bg-brand-100 px-2.5 py-1 text-[10px] font-bold text-brand-fg',
       done: 'rounded-full bg-success-soft px-2.5 py-1 text-[10px] font-bold text-success',
       postponed: 'rounded-full bg-warn-soft px-2.5 py-1 text-[10px] font-bold text-warn',
+      expired: 'rounded-full bg-danger-soft px-2.5 py-1 text-[10px] font-bold text-danger',
     };
     return map[status] ?? 'rounded-full bg-surface-line px-2.5 py-1 text-[10px] font-bold text-ink-500';
   }
@@ -135,6 +136,7 @@ export class TaskDetailPage {
       postponed: 'Adiado',
       edited: 'Editado',
       next_step_changed: 'Próximo passo atualizado',
+      expired: 'Expirada',
     };
     return map[type] ?? type;
   }

@@ -151,6 +151,7 @@ export class ProjectDetailPage {
       postponed: 'Adiado',
       edited: 'Editado',
       next_step_changed: 'Próximo passo atualizado',
+      expired: 'Expirada',
     };
     return map[type] ?? type;
   }

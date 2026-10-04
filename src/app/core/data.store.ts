@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
-import { AppData, Project, Task, ActivityEntry, Category, Urgency, Status } from './models';
+import { AppData, Project, Task, ActivityEntry, Urgency, Status } from './models';
 import { DataRepository, emptyAppData } from './storage.repository';
 import { seedData } from './seed';
 import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime, toDatePart } from './date.utils';
@@ -13,12 +13,16 @@ export class DataStore {
 
   constructor() {
     try {
-      if (this._data().projects.length === 0 && this._data().tasks.length === 0) {
+      const loaded = this._data();
+      if (loaded.projects.length === 0 && loaded.tasks.length === 0) {
         this._data.set(seedData());
+      } else if (!loaded.categories || loaded.categories.length === 0) {
+        this._data.update((d) => ({ ...d, categories: ['professional', 'personal', 'household'] }));
       }
     } catch {
-      // keep empty data on initialization failure
+      this._data.set(emptyAppData());
     }
+    this.expireOverdueTasks();
   }
 
   private readonly _persistEffect = effect(() => {
@@ -28,10 +32,13 @@ export class DataStore {
 
   data = this._data.asReadonly();
 
+  categories = computed(() => this._data().categories ?? ['professional', 'personal', 'household']);
+
   todayTasks = computed(() => {
     const t = todayISO();
     return this._data().tasks.filter((tk) => {
       if (tk.status === 'done') return false;
+      if (tk.status === 'expired') return false;
       if (tk.urgency === 'critical') return true;
       if (toDatePart(tk.dueDate || '') === t) return true;
       if (tk.dueDate && toDatePart(tk.dueDate) < t) return true;
@@ -46,7 +53,7 @@ export class DataStore {
 
   urgentTasks = computed(() => {
     return this._data().tasks
-      .filter((tk) => tk.status !== 'done' && (tk.urgency === 'critical' || tk.urgency === 'high'))
+      .filter((tk) => tk.status !== 'done' && tk.status !== 'expired' && (tk.urgency === 'critical' || tk.urgency === 'high'))
       .sort((a, b) => urgencyOrder(a.urgency) - urgencyOrder(b.urgency) || (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
   });
 
@@ -58,7 +65,7 @@ export class DataStore {
       }
     }
     for (const t of this._data().tasks) {
-      if (t.nextStep && t.status !== 'done') {
+      if (t.nextStep && t.status !== 'done' && t.status !== 'expired') {
         items.push({ kind: 'task', id: t.id, title: t.title, nextStep: t.nextStep, urgency: t.urgency });
       }
     }
@@ -67,16 +74,17 @@ export class DataStore {
   });
 
   statsByCategory = computed(() => {
-    const stats: Record<Category, { total: number; done: number; percent: number }> = {
-      professional: { total: 0, done: 0, percent: 0 },
-      personal: { total: 0, done: 0, percent: 0 },
-      household: { total: 0, done: 0, percent: 0 },
-    };
+    const cats = this.categories();
+    const stats: Record<string, { total: number; done: number; percent: number }> = {};
+    for (const cat of cats) {
+      stats[cat] = { total: 0, done: 0, percent: 0 };
+    }
     for (const t of this._data().tasks) {
+      if (!stats[t.category]) stats[t.category] = { total: 0, done: 0, percent: 0 };
       stats[t.category].total++;
       if (t.status === 'done') stats[t.category].done++;
     }
-    for (const cat of Object.keys(stats) as Category[]) {
+    for (const cat of Object.keys(stats)) {
       stats[cat].percent = stats[cat].total === 0 ? 0 : Math.round((stats[cat].done / stats[cat].total) * 100);
     }
     return stats;
@@ -86,6 +94,11 @@ export class DataStore {
     const weekAgo = addDays(todayISO(), -7);
     return this._data().tasks.filter((t) => t.status === 'done' && t.completedAt && t.completedAt >= weekAgo).length;
   });
+
+  isExpired(dueDate: string | null): boolean {
+    if (!dueDate) return false;
+    return toDatePart(dueDate) < todayISO();
+  }
 
   addProject(input: Omit<Project, 'id' | 'activity' | 'createdAt' | 'updatedAt'>): void {
     const name = input.name?.trim();
@@ -133,11 +146,15 @@ export class DataStore {
   addTask(input: Omit<Task, 'id' | 'activity' | 'createdAt' | 'updatedAt' | 'completedAt'>): void {
     const title = input.title?.trim();
     if (!title || title.length < 2) return;
+    if (input.dueDate && toDatePart(input.dueDate) < todayISO()) return;
     const now = new Date().toISOString();
+    const status = input.status ?? 'todo';
+    const finalStatus = (input.dueDate && toDatePart(input.dueDate) < todayISO()) ? 'expired' : status;
     const task: Task = {
       ...input,
       title,
       id: crypto.randomUUID(),
+      status: finalStatus,
       activity: [{ id: crypto.randomUUID(), at: now, type: 'created', message: 'Tarefa criada' }],
       createdAt: now,
       updatedAt: now,
@@ -238,5 +255,46 @@ export class DataStore {
 
   clearAll(): void {
     this._data.set(emptyAppData());
+  }
+
+  expireOverdueTasks(): void {
+    const now = new Date().toISOString();
+    const today = todayISO();
+    this._data.update((d) => ({
+      ...d,
+      tasks: d.tasks.map((t) => {
+        if (t.status === 'done' || t.status === 'postponed' || t.status === 'expired') return t;
+        if (t.dueDate && toDatePart(t.dueDate) < today) {
+          return {
+            ...t,
+            status: 'expired',
+            updatedAt: now,
+            activity: [
+              ...t.activity,
+              { id: crypto.randomUUID(), at: now, type: 'expired', message: 'Tarefa expirada por prazo vencido' },
+            ],
+          };
+        }
+        return t;
+      }),
+    }));
+  }
+
+  addCategory(name: string): void {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const cats = this._data().categories ?? [];
+    if (cats.includes(trimmed)) return;
+    this._data.update((d) => ({ ...d, categories: [...cats, trimmed] }));
+  }
+
+  removeCategory(name: string): void {
+    if (name === 'professional' || name === 'personal' || name === 'household') return;
+    this._data.update((d) => ({
+      ...d,
+      categories: d.categories?.filter((c) => c !== name) ?? [],
+      tasks: d.tasks.map((t) => (t.category === name ? { ...t, category: 'professional' } : t)),
+      projects: d.projects.map((p) => (p.category === name ? { ...p, category: 'professional' } : p)),
+    }));
   }
 }

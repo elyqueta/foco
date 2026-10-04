@@ -98,6 +98,7 @@ export class ImportService {
       projects: [...current.projects, ...projects],
       tasks: [...current.tasks, ...tasks],
       settings: current.settings,
+      categories: current.categories ?? ['professional', 'personal', 'household'],
     };
     this.store.replaceAll(merged);
     return { ok: true, errors: [] };

@@ -27,11 +27,10 @@ export class ProjectsPage {
   searchQuery = this.search.query;
 
   filters() {
+    const cats = this.store.categories();
     return [
       { label: 'Todas', value: 'all' },
-      { label: 'Profissional', value: 'professional' },
-      { label: 'Pessoal', value: 'personal' },
-      { label: 'Doméstica', value: 'household' },
+      ...cats.map((c) => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c })),
     ];
   }
 

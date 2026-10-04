@@ -8,6 +8,7 @@ import { ImportPage } from './pages/import/import.page';
 import { CalendarPage } from './pages/calendar/calendar.page';
 import { CalendarDayPage } from './pages/calendar/calendar-day.page';
 import { SettingsPage } from './pages/settings/settings.page';
+import { CategoriesPage } from './pages/categories/categories.page';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.page').then(m => m.DashboardPage) },
@@ -18,5 +19,6 @@ export const routes: Routes = [
   { path: 'importar', loadComponent: () => import('./pages/import/import.page').then(m => m.ImportPage) },
   { path: 'calendario', loadComponent: () => import('./pages/calendar/calendar.page').then(m => m.CalendarPage) },
   { path: 'calendario/:date', loadComponent: () => import('./pages/calendar/calendar-day.page').then(m => m.CalendarDayPage) },
+  { path: 'categorias', loadComponent: () => import('./pages/categories/categories.page').then(m => m.CategoriesPage) },
   { path: 'definicoes', loadComponent: () => import('./pages/settings/settings.page').then(m => m.SettingsPage) },
 ];

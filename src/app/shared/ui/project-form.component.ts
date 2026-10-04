@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Project, Category, Urgency } from '../../core/models';
+import { DataStore } from '../../core/data.store';
 
 @Component({
   selector: 'app-project-form',
@@ -16,4 +17,9 @@ export class ProjectFormComponent {
 
   form = signal<Partial<Project>>({});
   touched = signal(false);
+  private store = inject(DataStore);
+
+  categoryOptions(): string[] {
+    return this.store.categories();
+  }
 }

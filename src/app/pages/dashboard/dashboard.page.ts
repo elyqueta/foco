@@ -43,9 +43,9 @@ export class DashboardPage {
   categories() {
     const stats = this.statsByCategory();
     return [
-      { key: 'professional', label: 'Profissional', value: stats.professional },
-      { key: 'personal', label: 'Pessoal', value: stats.personal },
-      { key: 'household', label: 'Doméstica', value: stats.household },
+      { key: 'professional', label: 'Profissional', value: stats['professional'] },
+      { key: 'personal', label: 'Pessoal', value: stats['personal'] },
+      { key: 'household', label: 'Doméstica', value: stats['household'] },
     ];
   }
 

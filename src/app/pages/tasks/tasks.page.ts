@@ -28,14 +28,14 @@ export class TasksPage {
   catFilter = signal<string>('all');
   urgencyFilter = signal<string>('all');
   showDone = signal(false);
+  showExpired = signal(false);
   searchQuery = this.search.query;
 
   catFilters() {
+    const cats = this.store.categories();
     return [
       { label: 'Todas', value: 'all' },
-      { label: 'Profissional', value: 'professional' },
-      { label: 'Pessoal', value: 'personal' },
-      { label: 'Doméstica', value: 'household' },
+      ...cats.map((c) => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c })),
     ];
   }
 
@@ -57,9 +57,10 @@ export class TasksPage {
     if (urg !== 'all') tasks = tasks.filter((t) => t.urgency === urg);
     const done = this.showDone();
     if (!done) {
-      const pending = tasks.filter((t) => t.status !== 'done');
-      const doneTasks = tasks.filter((t) => t.status === 'done');
-      tasks = [...pending, ...doneTasks];
+      tasks = tasks.filter((t) => t.status !== 'done');
+    }
+    if (!this.showExpired()) {
+      tasks = tasks.filter((t) => t.status !== 'expired');
     }
     const query = this.searchQuery().trim().toLowerCase();
     if (query) {
@@ -104,6 +105,10 @@ export class TasksPage {
 
   toggleShowDone(): void {
     this.showDone.update((v) => !v);
+  }
+
+  toggleShowExpired(): void {
+    this.showExpired.update((v) => !v);
   }
 
   openModal(): void {

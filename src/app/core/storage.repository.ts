@@ -14,6 +14,7 @@ export function emptyAppData(): AppData {
     projects: [],
     tasks: [],
     settings: { theme: 'light', userName: 'Zua' },
+    categories: ['professional', 'personal', 'household'],
   };
 }
 
@@ -25,6 +26,9 @@ export class LocalStorageRepository extends DataRepository {
       if (!raw) return emptyAppData();
       const parsed = JSON.parse(raw) as AppData;
       if (parsed.schemaVersion !== 1) return emptyAppData();
+      if (!parsed.categories || !Array.isArray(parsed.categories)) {
+        parsed.categories = ['professional', 'personal', 'household'];
+      }
       return parsed;
     } catch {
       return emptyAppData();

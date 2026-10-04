@@ -157,5 +157,6 @@ export function seedData(): AppData {
       },
     ],
     settings: { theme: 'light', userName: 'Zua' },
+    categories: ['professional', 'personal', 'household'],
   };
 }

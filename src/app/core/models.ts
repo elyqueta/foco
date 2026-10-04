@@ -1,11 +1,11 @@
-export type Category = 'professional' | 'personal' | 'household';
+export type Category = string;
 export type Urgency = 'critical' | 'high' | 'medium' | 'low';
-export type Status = 'todo' | 'in_progress' | 'done' | 'postponed';
+export type Status = 'todo' | 'in_progress' | 'done' | 'postponed' | 'expired';
 
 export interface ActivityEntry {
   id: string;
   at: string;
-  type: 'created' | 'status_changed' | 'note' | 'postponed' | 'edited' | 'next_step_changed';
+  type: 'created' | 'status_changed' | 'note' | 'postponed' | 'edited' | 'next_step_changed' | 'expired';
   message: string;
 }
 
@@ -49,4 +49,5 @@ export interface AppData {
   projects: Project[];
   tasks: Task[];
   settings: { theme: 'light' | 'dark'; userName: string };
+  categories: string[];
 }

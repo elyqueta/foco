@@ -14,9 +14,9 @@
         <div>
           <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Categoria</label>
           <select [(ngModel)]="form().category" name="category" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
-            <option value="professional">Profissional</option>
-            <option value="personal">Pessoal</option>
-            <option value="household">Doméstica</option>
+            @for (cat of categoryOptions(); track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
           </select>
         </div>
         <div>

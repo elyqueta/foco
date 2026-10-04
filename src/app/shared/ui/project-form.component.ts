@@ -1,0 +1,70 @@
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Project, Category, Urgency } from '../../core/models';
+
+@Component({
+  selector: 'app-project-form',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <form (ngSubmit)="submit.emit(form())" class="flex flex-col gap-4">
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Nome</label>
+        <input type="text" [(ngModel)]="form().name" name="name" required class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Nome do projeto" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Descrição</label>
+        <textarea [(ngModel)]="form().description" name="description" rows="3" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Descrição"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Categoria</label>
+          <select [(ngModel)]="form().category" name="category" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
+            <option value="professional">Profissional</option>
+            <option value="personal">Pessoal</option>
+            <option value="household">Doméstica</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Urgência</label>
+          <select [(ngModel)]="form().urgency" name="urgency" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
+            <option value="critical">Crítica</option>
+            <option value="high">Alta</option>
+            <option value="medium">Média</option>
+            <option value="low">Baixa</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Estado</label>
+          <select [(ngModel)]="form().status" name="status" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
+            <option value="active">Ativo</option>
+            <option value="paused">Pausado</option>
+            <option value="done">Concluído</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Prazo</label>
+          <input type="date" [(ngModel)]="form().dueDate" name="dueDate" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" />
+        </div>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Próximo passo</label>
+        <input type="text" [(ngModel)]="form().nextStep" name="nextStep" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Próximo passo concreto" />
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" (click)="cancel.emit()" class="h-10 rounded-xl border border-surface-line px-5 text-[13px] font-semibold text-ink-500 hover:text-ink transition">Cancelar</button>
+          <button type="submit" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white hover:bg-brand-600 transition">{{ project ? 'Guardar' : 'Criar' }}</button>
+      </div>
+    </form>
+  `,
+})
+export class ProjectFormComponent {
+  @Input() project?: Partial<Project>;
+  @Output() submit = new EventEmitter<Partial<Project>>();
+  @Output() cancel = new EventEmitter<void>();
+
+  form = signal<Partial<Project>>({});
+}

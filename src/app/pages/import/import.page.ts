@@ -1,0 +1,90 @@
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DataStore } from '../../core/data.store';
+import { ImportService } from '../../core/import.service';
+
+@Component({
+  selector: 'app-import',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="mt-8 max-w-3xl">
+      <h1 class="text-[28px] font-extrabold text-ink mb-2">Importar / Exportar</h1>
+      <p class="text-[14px] text-ink-500 mb-6">Importa dados de JSON ou exporta o teu estado atual. Também podes gerar um prompt para uma IA.</p>
+
+      <div class="rounded-card bg-white p-5 shadow-card mb-6">
+        <h3 class="text-[16px] font-bold text-ink mb-3">Exportar JSON</h3>
+        <p class="text-[12px] text-ink-500 mb-4">Descobre o ficheiro JSON com todos os teus dados.</p>
+        <div class="flex gap-3">
+          <button (click)="exportJson()" class="h-10 rounded-xl border border-surface-line px-5 text-[13px] font-semibold text-ink-500 hover:text-ink transition">Exportar JSON</button>
+          <button (click)="copyPrompt()" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white hover:bg-brand-600 transition">Copiar prompt para IA</button>
+        </div>
+      </div>
+
+      <div class="rounded-card bg-white p-5 shadow-card">
+        <h3 class="text-[16px] font-bold text-ink mb-3">Importar JSON</h3>
+        <p class="text-[12px] text-ink-500 mb-4">Cola o JSON abaixo para importar projetos e tarefas.</p>
+        <textarea [(ngModel)]="jsonText" rows="12" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30 font-mono text-xs" placeholder='{"projects":[...],"tasks":[...]}'></textarea>
+        @if (errors().length > 0) {
+          <div class="mt-3 rounded-xl bg-danger-soft p-4">
+            @for (err of errors(); track err) {
+              <p class="text-[12px] text-danger">{{ err }}</p>
+            }
+          </div>
+        }
+        @if (success()) {
+          <div class="mt-3 rounded-xl bg-success-soft p-4">
+            <p class="text-[12px] text-success">Importação concluída com sucesso.</p>
+          </div>
+        }
+        <div class="mt-4 flex gap-3">
+          <button (click)="importJson()" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white hover:bg-brand-600 transition">Importar</button>
+          <button (click)="clearForm()" class="h-10 rounded-xl border border-surface-line px-5 text-[13px] font-semibold text-ink-500 hover:text-ink transition">Limpar</button>
+        </div>
+      </div>
+    </div>
+  `,
+})
+export class ImportPage {
+  private store = inject(DataStore);
+  private importService = inject(ImportService);
+  jsonText = signal('');
+  errors = signal<string[]>([]);
+  success = signal(false);
+
+  exportJson(): void {
+    const json = this.store.exportJson();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'foco-export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  copyPrompt(): void {
+    const text = 'Converte a lista de tarefas abaixo em JSON no formato do Foco (projects[] e tasks[]). category ∈ professional|personal|household. urgency ∈ critical|high|medium|low. dueDate em YYYY-MM-DD. Responde SÓ com JSON válido.';
+    navigator.clipboard.writeText(text);
+    alert('Prompt copiado para a área de transferência.');
+  }
+
+  importJson(): void {
+    const result = this.importService.import(this.jsonText());
+    if (result.ok) {
+      this.errors.set([]);
+      this.success.set(true);
+      setTimeout(() => this.success.set(false), 3000);
+    } else {
+      this.errors.set(result.errors);
+      this.success.set(false);
+    }
+  }
+
+  clearForm(): void {
+    this.jsonText.set('');
+    this.errors.set([]);
+    this.success.set(false);
+  }
+}

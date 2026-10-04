@@ -1,0 +1,64 @@
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { DataStore } from '../core/data.store';
+
+@Component({
+  selector: 'app-topbar',
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive],
+  template: `
+    <header class="flex items-center justify-between gap-4 mb-6">
+      <div class="flex items-center gap-6">
+        <a routerLink="/" routerLinkActive="text-ink font-semibold" class="text-[13px] font-medium text-ink-500 hover:text-ink transition">Dashboard</a>
+        <a routerLink="/projetos" routerLinkActive="text-ink font-semibold" class="text-[13px] font-medium text-ink-500 hover:text-ink transition">Projetos</a>
+        <a routerLink="/tarefas" routerLinkActive="text-ink font-semibold" class="text-[13px] font-medium text-ink-500 hover:text-ink transition">Tarefas</a>
+      </div>
+
+      <div class="flex-1 max-w-[260px] mx-4">
+        <input
+          type="text"
+          placeholder="Pesquisar tarefa ou projeto"
+          class="h-10 w-full rounded-xl border border-surface-line bg-white px-4 text-[13px] placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
+          (input)="onSearch($event)"
+        />
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="h-9 rounded-xl bg-white p-1 flex">
+          <button (click)="setTheme('light')" class="rounded-lg px-3 text-[12px] font-semibold transition" [class.bg-brand-100]="!isDark()" [class.text-brand]="!isDark()" [class.text-ink-500]="isDark()">Claro</button>
+          <button (click)="setTheme('dark')" class="rounded-lg px-3 text-[12px] font-semibold transition" [class.bg-brand-100]="isDark()" [class.text-brand]="isDark()" [class.text-ink-500]="!isDark()">Escuro</button>
+        </div>
+        <button class="h-9 rounded-xl border border-surface-line bg-white px-4 text-[12px] font-semibold text-ink-500 hover:text-ink transition">Exportar dados</button>
+         <button (click)="openModal()" class="h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white hover:bg-ink-700 shadow-card transition">Nova tarefa</button>
+      </div>
+    </header>
+  `,
+})
+export class TopbarComponent {
+  private store = inject(DataStore);
+  isDark = signal(false);
+  openTaskModal = signal(false);
+
+  constructor() {
+    this.isDark.set(this.store.data().settings.theme === 'dark');
+  }
+
+  setTheme(theme: 'light' | 'dark'): void {
+    this.isDark.set(theme === 'dark');
+    this.store.setTheme(theme);
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }
+
+  onSearch(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    console.log('search:', value);
+  }
+
+  openModal(): void {
+    this.openTaskModal.set(true);
+  }
+}

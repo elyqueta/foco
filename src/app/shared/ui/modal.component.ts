@@ -1,0 +1,21 @@
+import { Component, input, output, HostListener } from '@angular/core';
+
+@Component({
+  selector: 'app-modal',
+  standalone: true,
+  template: `
+    <div class="fixed inset-0 z-50 grid place-items-center bg-ink/40 backdrop-blur-sm p-4" (click)="close.emit()">
+      <div class="w-full max-w-[560px] rounded-shell bg-white p-8 shadow-float" (click)="$event.stopPropagation()">
+        <ng-content />
+      </div>
+    </div>
+  `,
+})
+export class ModalComponent {
+  close = output<void>();
+
+  @HostListener('document:keydown.escape')
+  onEsc(): void {
+    this.close.emit();
+  }
+}

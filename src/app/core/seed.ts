@@ -1,0 +1,161 @@
+import { AppData } from './models';
+import { today } from './date.utils';
+
+export function seedData(): AppData {
+  const now = new Date().toISOString();
+  const projectId = crypto.randomUUID();
+  const projectId2 = crypto.randomUUID();
+
+  return {
+    schemaVersion: 1,
+    projects: [
+      {
+        id: projectId,
+        name: 'Loja Nerd',
+        description: 'Marca de acessórios tech para geeks e gamers.',
+        category: 'personal',
+        urgency: 'high',
+        status: 'active',
+        canPostpone: true,
+        dueDate: today(),
+        nextStep: 'Definir catálogo inicial de 10 produtos',
+        color: '#3FBF9A',
+        activity: [
+          {
+            id: crypto.randomUUID(),
+            at: now,
+            type: 'created',
+            message: 'Projeto criado',
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: projectId2,
+        name: 'destino-mussulo',
+        description: 'Plataforma de reservas para o Mussulo.',
+        category: 'professional',
+        urgency: 'critical',
+        status: 'active',
+        canPostpone: false,
+        dueDate: today(),
+        nextStep: 'Integrar API real no backend',
+        color: '#6C5CE7',
+        activity: [
+          {
+            id: crypto.randomUUID(),
+            at: now,
+            type: 'created',
+            message: 'Projeto criado',
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+    tasks: [
+      {
+        id: crypto.randomUUID(),
+        projectId: projectId2,
+        title: 'Integrar API real no destino-mussulo',
+        description: 'Substituir o mock service por HttpClient real.',
+        category: 'professional',
+        urgency: 'critical',
+        status: 'todo',
+        canPostpone: false,
+        dueDate: today(),
+        nextStep: 'Trocar mock service por HttpClient',
+        estimateMinutes: 90,
+        tags: ['angular', 'api'],
+        activity: [
+          {
+            id: crypto.randomUUID(),
+            at: now,
+            type: 'created',
+            message: 'Tarefa criada',
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+      },
+      {
+        id: crypto.randomUUID(),
+        projectId: projectId,
+        title: 'Definir catálogo inicial',
+        description: 'Listar 10 produtos com fotos e preços.',
+        category: 'personal',
+        urgency: 'high',
+        status: 'in_progress',
+        canPostpone: true,
+        dueDate: today(),
+        nextStep: 'Pesquisar fornecedores de acessórios',
+        estimateMinutes: 60,
+        tags: ['produto'],
+        activity: [
+          {
+            id: crypto.randomUUID(),
+            at: now,
+            type: 'created',
+            message: 'Tarefa criada',
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+      },
+      {
+        id: crypto.randomUUID(),
+        projectId: null,
+        title: 'Compras do supermercado',
+        description: 'Leite, ovos, pão, fruta.',
+        category: 'household',
+        urgency: 'medium',
+        status: 'todo',
+        canPostpone: true,
+        dueDate: today(),
+        nextStep: 'Fazer lista antes de sair',
+        estimateMinutes: 30,
+        tags: ['casa'],
+        activity: [
+          {
+            id: crypto.randomUUID(),
+            at: now,
+            type: 'created',
+            message: 'Tarefa criada',
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+      },
+      {
+        id: crypto.randomUUID(),
+        projectId: null,
+        title: 'Ligar para a mãe',
+        description: '',
+        category: 'personal',
+        urgency: 'low',
+        status: 'todo',
+        canPostpone: true,
+        dueDate: null,
+        nextStep: '',
+        estimateMinutes: 15,
+        tags: [],
+        activity: [
+          {
+            id: crypto.randomUUID(),
+            at: now,
+            type: 'created',
+            message: 'Tarefa criada',
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+      },
+    ],
+    settings: { theme: 'light', userName: 'Zua' },
+  };
+}

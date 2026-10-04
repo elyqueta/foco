@@ -13,7 +13,7 @@ export function emptyAppData(): AppData {
     schemaVersion: 1,
     projects: [],
     tasks: [],
-    settings: { theme: 'light', userName: 'Zua' },
+    settings: { theme: 'light', userName: 'Zua', colorScheme: 'purple' },
     categories: ['professional', 'personal', 'household'],
   };
 }

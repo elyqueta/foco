@@ -44,11 +44,13 @@ export interface Project {
   updatedAt: string;
 }
 
+export type ColorScheme = 'purple' | 'blue' | 'red' | 'gray';
+
 export interface AppData {
   schemaVersion: 1;
   projects: Project[];
   tasks: Task[];
-  settings: { theme: 'light' | 'dark'; userName: string };
+  settings: { theme: 'light' | 'dark'; userName: string; colorScheme: ColorScheme };
   categories: string[];
 }
 

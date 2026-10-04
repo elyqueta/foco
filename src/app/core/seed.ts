@@ -156,7 +156,7 @@ export function seedData(): AppData {
         completedAt: null,
       },
     ],
-    settings: { theme: 'light', userName: 'Zua' },
+    settings: { theme: 'light', userName: 'Zua', colorScheme: 'purple' },
     categories: ['professional', 'personal', 'household'],
   };
 }

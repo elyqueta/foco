@@ -41,6 +41,8 @@
 - Sessão persistida em `localStorage` (`foco:focus:v1`).
 - Widget flutuante global arrastável (`FocusWidgetComponent`).
 - Posição do widget guardada em `localStorage` (`foco:focus-widget-pos:v1`).
+- Widget aparece só depois de iniciar uma tarefa.
+- Botões do widget sincronizados com o card do dashboard.
 
 ## 9. Notificações
 - Página `/notificacoes` com lista mockada.
@@ -51,15 +53,23 @@
 - Diálogo de escolha de formato antes de exportar.
 - Suporte a JSON (backup) e PDF (relatório formatado).
 - PDF gerado com jsPDF + autotable, com tabelas estilizadas para projetos e tarefas.
+- Cor do PDF segue o esquema de cores escolhido pelo utilizador.
 
-## 11. Proxy
+## 11. Personalização de cores
+- Esquemas disponíveis: roxo, azul, vermelho e cinza.
+- Preferência guardada em `localStorage` através do `DataStore`.
+- Cores aplicadas via variáveis CSS dinâmicas (`--c-brand`, `--c-brand-600`, etc.).
+- `ColorSchemeService` gere a lógica de aplicação e leitura do esquema.
+
+## 12. Proxy
 - `proxy.conf.json` encaminha `/api` para `http://localhost:8000` (container Laravel).
 - Configurado em `angular.json` para `ng serve`.
 
-## 12. Verificações realizadas
+## 13. Verificações realizadas
 - `ng build` sem erros.
 - Ícone de pesquisa ajustado (left-3) para não sobrepor o placeholder.
 - Novos ícones adicionados: `Eye`, `EyeOff`, `LogOut`, `Target`, `Sun`, `Moon`, `BellRing` (mantidos `Check` e `Sparkles` existentes).
 - Contagem regressiva do foco atualizada a cada segundo.
 - Widget flutuante arrastável com botões sincronizados com o card do dashboard.
 - Exportação JSON e PDF funcionais.
+- Personalização de cores sem destruir funcionalidades existentes.

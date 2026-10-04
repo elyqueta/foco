@@ -1,12 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { DataStore } from './data.store';
 import { AppData, Project, Task } from './models';
+import { ColorSchemeService } from './color-scheme.service';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 @Injectable({ providedIn: 'root' })
 export class ExportService {
   private readonly store = inject(DataStore);
+  private readonly colorService = inject(ColorSchemeService);
 
   exportJson(): void {
     const data = this.store.exportJson();
@@ -27,11 +29,12 @@ export class ExportService {
     const margin = 48;
     const contentWidth = pageWidth - margin * 2;
     let y = margin;
+    const brandRgb = this.colorService.rgb();
 
     const title = (text: string, size = 16) => {
       doc.setFontSize(size);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 30, 40);
+      doc.setTextColor(...brandRgb);
       doc.text(text, margin, y);
       y += size * 0.8;
     };
@@ -39,7 +42,7 @@ export class ExportService {
     const section = (text: string) => {
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(99, 102, 241);
+      doc.setTextColor(...brandRgb);
       doc.text(text.toUpperCase(), margin, y);
       y += 14;
     };
@@ -81,7 +84,7 @@ export class ExportService {
           textColor: [30, 30, 40],
         },
         headStyles: {
-          fillColor: [99, 102, 241],
+          fillColor: [...brandRgb],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
         },
@@ -115,7 +118,7 @@ export class ExportService {
           textColor: [30, 30, 40],
         },
         headStyles: {
-          fillColor: [99, 102, 241],
+          fillColor: [...brandRgb],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
         },

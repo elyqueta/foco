@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
-import { AppData, Project, Task, ActivityEntry, Urgency, Status } from './models';
+import { AppData, Project, Task, ActivityEntry, Urgency, Status, ColorScheme } from './models';
 import { DataRepository, emptyAppData } from './storage.repository';
 import { seedData } from './seed';
 import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime, toDatePart } from './date.utils';
@@ -247,6 +247,10 @@ export class DataStore {
 
   setTheme(theme: 'light' | 'dark'): void {
     this._data.update((d) => ({ ...d, settings: { ...d.settings, theme } }));
+  }
+
+  setColorScheme(colorScheme: ColorScheme): void {
+    this._data.update((d) => ({ ...d, settings: { ...d.settings, colorScheme } }));
   }
 
   setUserName(name: string): void {

@@ -1,17 +1,10 @@
-import { Component, inject } from '@angular/core';
-import { ShellComponent } from './layout/shell.component';
-import { ConsoleApi } from './core/console-api';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ShellComponent],
-  template: `<app-shell />`,
+  imports: [RouterOutlet],
+  template: `<router-outlet />`,
 })
-export class App {
-  private consoleApi = inject(ConsoleApi);
-
-  constructor() {
-    this.consoleApi.init();
-  }
-}
+export class App {}

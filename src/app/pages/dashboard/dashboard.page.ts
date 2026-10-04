@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
@@ -10,6 +10,7 @@ import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
 import { LucideAngularModule } from 'lucide-angular';
+import { AuthService } from '../../core/auth/auth.service';
 import { Task, ActivityEntry } from '../../core/models';
 import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISODate, toDatePart } from '../../core/date.utils';
 
@@ -23,6 +24,7 @@ export class DashboardPage {
   private store = inject(DataStore);
   private modal = inject(TaskModalService);
   private router = inject(Router);
+  private auth = inject(AuthService);
 
   todayTasks = this.store.todayTasks;
   pendingTasks = this.store.pendingTasks;
@@ -31,7 +33,7 @@ export class DashboardPage {
   statsByCategory = this.store.statsByCategory;
   completedThisWeek = this.store.completedThisWeek;
 
-  userName = this.store.data().settings.userName;
+  userName = computed(() => this.auth.user()?.name ?? this.store.data().settings.userName);
 
   selectedDate = signal(todayISO());
   weekStart = signal(todayISO());

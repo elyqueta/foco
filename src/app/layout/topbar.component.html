@@ -62,5 +62,27 @@
       class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand/40">
       Nova tarefa
     </button>
+
+    <div class="relative">
+      <button type="button" (click)="menuOpen.set(!menuOpen())" data-user-menu
+        class="flex h-10 items-center gap-2 rounded-xl bg-surface-card pl-1 pr-3 shadow-card transition hover:opacity-90">
+        <div class="grid h-8 w-8 place-items-center rounded-lg bg-brand text-[12px] font-bold text-white">{{ initials(userName) }}</div>
+        <span class="hidden text-[12px] font-semibold text-ink md:block">{{ userName.split(' ')[0] }}</span>
+      </button>
+      @if (menuOpen()) {
+        <div class="absolute right-0 top-12 z-50 w-[220px] rounded-2xl border border-surface-line bg-surface-card p-2 shadow-float">
+          <div class="border-b border-surface-line px-3 pt-2 pb-2">
+            <p class="text-[13px] font-semibold text-ink">{{ userName }}</p>
+            <p class="text-[11px] text-ink-400">{{ auth.user()?.email ?? '' }}</p>
+          </div>
+          <a routerLink="/definicoes" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-surface-app text-ink">
+            <lucide-icon name="settings" class="h-4 w-4" /> Definições
+          </a>
+          <button type="button" (click)="logout()" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold text-danger transition hover:bg-surface-app">
+            <lucide-icon name="log-out" class="h-4 w-4" /> Terminar sessão
+          </button>
+        </div>
+      }
+    </div>
   </div>
 </header>

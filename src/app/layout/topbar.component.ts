@@ -1,10 +1,12 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Router } from '@angular/router';
+import { HostListener } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { DataStore } from '../core/data.store';
 import { ThemeService } from '../core/theme.service';
 import { SearchService } from '../core/search.service';
+import { AuthService } from '../core/auth/auth.service';
 import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
 import { toISODate } from '../core/date.utils';
 
@@ -19,6 +21,7 @@ export class TopbarComponent implements OnInit {
   private themeService = inject(ThemeService);
   private search = inject(SearchService);
   private router = inject(Router);
+  private auth = inject(AuthService);
   theme = this.themeService.theme;
   searchQuery = this.search.query;
 
@@ -28,6 +31,8 @@ export class TopbarComponent implements OnInit {
     { path: '/tarefas', exact: false, label: 'Tarefas', icon: 'square-check' },
   ];
 
+  menuOpen = signal(false);
+
   constructor() {}
 
   ngOnInit(): void {
@@ -36,6 +41,7 @@ export class TopbarComponent implements OnInit {
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         if (event.key === 'Escape') {
           (target as HTMLInputElement).blur();
+          this.menuOpen.set(false);
         }
         return;
       }
@@ -50,6 +56,27 @@ export class TopbarComponent implements OnInit {
         }
       }
     });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const button = target.closest('[data-user-menu]');
+    if (!button) {
+      this.menuOpen.set(false);
+    }
+  }
+
+  get userName(): string {
+    return this.auth.user()?.name ?? this.store.data().settings.userName;
+  }
+
+  initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0]?.slice(0, 2).toUpperCase() ?? 'U';
   }
 
   setTheme(value: 'light' | 'dark'): void {
@@ -73,6 +100,11 @@ export class TopbarComponent implements OnInit {
     if (input) {
       input.value = '';
     }
+  }
+
+  async logout(): Promise<void> {
+    this.menuOpen.set(false);
+    await this.auth.logout();
   }
 
   exportData(): void {

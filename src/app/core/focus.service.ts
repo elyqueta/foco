@@ -15,15 +15,26 @@ const STORAGE_KEY = 'foco:focus:v1';
 export class FocusService {
   private readonly _session = signal<FocusSession | null>(this.read());
   private readonly _paused = signal(false);
+  private readonly _tick = signal(0);
+  private readonly _widgetVisible = signal(false);
 
   readonly session = this._session.asReadonly();
   readonly paused = this._paused.asReadonly();
+  readonly widgetVisible = this._widgetVisible.asReadonly();
+
+  constructor() {
+    this.tick;
+    setInterval(() => {
+      this._tick.update((prev) => prev + 1);
+    }, 1000);
+  }
 
   readonly tick = computed(() => {
     const s = this._session();
     if (!s) return 0;
     if (s.paused || this._paused()) return Math.max(0, Math.floor(s.durationMs / 1000));
-    return Math.max(0, Math.floor((s.durationMs - (Date.now() - new Date(s.startedAt).getTime())) / 1000));
+    const elapsed = Date.now() - new Date(s.startedAt).getTime();
+    return Math.max(0, Math.floor((s.durationMs - elapsed) / 1000));
   });
 
   readonly active = computed(() => !!this._session() && this.tick() > 0);
@@ -39,6 +50,7 @@ export class FocusService {
     };
     this._session.set(session);
     this._paused.set(false);
+    this._widgetVisible.set(true);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     } catch {
@@ -80,6 +92,7 @@ export class FocusService {
   stop(): void {
     this._session.set(null);
     this._paused.set(false);
+    this._widgetVisible.set(false);
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {

@@ -32,12 +32,30 @@
 
 ## 7. Dashboard
 - Saudação passa a usar `auth.user()?.name ?? settings.userName`.
+- Card "Modo foco" com temporizador regressivo em tempo real (`MM:SS`).
+- Ações no card: Ver tarefa, Pausar/Continuar, Parar.
 
-## 8. Proxy
+## 8. Modo foco
+- `FocusService` gere sessão com estado pausado/retomado.
+- Tick atualizado a cada segundo via intervalo.
+- Sessão persistida em `localStorage` (`foco:focus:v1`).
+
+## 9. Widget flutuante global
+- Componente `FocusWidgetComponent` aparece em todas as páginas enquanto o foco estiver ativo.
+- Arrastável com pointer events (`pointerdown/move/up`).
+- Posição guardada em `localStorage` (`foco:focus-widget-pos:v1`).
+- Responsivo: `w-[calc(100%-32px)] max-w-[360px]`.
+
+## 10. Notificações
+- Página `/notificacoes` com lista mockada.
+- `NotificationService` com seed e persistência em `localStorage` (`foco:notifications:v1`).
+- Badge de não lidas no menu do utilizador.
+
+## 11. Proxy
 - `proxy.conf.json` encaminha `/api` para `http://localhost:8000` (container Laravel).
 - Configurado em `angular.json` para `ng serve`.
 
-## 9. Verificações realizadas
+## 12. Verificações realizadas
 - `ng build` sem erros.
 - Ícone de pesquisa ajustado (left-3) para não sobrepor o placeholder.
-- Novos ícones adicionados: `Eye`, `EyeOff`, `LogOut`, `Target`, `Sun`, `Moon` (mantidos `Check` e `Sparkles` existentes).
+- Novos ícones adicionados: `Eye`, `EyeOff`, `LogOut`, `Target`, `Sun`, `Moon`, `BellRing` (mantidos `Check` e `Sparkles` existentes).

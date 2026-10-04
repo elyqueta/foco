@@ -73,7 +73,6 @@ export class TopbarComponent implements OnInit {
     if (input) {
       input.value = '';
     }
-    this.router.navigate(['/tarefas']);
   }
 
   exportData(): void {

@@ -16,7 +16,7 @@
 
   <!-- Pesquisa -->
   <div class="relative order-last w-full md:order-none md:w-[260px]">
-    <lucide-icon name="search" class="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+    <lucide-icon name="search" class="pointer-events-none absolute left-6 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
     <input
       id="search"
       type="text"
@@ -25,7 +25,7 @@
       (keydown.enter)="onSearchEnter()"
       placeholder="Pesquisar tarefa ou projeto"
       aria-label="Pesquisar"
-      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-12 pr-10 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
+      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-14 pr-10 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
     />
     @if (searchQuery()) {
       <button type="button" (click)="clearSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-400 hover:text-ink transition">

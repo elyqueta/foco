@@ -1,6 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
+import { TaskModalService } from '../../core/task-modal.service';
 import { CardComponent } from '../../shared/ui/card.component';
 import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
 import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component';
@@ -18,6 +20,8 @@ import { formatDate, today } from '../../core/date.utils';
 })
 export class DashboardPage {
   private store = inject(DataStore);
+  private modal = inject(TaskModalService);
+  private router = inject(Router);
 
   todayTasks = this.store.todayTasks;
   pendingTasks = this.store.pendingTasks;
@@ -63,19 +67,16 @@ export class DashboardPage {
   }
 
   goTask(id: string): void {
-    window.location.hash = `/tarefas/${id}`;
+    this.router.navigate(['/tarefas', id]);
   }
 
   go(kind: 'task' | 'project', id: string): void {
     const path = kind === 'task' ? `/tarefas/${id}` : `/projetos/${id}`;
-    window.location.hash = path;
+    this.router.navigate([path]);
   }
 
   openModal(): void {
-    const modal = document.querySelector('app-modal') as HTMLElement | null;
-    if (modal) {
-      modal.dispatchEvent(new Event('open'));
-    }
+    this.modal.show();
   }
 
   startFocus(id: string): void {

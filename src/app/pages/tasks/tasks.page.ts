@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
 import { CardComponent } from '../../shared/ui/card.component';
 import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
@@ -19,6 +20,7 @@ import { formatDate } from '../../core/date.utils';
 })
 export class TasksPage {
   private store = inject(DataStore);
+  private router = inject(Router);
   showModal = signal(false);
   catFilter = signal<string>('all');
   urgencyFilter = signal<string>('all');
@@ -100,7 +102,7 @@ export class TasksPage {
   }
 
   goTask(id: string): void {
-    window.location.hash = `/tarefas/${id}`;
+    this.router.navigate(['/tarefas', id]);
   }
 
   formatDate = formatDate;

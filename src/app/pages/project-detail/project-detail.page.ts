@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
 import { CardComponent } from '../../shared/ui/card.component';
 import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
@@ -23,6 +24,7 @@ import { Task, Project } from '../../core/models';
 export class ProjectDetailPage {
   private route = inject(ActivatedRoute);
   private store = inject(DataStore);
+  private router = inject(Router);
   showTaskModal = signal(false);
   showEditProject = signal(false);
   projectForm = signal<Partial<Project>>({});
@@ -90,7 +92,7 @@ export class ProjectDetailPage {
   }
 
   goTask(id: string): void {
-    window.location.hash = `/tarefas/${id}`;
+    this.router.navigate(['/tarefas', id]);
   }
 
   addNote(text: string): void {

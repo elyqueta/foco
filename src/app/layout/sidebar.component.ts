@@ -22,7 +22,7 @@ export class SidebarComponent {
   items: NavItem[] = [
     { path: '/', exact: true, label: 'Dashboard', icon: 'layout-grid' },
     { path: '/projetos', exact: false, label: 'Projetos', icon: 'folder-kanban' },
-    { path: '/tarefas', exact: false, label: 'Tarefas', icon: 'check-square' },
+    { path: '/tarefas', exact: false, label: 'Tarefas', icon: 'square-check' },
     { path: '/calendario', exact: false, label: 'Calendário', icon: 'calendar-days' },
     { path: '/importar', exact: false, label: 'Importar', icon: 'upload' },
     { path: '/definicoes', exact: false, label: 'Definições', icon: 'settings' },

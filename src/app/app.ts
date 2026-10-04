@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ConsoleApi } from './core/console-api';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +8,10 @@ import { RouterOutlet } from '@angular/router';
   imports: [RouterOutlet],
   template: `<router-outlet />`,
 })
-export class App {}
+export class App {
+  private consoleApi = inject(ConsoleApi);
+
+  constructor() {
+    this.consoleApi.init();
+  }
+}

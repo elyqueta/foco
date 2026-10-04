@@ -39,17 +39,18 @@
 - `FocusService` gere sessão com estado pausado/retomado.
 - Tick atualizado a cada segundo via intervalo.
 - Sessão persistida em `localStorage` (`foco:focus:v1`).
+- Widget flutuante global arrastável (`FocusWidgetComponent`).
+- Posição do widget guardada em `localStorage` (`foco:focus-widget-pos:v1`).
 
-## 9. Widget flutuante global
-- Componente `FocusWidgetComponent` aparece em todas as páginas enquanto o foco estiver ativo.
-- Arrastável com pointer events (`pointerdown/move/up`).
-- Posição guardada em `localStorage` (`foco:focus-widget-pos:v1`).
-- Responsivo: `w-[calc(100%-32px)] max-w-[360px]`.
-
-## 10. Notificações
+## 9. Notificações
 - Página `/notificacoes` com lista mockada.
 - `NotificationService` com seed e persistência em `localStorage` (`foco:notifications:v1`).
 - Badge de não lidas no menu do utilizador.
+
+## 10. Exportação
+- Diálogo de escolha de formato antes de exportar.
+- Suporte a JSON (backup) e PDF (relatório formatado).
+- PDF gerado com jsPDF + autotable, com tabelas estilizadas para projetos e tarefas.
 
 ## 11. Proxy
 - `proxy.conf.json` encaminha `/api` para `http://localhost:8000` (container Laravel).
@@ -59,3 +60,6 @@
 - `ng build` sem erros.
 - Ícone de pesquisa ajustado (left-3) para não sobrepor o placeholder.
 - Novos ícones adicionados: `Eye`, `EyeOff`, `LogOut`, `Target`, `Sun`, `Moon`, `BellRing` (mantidos `Check` e `Sparkles` existentes).
+- Contagem regressiva do foco atualizada a cada segundo.
+- Widget flutuante arrastável com botões sincronizados com o card do dashboard.
+- Exportação JSON e PDF funcionais.

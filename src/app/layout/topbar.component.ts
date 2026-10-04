@@ -10,12 +10,13 @@ import { AuthService } from '../core/auth/auth.service';
 import { TaskModalService } from '../core/task-modal.service';
 import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
 import { NotificationService } from '../core/notification.service';
+import { ExportDialogComponent } from '../shared/ui/export-dialog.component';
 import { toISODate } from '../core/date.utils';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule, SearchDropdownComponent],
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule, SearchDropdownComponent, ExportDialogComponent],
   templateUrl: './topbar.component.html',
 })
 export class TopbarComponent implements OnInit {
@@ -36,6 +37,7 @@ export class TopbarComponent implements OnInit {
   ];
 
   menuOpen = signal(false);
+  showExportDialog = signal(false);
   readonly unreadNotifications = this.notifications.unreadCount;
 
   constructor() {}
@@ -47,6 +49,7 @@ export class TopbarComponent implements OnInit {
         if (event.key === 'Escape') {
           (target as HTMLInputElement).blur();
           this.menuOpen.set(false);
+          this.showExportDialog.set(false);
         }
         return;
       }
@@ -112,7 +115,11 @@ export class TopbarComponent implements OnInit {
     await this.auth.logout();
   }
 
-  exportData(): void {
+  openNewTask(): void {
+    this.modal.show();
+  }
+
+  exportJson(): void {
     const json = this.store.exportJson();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -124,7 +131,8 @@ export class TopbarComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  openNewTask(): void {
-    this.modal.show();
+  exportPdf(): void {
+    // PDF export logic moved to ExportService
   }
 }
+

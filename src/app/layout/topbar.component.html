@@ -52,7 +52,7 @@
       </button>
     </div>
 
-    <button type="button" (click)="exportData()"
+    <button type="button" (click)="showExportDialog.set(true)"
       class="hidden h-9 items-center gap-2 rounded-xl border border-surface-line bg-surface-card px-4 text-[12px] font-semibold text-ink-500 transition hover:text-ink sm:flex">
       <lucide-icon name="download" class="h-4 w-4" />
       Exportar
@@ -92,3 +92,7 @@
     </div>
   </div>
 </header>
+
+@if (showExportDialog()) {
+  <app-export-dialog (close)="showExportDialog.set(false)" />
+}

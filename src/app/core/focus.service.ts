@@ -30,6 +30,7 @@ export class FocusService {
   }
 
   readonly tick = computed(() => {
+    this._tick();
     const s = this._session();
     if (!s) return 0;
     if (s.paused || this._paused()) return Math.max(0, Math.floor(s.durationMs / 1000));

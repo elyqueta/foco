@@ -1,11 +1,11 @@
 <div class="mt-8">
   <section class="grid min-w-0 grid-cols-12 items-stretch gap-5">
     <div class="col-span-12 min-w-0 xl:col-span-5">
-      <h1 class="text-[28px] leading-[36px] md:text-[36px] md:leading-[44px] font-extrabold tracking-tight text-ink dark:text-white">Olá, {{ userName }}! O que tens planeado para hoje?</h1>
+      <h1 class="text-[28px] leading-[36px] md:text-[36px] md:leading-[44px] font-extrabold tracking-tight text-ink">Olá, {{ userName }}! O que tens planeado para hoje?</h1>
       <p class="mt-3 max-w-[420px] text-[14px] leading-[22px] text-ink-500">Aqui está o que precisas de fazer hoje. Foca-te numa coisa de cada vez.</p>
     </div>
     <div class="col-span-12 grid min-w-0 grid-cols-2 gap-5 sm:grid-cols-4 xl:col-span-7">
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-white p-5 shadow-card dark:bg-[#1C1B3D]">
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
         <div class="h-11 w-11 rounded-2xl bg-brand-100 text-brand grid place-items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
@@ -15,7 +15,7 @@
           <div class="text-[11px] text-ink-400">Tarefas para hoje</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-white p-5 shadow-card dark:bg-[#1C1B3D]">
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
         <div class="h-11 w-11 rounded-2xl bg-brand-100 text-brand grid place-items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
         </div>
@@ -25,7 +25,7 @@
           <div class="text-[11px] text-ink-400">Por fazer ou em curso</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-white p-5 shadow-card dark:bg-[#1C1B3D]">
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
         <div class="h-11 w-11 rounded-2xl bg-danger-soft text-danger grid place-items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
         </div>
@@ -35,7 +35,7 @@
           <div class="text-[11px] text-ink-400">Críticas e altas</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-white p-5 shadow-card dark:bg-[#1C1B3D]">
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
         <div class="h-11 w-11 rounded-2xl bg-success-soft text-success grid place-items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         </div>
@@ -67,7 +67,7 @@
       <app-card title="Urgentes" [actionLabel]="null" class="flex h-full flex-col">
         <div class="flex flex-col gap-3">
           @for (task of urgentTasks(); track task.id) {
-            <div class="rounded-2xl border border-surface-line p-4 hover:shadow-card transition cursor-pointer" (click)="goTask(task.id)">
+            <div class="rounded-2xl border border-surface-line bg-surface-card p-4 hover:shadow-card transition cursor-pointer" (click)="goTask(task.id)">
               <div class="flex items-center gap-2 mb-2 min-w-0">
                 <app-badge-category [category]="task.category" />
                 <span class="text-[10px] text-ink-400 truncate">{{ task.tags.join(', ') }}</span>
@@ -81,7 +81,7 @@
           } @empty {
             <p class="text-[12px] text-ink-500">Nenhuma tarefa urgente.</p>
           }
-          <button (click)="openModal()" class="rounded-2xl border-2 border-dashed border-brand/30 bg-brand-50 py-4 text-[13px] font-semibold text-brand flex items-center justify-center gap-2 hover:bg-brand-100 transition">
+          <button (click)="openModal()" class="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-brand/30 bg-brand-50 py-4 text-[13px] font-semibold text-brand-fg transition hover:border-brand/60">
             <span class="h-6 w-6 rounded-md bg-brand text-white grid place-items-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
             </span>
@@ -94,13 +94,13 @@
     <div class="col-span-12 min-w-0 md:col-span-6 lg:col-span-3">
       <app-card title="Calendário" class="flex h-full flex-col">
         <div class="flex items-center justify-between mb-3">
-          <button type="button" (click)="prevWeek()" class="h-6 w-6 rounded-full bg-surface-app grid place-items-center text-ink hover:bg-brand-100 transition">&lsaquo;</button>
+          <button type="button" (click)="prevWeek()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&lsaquo;</button>
           <span class="text-[13px] font-semibold text-ink">{{ monthLabel() }}</span>
-          <button type="button" (click)="nextWeek()" class="h-6 w-6 rounded-full bg-surface-app grid place-items-center text-ink hover:bg-brand-100 transition">&rsaquo;</button>
+          <button type="button" (click)="nextWeek()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&rsaquo;</button>
         </div>
         <div class="grid grid-cols-7 gap-y-2 text-center mb-2">
           @for (d of weekDays(); track d) {
-            <div class="text-[10px] text-ink-400">{{ d }}</div>
+            <div class="text-[10px] font-bold text-ink-400">{{ d }}</div>
           }
         </div>
         <div class="grid grid-cols-7 text-center gap-y-1">
@@ -151,10 +151,12 @@
           <p class="text-[12px] text-white/80">Faz só UMA coisa agora</p>
         </div>
         @if (focusTask()) {
-          <p class="text-[13px] font-semibold text-white/90">{{ focusTask()!.title }}</p>
-          <button type="button" (click)="startFocus(focusTask()!.id)" class="h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white hover:bg-ink-700 transition">Começar</button>
+          <p class="text-[16px] font-bold">{{ focusTask()!.title }}</p>
+          <button type="button" (click)="startFocus(focusTask()!.id)" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Começar</button>
         } @else {
-          <p class="text-[12px] text-white/60">Sem tarefas urgentes agora.</p>
+          <lucide-icon name="sparkles" class="h-8 w-8" />
+          <p class="text-[12px] text-white/80">Nada urgente. Respira fundo.</p>
+          <a routerLink="/tarefas" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90 inline-block">Ver pendentes</a>
         }
       </div>
     </div>
@@ -163,7 +165,7 @@
       <app-card title="Progresso por categoria" class="flex h-full flex-col">
         <div class="grid grid-cols-3 gap-3">
           @for (cat of categories(); track cat.key) {
-            <div class="rounded-2xl border border-surface-line p-3 flex flex-col items-center">
+            <div class="rounded-2xl border border-surface-line bg-surface-card p-3 flex flex-col items-center">
               <app-progress-ring [percent]="cat.value.percent" />
               <span class="text-[11px] font-bold text-ink mt-1">{{ cat.label }}</span>
               <span class="text-[10px] text-ink-400">{{ cat.value.done }} de {{ cat.value.total }}</span>

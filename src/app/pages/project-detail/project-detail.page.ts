@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
@@ -12,13 +13,14 @@ import { ModalComponent } from '../../shared/ui/modal.component';
 import { TaskFormComponent } from '../../shared/ui/task-form.component';
 import { ProjectFormComponent } from '../../shared/ui/project-form.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
+import { LucideAngularModule } from 'lucide-angular';
 import { formatDate } from '../../core/date.utils';
-import { Task, Project } from '../../core/models';
+import { Task, Project, ActivityEntry } from '../../core/models';
 
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, ProjectFormComponent, TaskRowComponent],
+  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, ProjectFormComponent, TaskRowComponent, LucideAngularModule],
   templateUrl: './project-detail.page.html',
 })
 export class ProjectDetailPage {
@@ -55,8 +57,16 @@ export class ProjectDetailPage {
     return map[status] ?? status;
   }
 
+  statusClass(status: string): string {
+    const map: Record<string, string> = {
+      active: 'rounded-full bg-brand-100 px-2.5 py-1 text-[10px] font-bold text-brand-fg',
+      paused: 'rounded-full bg-warn-soft px-2.5 py-1 text-[10px] font-bold text-warn',
+      done: 'rounded-full bg-success-soft px-2.5 py-1 text-[10px] font-bold text-success',
+    };
+    return map[status] ?? 'rounded-full bg-surface-line px-2.5 py-1 text-[10px] font-bold text-ink-500';
+  }
+
   formatDate = formatDate;
-  formatDateTime = formatDate;
 
   openTaskModal(): void {
     this.showTaskModal.set(true);
@@ -69,8 +79,9 @@ export class ProjectDetailPage {
   onTaskSubmit(patch: Partial<Task>): void {
     const p = this.project()?.id;
     if (!p) return;
+    if (!patch.title || patch.title.trim().length < 2) return;
     this.store.addTask({
-      title: patch.title ?? '',
+      title: patch.title.trim(),
       description: patch.description ?? '',
       category: patch.category ?? 'professional',
       urgency: patch.urgency ?? 'medium',
@@ -124,5 +135,26 @@ export class ProjectDetailPage {
     if (!p) return;
     this.store.updateProject(p, patch);
     this.closeEditProject();
+  }
+
+  sortedActivity(): ActivityEntry[] {
+    const activity = this.project()?.activity ?? [];
+    return [...activity].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  }
+
+  labelOf(type: ActivityEntry['type']): string {
+    const map: Record<ActivityEntry['type'], string> = {
+      created: 'Criado',
+      status_changed: 'Estado alterado',
+      note: 'Nota',
+      postponed: 'Adiado',
+      edited: 'Editado',
+      next_step_changed: 'Próximo passo atualizado',
+    };
+    return map[type] ?? type;
+  }
+
+  format(iso: string): string {
+    return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
   }
 }

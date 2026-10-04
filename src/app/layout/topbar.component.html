@@ -6,7 +6,7 @@
         [routerLink]="tab.path"
         routerLinkActive="!text-ink font-semibold"
         [routerLinkActiveOptions]="{ exact: tab.exact }"
-        class="flex items-center gap-2 text-[13px] font-medium text-ink-500 transition hover:text-ink dark:text-white/60 dark:hover:text-white"
+        class="flex items-center gap-2 text-[13px] font-medium text-ink-500 transition hover:text-ink"
       >
         <lucide-icon [name]="tab.icon" class="h-4 w-4" [strokeWidth]="1.75" />
         {{ tab.label }}
@@ -22,31 +22,31 @@
       type="text"
       placeholder="Pesquisar tarefa ou projeto"
       aria-label="Pesquisar"
-      class="h-10 w-full rounded-xl border border-surface-line bg-white pl-10 pr-4 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-white/10 dark:bg-[#1C1B3D] dark:text-white"
+      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-10 pr-4 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
     />
   </div>
 
   <!-- Ações -->
   <div class="flex items-center gap-3">
-    <div class="flex h-9 items-center rounded-xl bg-white p-1 dark:bg-[#1C1B3D]">
+    <div class="flex h-9 items-center rounded-xl bg-surface-card p-1">
       <button type="button" (click)="setTheme('light')"
-        [class]="theme() === 'light' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500 dark:text-white/60'">
+        [class]="theme() === 'light' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500'">
         Claro
       </button>
       <button type="button" (click)="setTheme('dark')"
-        [class]="theme() === 'dark' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500 dark:text-white/60'">
+        [class]="theme() === 'dark' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500'">
         Escuro
       </button>
     </div>
 
     <button type="button" (click)="exportData()"
-      class="hidden h-9 items-center gap-2 rounded-xl border border-surface-line bg-white px-4 text-[12px] font-semibold text-ink-500 transition hover:text-ink sm:flex dark:border-white/10 dark:bg-[#1C1B3D] dark:text-white/70">
+      class="hidden h-9 items-center gap-2 rounded-xl border border-surface-line bg-surface-card px-4 text-[12px] font-semibold text-ink-500 transition hover:text-ink sm:flex">
       <lucide-icon name="download" class="h-4 w-4" />
       Exportar
     </button>
 
     <button type="button" (click)="openNewTask()"
-      class="h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white shadow-card transition hover:bg-ink-700 focus-visible:ring-2 focus-visible:ring-brand/40">
+      class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand/40">
       Nova tarefa
     </button>
   </div>

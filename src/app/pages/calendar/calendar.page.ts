@@ -1,15 +1,91 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { DataStore } from '../../core/data.store';
+import { TaskRowComponent } from '../../shared/ui/task-row.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
+import { formatDate, toISODate, parseISODate, weekDaysMondayFirst } from '../../core/date.utils';
+import { Task } from '../../core/models';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-calendar-page',
   standalone: true,
-  imports: [CommonModule, EmptyStateComponent],
-  template: `
-    <div class="flex items-center justify-center py-20">
-      <app-empty-state title="Em breve" message="O calendário estará disponível em breve." />
-    </div>
-  `,
+  imports: [CommonModule, TaskRowComponent, LucideAngularModule, RouterLink],
+  templateUrl: './calendar.page.html',
 })
-export class CalendarPage {}
+export class CalendarPage {
+  private store = inject(DataStore);
+  private router = inject(Router);
+  currentMonth = signal(new Date());
+  selectedDate = signal(toISODate(new Date()));
+
+  tasks(): Task[] {
+    const d = parseISODate(this.selectedDate());
+    const iso = toISODate(d);
+    return this.store.data().tasks.filter((t) => t.dueDate === iso && t.status !== 'done');
+  }
+
+  monthLabel(): string {
+    const d = parseISODate(this.selectedDate());
+    return new Intl.DateTimeFormat('pt-PT', { month: 'long', year: 'numeric' }).format(d);
+  }
+
+  prevMonth(): void {
+    const d = parseISODate(this.selectedDate());
+    d.setMonth(d.getMonth() - 1);
+    this.selectedDate.set(toISODate(d));
+    this.currentMonth.set(new Date(d.getFullYear(), d.getMonth(), 1));
+  }
+
+  nextMonth(): void {
+    const d = parseISODate(this.selectedDate());
+    d.setMonth(d.getMonth() + 1);
+    this.selectedDate.set(toISODate(d));
+    this.currentMonth.set(new Date(d.getFullYear(), d.getMonth(), 1));
+  }
+
+  goToday(): void {
+    const today = new Date();
+    this.selectedDate.set(toISODate(today));
+    this.currentMonth.set(new Date(today.getFullYear(), today.getMonth(), 1));
+  }
+
+  calendarDays(): { date: Date; inMonth: boolean; tasks: Task[] }[] {
+    const year = this.currentMonth().getFullYear();
+    const month = this.currentMonth().getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startDay = weekDaysMondayFirst(firstDay)[0];
+    const days: { date: Date; inMonth: boolean; tasks: Task[] }[] = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(startDay);
+      d.setDate(startDay.getDate() + i);
+      const iso = toISODate(d);
+      const tasks = this.store.data().tasks.filter((t) => t.dueDate === iso && t.status !== 'done');
+      days.push({ date: d, inMonth: d.getMonth() === month, tasks });
+    }
+    return days;
+  }
+
+  weekLabels(): string[] {
+    return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  }
+
+  selectDate(iso: string): void {
+    this.selectedDate.set(iso);
+  }
+
+  formatDate = formatDate;
+  toISODate = toISODate;
+
+  goTask(id: string): void {
+    this.router.navigate(['/tarefas', id]);
+  }
+
+  toggleTask(id: string): void {
+    const task = this.store.data().tasks.find((t) => t.id === id);
+    if (!task) return;
+    this.store.setTaskStatus(id, task.status === 'done' ? 'todo' : 'done');
+  }
+}

@@ -1,15 +1,14 @@
-<div class="flex items-center gap-4 rounded-2xl px-3 py-3 hover:bg-surface-app transition cursor-pointer" (click)="click.emit(task().id)">
-      <button (click)="toggle.emit(task().id); $event.stopPropagation()" class="h-5 w-5 rounded-full border-2 flex items-center justify-center transition" [class.bg-brand]="task().status === 'done'" [class.border-brand]="task().status === 'done'" [class.border-ink-300]="task().status !== 'done'">
-        @if (task().status === 'done') {
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        }
-      </button>
-      <div class="flex-1 min-w-0">
-        <p class="text-[14px] font-semibold truncate" [class.line-through]="task().status === 'done'" [class.text-ink-400]="task().status === 'done'">{{ task().title }}</p>
-        <p class="text-[11px] text-ink-400 truncate">{{ projectName() }} &middot; {{ dueLabel() }}</p>
-      </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <app-badge-urgency [urgency]="task().urgency" [canPostpone]="task().canPostpone" />
-        <app-badge-category [category]="task().category" />
-      </div>
-    </div>
+<a [routerLink]="['/tarefas', task().id]" class="flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3 transition hover:shadow-card">
+  <input type="checkbox" class="h-4 w-4 rounded accent-brand" [checked]="task().status === 'done'" (click)="$event.stopPropagation(); toggle.emit(task().id)" />
+  <div class="min-w-0 flex-1">
+    <p class="truncate text-[14px] font-semibold text-ink" [class.line-through]="task().status === 'done'" [class.text-ink-400]="task().status === 'done'">{{ task().title }}</p>
+    @if (taskMeta().length > 0) {
+      <p class="text-[11px] text-ink-400">{{ taskMeta().join(' · ') }}</p>
+    }
+  </div>
+  <div class="flex items-center gap-2 shrink-0">
+    <app-badge-urgency [urgency]="task().urgency" [canPostpone]="task().canPostpone" />
+    <app-badge-category [category]="task().category" />
+  </div>
+  <lucide-icon name="chevron-right" class="h-4 w-4 text-ink-300" />
+</a>

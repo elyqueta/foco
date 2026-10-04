@@ -17,4 +17,5 @@ export class TaskFormComponent {
   @Output() cancel = new EventEmitter<void>();
 
   form = signal<Partial<Task>>({});
+  touched = signal(false);
 }

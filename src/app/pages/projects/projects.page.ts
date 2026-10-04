@@ -52,8 +52,10 @@ export class ProjectsPage {
   }
 
   onSubmit(patch: Partial<Project>): void {
+    const name = patch.name?.trim();
+    if (!name || name.length < 2) return;
     this.store.addProject({
-      name: patch.name ?? '',
+      name,
       description: patch.description ?? '',
       category: patch.category ?? 'professional',
       urgency: patch.urgency ?? 'medium',
@@ -78,6 +80,10 @@ export class ProjectsPage {
 
   totalCount(projectId: string): number {
     return this.store.data().tasks.filter((t) => t.projectId === projectId).length;
+  }
+
+  plural(n: number, singular: string, plural: string): string {
+    return n === 1 ? singular : plural;
   }
 
   formatDate = formatDate;

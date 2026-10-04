@@ -15,4 +15,5 @@ export class ProjectFormComponent {
   @Output() cancel = new EventEmitter<void>();
 
   form = signal<Partial<Project>>({});
+  touched = signal(false);
 }

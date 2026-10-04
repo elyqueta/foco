@@ -1,0 +1,42 @@
+<div class="mt-8 max-w-4xl">
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <button type="button" (click)="prevMonth()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&lsaquo;</button>
+      <span class="text-[18px] font-bold text-ink">{{ monthLabel() }}</span>
+      <button type="button" (click)="nextMonth()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&rsaquo;</button>
+    </div>
+    <button type="button" (click)="goToday()" class="h-9 rounded-xl bg-brand-100 px-4 text-[12px] font-semibold text-brand-fg transition hover:bg-brand-50">Hoje</button>
+  </div>
+  <div class="grid grid-cols-7 gap-2">
+    @for (label of weekLabels(); track label) {
+      <div class="text-[11px] font-bold uppercase text-ink-400 text-center pb-2">{{ label }}</div>
+    }
+  </div>
+  <div class="grid grid-cols-7 gap-2">
+    @for (day of calendarDays(); track day.date.toISOString()) {
+      <button type="button" (click)="selectDate(toISODate(day.date))" class="min-h-[96px] rounded-xl border p-2 text-left transition" [class.border-surface-line]="day.inMonth" [class.opacity-40]="!day.inMonth" [class.bg-surface-card]="day.inMonth" [class.border-brand/50]="toISODate(day.date) === selectedDate()" [class.bg-brand-50]="toISODate(day.date) === selectedDate()">
+        <span class="text-[12px] font-semibold text-ink">{{ day.date.getDate() }}</span>
+        <div class="mt-1 flex flex-col gap-1">
+          @for (t of day.tasks.slice(0, 2); track t.id) {
+            <a [routerLink]="['/tarefas', t.id]" class="block truncate rounded-md bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-fg">{{ t.title }}</a>
+          }
+          @if (day.tasks.length > 2) {
+            <span class="text-[10px] text-ink-400">+{{ day.tasks.length - 2 }}</span>
+          }
+        </div>
+      </button>
+    }
+  </div>
+  <div class="mt-6">
+    <h3 class="text-[16px] font-bold text-ink mb-3">Tarefas para {{ formatDate(selectedDate()) }}</h3>
+    @if (tasks().length === 0) {
+      <p class="text-[12px] text-ink-400">Sem tarefas neste dia.</p>
+    } @else {
+      <div class="flex flex-col gap-1">
+        @for (t of tasks(); track t.id) {
+          <app-task-row [task]="t" (click)="goTask(t.id)" (toggle)="toggleTask(t.id)" />
+        }
+      </div>
+    }
+  </div>
+</div>

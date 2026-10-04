@@ -1,16 +1,34 @@
-export function today(): string {
-  return new Date().toISOString().slice(0, 10);
+export function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function todayISO(): string {
+  return toISODate(new Date());
+}
+
+export function parseISODate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export function weekDaysMondayFirst(base: Date): Date[] {
+  const start = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
 }
 
 export function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = parseISODate(dateStr);
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return toISODate(d);
 }
 
 export function formatDate(dateStr: string | null): string {
   if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = parseISODate(dateStr);
   return new Intl.DateTimeFormat('pt-PT', {
     day: '2-digit',
     month: 'short',
@@ -31,7 +49,7 @@ export function formatDateTime(iso: string): string {
 
 export function isOverdue(dateStr: string | null): boolean {
   if (!dateStr) return false;
-  return dateStr < today();
+  return dateStr < todayISO();
 }
 
 export function urgencyOrder(u: string): number {

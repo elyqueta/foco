@@ -1,5 +1,5 @@
 import { AppData } from './models';
-import { today } from './date.utils';
+import { todayISO } from './date.utils';
 
 export function seedData(): AppData {
   const now = new Date().toISOString();
@@ -17,7 +17,7 @@ export function seedData(): AppData {
         urgency: 'high',
         status: 'active',
         canPostpone: true,
-        dueDate: today(),
+        dueDate: todayISO(),
         nextStep: 'Definir catálogo inicial de 10 produtos',
         color: '#3FBF9A',
         activity: [
@@ -39,7 +39,7 @@ export function seedData(): AppData {
         urgency: 'critical',
         status: 'active',
         canPostpone: false,
-        dueDate: today(),
+        dueDate: todayISO(),
         nextStep: 'Integrar API real no backend',
         color: '#6C5CE7',
         activity: [
@@ -64,7 +64,7 @@ export function seedData(): AppData {
         urgency: 'critical',
         status: 'todo',
         canPostpone: false,
-        dueDate: today(),
+        dueDate: todayISO(),
         nextStep: 'Trocar mock service por HttpClient',
         estimateMinutes: 90,
         tags: ['angular', 'api'],
@@ -89,7 +89,7 @@ export function seedData(): AppData {
         urgency: 'high',
         status: 'in_progress',
         canPostpone: true,
-        dueDate: today(),
+        dueDate: todayISO(),
         nextStep: 'Pesquisar fornecedores de acessórios',
         estimateMinutes: 60,
         tags: ['produto'],
@@ -114,7 +114,7 @@ export function seedData(): AppData {
         urgency: 'medium',
         status: 'todo',
         canPostpone: true,
-        dueDate: today(),
+        dueDate: todayISO(),
         nextStep: 'Fazer lista antes de sair',
         estimateMinutes: 30,
         tags: ['casa'],

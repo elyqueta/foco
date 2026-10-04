@@ -9,13 +9,14 @@ import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { ModalComponent } from '../../shared/ui/modal.component';
 import { TaskFormComponent } from '../../shared/ui/task-form.component';
+import { LucideAngularModule } from 'lucide-angular';
 import { Task, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent],
+  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, LucideAngularModule],
   templateUrl: './tasks.page.html',
 })
 export class TasksPage {
@@ -24,6 +25,7 @@ export class TasksPage {
   showModal = signal(false);
   catFilter = signal<string>('all');
   urgencyFilter = signal<string>('all');
+  showDone = signal(false);
 
   catFilters() {
     return [
@@ -50,6 +52,12 @@ export class TasksPage {
     const urg = this.urgencyFilter();
     if (cat !== 'all') tasks = tasks.filter((t) => t.category === cat);
     if (urg !== 'all') tasks = tasks.filter((t) => t.urgency === urg);
+    const done = this.showDone();
+    if (!done) {
+      const pending = tasks.filter((t) => t.status !== 'done');
+      const doneTasks = tasks.filter((t) => t.status === 'done');
+      tasks = [...pending, ...doneTasks];
+    }
     return tasks;
   }
 
@@ -63,7 +71,14 @@ export class TasksPage {
     }
     for (const t of tasks) {
       if (!map.has(t.category)) map.set(t.category, { key: t.category, label: t.category, tasks: [] });
-      map.get(t.category)!.tasks.push(t);
+      const group = map.get(t.category)!;
+      const urgencyPriority = { critical: 0, high: 1, medium: 2, low: 3 };
+      const insertIndex = group.tasks.findIndex((x) => (urgencyPriority[x.urgency] ?? 3) > (urgencyPriority[t.urgency] ?? 3));
+      if (insertIndex === -1) {
+        group.tasks.push(t);
+      } else {
+        group.tasks.splice(insertIndex, 0, t);
+      }
     }
     return Array.from(map.values()).filter((g) => g.tasks.length > 0);
   }
@@ -76,6 +91,10 @@ export class TasksPage {
     this.urgencyFilter.set(f);
   }
 
+  toggleShowDone(): void {
+    this.showDone.update((v) => !v);
+  }
+
   openModal(): void {
     this.showModal.set(true);
   }
@@ -85,8 +104,9 @@ export class TasksPage {
   }
 
   onSubmit(patch: Partial<Task>): void {
+    if (!patch.title || patch.title.trim().length < 2) return;
     this.store.addTask({
-      title: patch.title ?? '',
+      title: patch.title.trim(),
       description: patch.description ?? '',
       category: patch.category ?? 'professional',
       urgency: patch.urgency ?? 'medium',
@@ -103,6 +123,23 @@ export class TasksPage {
 
   goTask(id: string): void {
     this.router.navigate(['/tarefas', id]);
+  }
+
+  toggleTask(id: string): void {
+    const task = this.store.data().tasks.find((t) => t.id === id);
+    if (!task) return;
+    this.store.setTaskStatus(id, task.status === 'done' ? 'todo' : 'done');
+  }
+
+  taskMeta(t: Task): string[] {
+    const parts: string[] = [];
+    if (t.projectId) {
+      const p = this.store.data().projects.find((x) => x.id === t.projectId);
+      if (p) parts.push(p.name);
+    }
+    if (t.dueDate) parts.push(formatDate(t.dueDate));
+    if (t.estimateMinutes) parts.push(`${t.estimateMinutes} min`);
+    return parts;
   }
 
   formatDate = formatDate;

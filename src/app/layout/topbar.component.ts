@@ -1,7 +1,9 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { DataStore } from '../core/data.store';
+import { ThemeService } from '../core/theme.service';
+import { toISODate } from '../core/date.utils';
 
 @Component({
   selector: 'app-topbar',
@@ -11,22 +13,17 @@ import { DataStore } from '../core/data.store';
 })
 export class TopbarComponent implements OnInit {
   private store = inject(DataStore);
-  theme = signal<'light' | 'dark'>('light');
+  private themeService = inject(ThemeService);
+  theme = this.themeService.theme;
   searchInput: HTMLInputElement | null = null;
 
   tabs = [
     { path: '/', exact: true, label: 'Dashboard', icon: 'layout-grid' },
     { path: '/projetos', exact: false, label: 'Projetos', icon: 'folder-kanban' },
-    { path: '/tarefas', exact: false, label: 'Tarefas', icon: 'check-square' },
+    { path: '/tarefas', exact: false, label: 'Tarefas', icon: 'square-check' },
   ];
 
-  constructor() {
-    const saved = this.store.data().settings.theme;
-    this.theme.set(saved);
-    if (saved === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }
+  constructor() {}
 
   ngOnInit(): void {
     document.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -51,13 +48,7 @@ export class TopbarComponent implements OnInit {
   }
 
   setTheme(value: 'light' | 'dark'): void {
-    this.theme.set(value);
-    this.store.setTheme(value);
-    if (value === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
+    this.themeService.set(value);
   }
 
   exportData(): void {
@@ -65,7 +56,7 @@ export class TopbarComponent implements OnInit {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const date = new Date().toISOString().slice(0, 10);
+    const date = toISODate(new Date());
     a.href = url;
     a.download = `foco-backup-${date}.json`;
     a.click();

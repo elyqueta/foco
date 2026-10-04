@@ -2,7 +2,7 @@ import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { AppData, Project, Task, ActivityEntry, Category, Urgency, Status } from './models';
 import { DataRepository, emptyAppData } from './storage.repository';
 import { seedData } from './seed';
-import { today, urgencyOrder, addDays, formatDate, formatDateTime } from './date.utils';
+import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime } from './date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class DataStore {
@@ -27,7 +27,7 @@ export class DataStore {
   data = this._data.asReadonly();
 
   todayTasks = computed(() => {
-    const t = today();
+    const t = todayISO();
     return this._data().tasks.filter((tk) => {
       if (tk.status === 'done') return false;
       if (tk.urgency === 'critical') return true;
@@ -81,14 +81,17 @@ export class DataStore {
   });
 
   completedThisWeek = computed(() => {
-    const weekAgo = addDays(today(), -7);
+    const weekAgo = addDays(todayISO(), -7);
     return this._data().tasks.filter((t) => t.status === 'done' && t.completedAt && t.completedAt >= weekAgo).length;
   });
 
   addProject(input: Omit<Project, 'id' | 'activity' | 'createdAt' | 'updatedAt'>): void {
+    const name = input.name?.trim();
+    if (!name || name.length < 2) return;
     const now = new Date().toISOString();
     const project: Project = {
       ...input,
+      name,
       id: crypto.randomUUID(),
       activity: [{ id: crypto.randomUUID(), at: now, type: 'created', message: 'Projeto criado' }],
       createdAt: now,
@@ -120,9 +123,12 @@ export class DataStore {
   }
 
   addTask(input: Omit<Task, 'id' | 'activity' | 'createdAt' | 'updatedAt' | 'completedAt'>): void {
+    const title = input.title?.trim();
+    if (!title || title.length < 2) return;
     const now = new Date().toISOString();
     const task: Task = {
       ...input,
+      title,
       id: crypto.randomUUID(),
       activity: [{ id: crypto.randomUUID(), at: now, type: 'created', message: 'Tarefa criada' }],
       createdAt: now,

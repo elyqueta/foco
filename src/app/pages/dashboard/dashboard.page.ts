@@ -9,13 +9,14 @@ import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component
 import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
+import { LucideAngularModule } from 'lucide-angular';
 import { Task, ActivityEntry } from '../../core/models';
-import { formatDate, today } from '../../core/date.utils';
+import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISODate } from '../../core/date.utils';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent],
+  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, LucideAngularModule],
   templateUrl: './dashboard.page.html',
 })
 export class DashboardPage {
@@ -32,8 +33,8 @@ export class DashboardPage {
 
   userName = this.store.data().settings.userName;
 
-  selectedDate = signal(today());
-  weekStart = signal(today());
+  selectedDate = signal(todayISO());
+  weekStart = signal(todayISO());
 
   focusTask(): Task | undefined {
     return this.urgentTasks()[0];
@@ -88,33 +89,26 @@ export class DashboardPage {
   }
 
   weekDates() {
-    const start = new Date(this.weekStart() + 'T00:00:00');
-    const days: { num: number; full: string; inMonth: boolean }[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const full = d.toISOString().slice(0, 10);
-      const inMonth = d.getMonth() === start.getMonth();
-      days.push({ num: d.getDate(), full, inMonth });
-    }
-    return days;
+    const base = parseISODate(this.weekStart());
+    const days = weekDaysMondayFirst(base);
+    return days.map((d) => {
+      const full = toISODate(d);
+      const inMonth = d.getMonth() === base.getMonth();
+      return { num: d.getDate(), full, inMonth };
+    });
   }
 
   monthLabel(): string {
-    const d = new Date(this.weekStart() + 'T00:00:00');
+    const d = parseISODate(this.weekStart());
     return new Intl.DateTimeFormat('pt-PT', { month: 'long', year: 'numeric' }).format(d);
   }
 
   prevWeek(): void {
-    const next = new Date(this.weekStart() + 'T00:00:00');
-    next.setDate(next.getDate() - 7);
-    this.weekStart.set(next.toISOString().slice(0, 10));
+    this.weekStart.set(addDays(this.weekStart(), -7));
   }
 
   nextWeek(): void {
-    const next = new Date(this.weekStart() + 'T00:00:00');
-    next.setDate(next.getDate() + 7);
-    this.weekStart.set(next.toISOString().slice(0, 10));
+    this.weekStart.set(addDays(this.weekStart(), 7));
   }
 
   selectDate(date: string): void {

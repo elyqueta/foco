@@ -16,6 +16,7 @@ export class ImportPage {
   jsonText = signal('');
   errors = signal<string[]>([]);
   success = signal(false);
+  copied = signal(false);
 
   exportJson(): void {
     const json = this.store.exportJson();
@@ -31,7 +32,8 @@ export class ImportPage {
   copyPrompt(): void {
     const text = 'Converte a lista de tarefas abaixo em JSON no formato do Foco (projects[] e tasks[]). category ∈ professional|personal|household. urgency ∈ critical|high|medium|low. dueDate em YYYY-MM-DD. Responde SÓ com JSON válido.';
     navigator.clipboard.writeText(text);
-    alert('Prompt copiado para a área de transferência.');
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 2000);
   }
 
   importJson(): void {

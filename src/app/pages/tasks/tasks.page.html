@@ -1,16 +1,27 @@
 <div class="mt-8">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-[28px] font-extrabold text-ink">Tarefas</h1>
-        <button (click)="openModal()" class="h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white hover:bg-ink-700 shadow-card transition">Nova tarefa</button>
+        <button (click)="openModal()" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Nova tarefa</button>
       </div>
 
-      <div class="flex items-center gap-3 mb-6">
-        @for (f of catFilters(); track f.value) {
-          <button (click)="setCatFilter(f.value)" class="rounded-full px-4 h-9 text-[12px] font-semibold transition" [class.bg-brand]="catFilter() === f.value" [class.text-white]="catFilter() === f.value" [class.bg-white]="catFilter() !== f.value" [class.text-ink-500]="catFilter() !== f.value" [class.border]="catFilter() !== f.value" [class.border-surface-line]="catFilter() !== f.value">{{ f.label }}</button>
-        }
-        @for (f of urgencyFilters(); track f.value) {
-          <button (click)="setUrgencyFilter(f.value)" class="rounded-full px-4 h-9 text-[12px] font-semibold transition" [class.bg-brand]="urgencyFilter() === f.value" [class.text-white]="urgencyFilter() === f.value" [class.bg-white]="urgencyFilter() !== f.value" [class.text-ink-500]="urgencyFilter() !== f.value" [class.border]="urgencyFilter() !== f.value" [class.border-surface-line]="urgencyFilter() !== f.value">{{ f.label }}</button>
-        }
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-3 mb-6">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[11px] font-bold uppercase tracking-wide text-ink-400">Categoria</span>
+          @for (f of catFilters(); track f.value) {
+            <button (click)="setCatFilter(f.value)" class="h-9 rounded-full px-4 text-[12px] font-semibold transition" [class.bg-brand]="catFilter() === f.value" [class.text-white]="catFilter() === f.value" [class.border]="catFilter() !== f.value" [class.border-surface-line]="catFilter() !== f.value" [class.text-ink-500]="catFilter() !== f.value">{{ f.label }}</button>
+          }
+        </div>
+        <div class="hidden h-6 w-px bg-surface-line md:block"></div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[11px] font-bold uppercase tracking-wide text-ink-400">Urgência</span>
+          @for (f of urgencyFilters(); track f.value) {
+            <button (click)="setUrgencyFilter(f.value)" class="h-9 rounded-full px-4 text-[12px] font-semibold transition" [class.bg-brand]="urgencyFilter() === f.value" [class.text-white]="urgencyFilter() === f.value" [class.border]="urgencyFilter() !== f.value" [class.border-surface-line]="urgencyFilter() !== f.value" [class.text-ink-500]="urgencyFilter() !== f.value">{{ f.label }}</button>
+          }
+        </div>
+        <label class="ml-auto flex cursor-pointer items-center gap-2 text-[12px] font-semibold text-ink-500">
+          <input type="checkbox" class="h-4 w-4 accent-brand" [checked]="showDone()" (change)="toggleShowDone()" />
+          Mostrar concluídas
+        </label>
       </div>
 
       @if (filtered().length === 0) {
@@ -19,19 +30,23 @@
         <div class="flex flex-col gap-2">
           @for (group of grouped(); track group.key) {
             <div class="mb-4">
-              <h3 class="text-[14px] font-bold text-ink mb-2">{{ group.label }}</h3>
+              <h3 class="mb-2 text-[13px] font-bold text-ink">{{ group.label }} <span class="text-ink-400">· {{ group.tasks.length }}</span></h3>
               <div class="flex flex-col gap-1">
                 @for (t of group.tasks; track t.id) {
-                  <div class="rounded-2xl border border-surface-line p-4 hover:shadow-card transition cursor-pointer flex items-center justify-between" (click)="goTask(t.id)">
-                    <div>
-                      <p class="text-[14px] font-semibold text-ink" [class.line-through]="t.status === 'done'" [class.text-ink-400]="t.status === 'done'">{{ t.title }}</p>
-                      <p class="text-[11px] text-ink-400">{{ formatDate(t.dueDate) }} &middot; {{ t.estimateMinutes ?? 0 }} min</p>
+                  <a [routerLink]="['/tarefas', t.id]" class="flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3 transition hover:shadow-card">
+                    <input type="checkbox" class="h-4 w-4 rounded accent-brand" [checked]="t.status === 'done'" (click)="$event.stopPropagation(); toggleTask(t.id)" />
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-[14px] font-semibold text-ink" [class.line-through]="t.status === 'done'" [class.text-ink-400]="t.status === 'done'">{{ t.title }}</p>
+                      @if (taskMeta(t).length > 0) {
+                        <p class="text-[11px] text-ink-400">{{ taskMeta(t).join(' · ') }}</p>
+                      }
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 shrink-0">
                       <app-badge-urgency [urgency]="t.urgency" [canPostpone]="t.canPostpone" />
                       <app-badge-category [category]="t.category" />
                     </div>
-                  </div>
+                    <lucide-icon name="chevron-right" class="h-4 w-4 text-ink-300" />
+                  </a>
                 }
               </div>
             </div>

@@ -14,4 +14,14 @@ export class BadgeUrgencyComponent {
     const map: Record<Urgency, string> = { critical: 'Crítica', high: 'Alta', medium: 'Média', low: 'Baixa' };
     return map[this.urgency()];
   }
+
+  urgencyClass(): string {
+    const map: Record<Urgency, string> = {
+      critical: 'bg-danger-soft text-danger',
+      high: 'bg-warn-soft text-warn',
+      medium: 'bg-brand-100 text-brand-fg',
+      low: 'bg-success-soft text-success',
+    };
+    return map[this.urgency()];
+  }
 }

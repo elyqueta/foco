@@ -13,4 +13,13 @@ export class BadgeCategoryComponent {
     const map: Record<Category, string> = { professional: 'Profissional', personal: 'Pessoal', household: 'Doméstica' };
     return map[this.category()];
   }
+
+  categoryClass(): string {
+    const map: Record<Category, string> = {
+      professional: 'bg-brand text-white',
+      personal: 'bg-teal-tag text-white',
+      household: 'bg-warn text-white',
+    };
+    return map[this.category()];
+  }
 }

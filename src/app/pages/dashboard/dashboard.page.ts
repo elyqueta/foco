@@ -7,20 +7,17 @@ import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component
 import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
-import { ModalComponent } from '../../shared/ui/modal.component';
-import { TaskFormComponent } from '../../shared/ui/task-form.component';
 import { Task, ActivityEntry } from '../../core/models';
 import { formatDate, today } from '../../core/date.utils';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, ModalComponent, TaskFormComponent],
+  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent],
   templateUrl: './dashboard.page.html',
 })
 export class DashboardPage {
   private store = inject(DataStore);
-  showModal = signal(false);
 
   todayTasks = this.store.todayTasks;
   pendingTasks = this.store.pendingTasks;
@@ -75,28 +72,10 @@ export class DashboardPage {
   }
 
   openModal(): void {
-    this.showModal.set(true);
-  }
-
-  closeModal(): void {
-    this.showModal.set(false);
-  }
-
-  onTaskSubmit(patch: Partial<Task>): void {
-    this.store.addTask({
-      title: patch.title ?? '',
-      description: patch.description ?? '',
-      category: patch.category ?? 'professional',
-      urgency: patch.urgency ?? 'medium',
-      status: patch.status ?? 'todo',
-      canPostpone: patch.canPostpone ?? true,
-      dueDate: patch.dueDate ?? null,
-      nextStep: patch.nextStep ?? '',
-      estimateMinutes: patch.estimateMinutes ?? null,
-      tags: patch.tags ?? [],
-      projectId: null,
-    });
-    this.closeModal();
+    const modal = document.querySelector('app-modal') as HTMLElement | null;
+    if (modal) {
+      modal.dispatchEvent(new Event('open'));
+    }
   }
 
   startFocus(id: string): void {

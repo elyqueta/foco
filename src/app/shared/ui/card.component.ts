@@ -4,6 +4,9 @@ import { Component, input, output } from '@angular/core';
   selector: 'app-card',
   standalone: true,
   templateUrl: './card.component.html',
+  host: {
+    class: 'block min-w-0',
+  },
 })
 export class CardComponent {
   title = input.required<string>();

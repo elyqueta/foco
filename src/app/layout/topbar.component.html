@@ -1,25 +1,53 @@
-<header class="flex items-center justify-between gap-4 mb-6">
-      <div class="flex items-center gap-6">
-        <a routerLink="/" routerLinkActive="text-ink font-semibold" class="text-[13px] font-medium text-ink-500 hover:text-ink transition">Dashboard</a>
-        <a routerLink="/projetos" routerLinkActive="text-ink font-semibold" class="text-[13px] font-medium text-ink-500 hover:text-ink transition">Projetos</a>
-        <a routerLink="/tarefas" routerLinkActive="text-ink font-semibold" class="text-[13px] font-medium text-ink-500 hover:text-ink transition">Tarefas</a>
-      </div>
+<header class="flex flex-wrap items-center justify-between gap-4">
+  <!-- Tabs -->
+  <div class="hidden items-center gap-6 md:flex">
+    @for (tab of tabs; track tab.path) {
+      <a
+        [routerLink]="tab.path"
+        routerLinkActive="!text-ink font-semibold"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="flex items-center gap-2 text-[13px] font-medium text-ink-500 transition hover:text-ink dark:text-white/60 dark:hover:text-white"
+      >
+        <lucide-icon [name]="tab.icon" class="h-4 w-4" [strokeWidth]="1.75" />
+        {{ tab.label }}
+      </a>
+    }
+  </div>
 
-      <div class="flex-1 max-w-[260px] mx-4">
-        <input
-          type="text"
-          placeholder="Pesquisar tarefa ou projeto"
-          class="h-10 w-full rounded-xl border border-surface-line bg-white px-4 text-[13px] placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
-          (input)="onSearch($event)"
-        />
-      </div>
+  <!-- Pesquisa -->
+  <div class="relative order-last w-full md:order-none md:w-[260px]">
+    <lucide-icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+    <input
+      id="search"
+      type="text"
+      placeholder="Pesquisar tarefa ou projeto"
+      aria-label="Pesquisar"
+      class="h-10 w-full rounded-xl border border-surface-line bg-white pl-10 pr-4 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-white/10 dark:bg-[#1C1B3D] dark:text-white"
+    />
+  </div>
 
-      <div class="flex items-center gap-3">
-        <div class="h-9 rounded-xl bg-white p-1 flex">
-          <button (click)="setTheme('light')" class="rounded-lg px-3 text-[12px] font-semibold transition" [class.bg-brand-100]="!isDark()" [class.text-brand]="!isDark()" [class.text-ink-500]="isDark()">Claro</button>
-          <button (click)="setTheme('dark')" class="rounded-lg px-3 text-[12px] font-semibold transition" [class.bg-brand-100]="isDark()" [class.text-brand]="isDark()" [class.text-ink-500]="!isDark()">Escuro</button>
-        </div>
-        <button class="h-9 rounded-xl border border-surface-line bg-white px-4 text-[12px] font-semibold text-ink-500 hover:text-ink transition">Exportar dados</button>
-         <button (click)="openModal()" class="h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white hover:bg-ink-700 shadow-card transition">Nova tarefa</button>
-      </div>
-    </header>
+  <!-- Ações -->
+  <div class="flex items-center gap-3">
+    <div class="flex h-9 items-center rounded-xl bg-white p-1 dark:bg-[#1C1B3D]">
+      <button type="button" (click)="setTheme('light')"
+        [class]="theme() === 'light' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500 dark:text-white/60'">
+        Claro
+      </button>
+      <button type="button" (click)="setTheme('dark')"
+        [class]="theme() === 'dark' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500 dark:text-white/60'">
+        Escuro
+      </button>
+    </div>
+
+    <button type="button" (click)="exportData()"
+      class="hidden h-9 items-center gap-2 rounded-xl border border-surface-line bg-white px-4 text-[12px] font-semibold text-ink-500 transition hover:text-ink sm:flex dark:border-white/10 dark:bg-[#1C1B3D] dark:text-white/70">
+      <lucide-icon name="download" class="h-4 w-4" />
+      Exportar
+    </button>
+
+    <button type="button" (click)="openNewTask()"
+      class="h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white shadow-card transition hover:bg-ink-700 focus-visible:ring-2 focus-visible:ring-brand/40">
+      Nova tarefa
+    </button>
+  </div>
+</header>

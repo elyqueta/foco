@@ -5,6 +5,8 @@ import { ProjectDetailPage } from './pages/project-detail/project-detail.page';
 import { TasksPage } from './pages/tasks/tasks.page';
 import { TaskDetailPage } from './pages/task-detail/task-detail.page';
 import { ImportPage } from './pages/import/import.page';
+import { CalendarPage } from './pages/calendar/calendar.page';
+import { SettingsPage } from './pages/settings/settings.page';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.page').then(m => m.DashboardPage) },
@@ -13,4 +15,6 @@ export const routes: Routes = [
   { path: 'tarefas', loadComponent: () => import('./pages/tasks/tasks.page').then(m => m.TasksPage) },
   { path: 'tarefas/:id', loadComponent: () => import('./pages/task-detail/task-detail.page').then(m => m.TaskDetailPage) },
   { path: 'importar', loadComponent: () => import('./pages/import/import.page').then(m => m.ImportPage) },
+  { path: 'calendario', loadComponent: () => import('./pages/calendar/calendar.page').then(m => m.CalendarPage) },
+  { path: 'definicoes', loadComponent: () => import('./pages/settings/settings.page').then(m => m.SettingsPage) },
 ];

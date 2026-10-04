@@ -51,3 +51,17 @@ export interface AppData {
   settings: { theme: 'light' | 'dark'; userName: string };
   categories: string[];
 }
+
+export type NotificationType = 'focus' | 'success' | 'warning' | 'info' | 'error';
+
+export interface Notification {
+  title: string;
+  message: string;
+  type: NotificationType;
+}
+
+export interface AppNotification extends Notification {
+  id: string;
+  read: boolean;
+  createdAt: string;
+}

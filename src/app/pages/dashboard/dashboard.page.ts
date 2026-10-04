@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
@@ -11,6 +11,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { FocusService } from '../../core/focus.service';
 import { Task, ActivityEntry } from '../../core/models';
 import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISODate, toDatePart } from '../../core/date.utils';
 
@@ -25,6 +26,7 @@ export class DashboardPage {
   private modal = inject(TaskModalService);
   private router = inject(Router);
   private auth = inject(AuthService);
+  private focus = inject(FocusService);
 
   todayTasks = this.store.todayTasks;
   pendingTasks = this.store.pendingTasks;
@@ -40,6 +42,19 @@ export class DashboardPage {
 
   focusTask(): Task | undefined {
     return this.urgentTasks()[0];
+  }
+
+  focusSessionTask(): Task | undefined {
+    const session = this.focus.session();
+    if (!session) return undefined;
+    return this.store.data().tasks.find((t) => t.id === session.taskId) ?? undefined;
+  }
+
+  focusTick = this.focus.tick;
+  focusActive = this.focus.active;
+
+  constructor() {
+    this.focus.tick;
   }
 
   categories() {
@@ -83,7 +98,14 @@ export class DashboardPage {
   }
 
   startFocus(id: string): void {
+    const task = this.store.data().tasks.find((t) => t.id === id);
+    if (!task) return;
     this.store.setTaskStatus(id, 'in_progress');
+    this.focus.start(task);
+  }
+
+  stopFocus(): void {
+    this.focus.stop();
   }
 
   weekDays(): string[] {
@@ -122,4 +144,10 @@ export class DashboardPage {
   }
 
   formatDate = formatDate;
+
+  formatTick(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
 }

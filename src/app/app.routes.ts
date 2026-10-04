@@ -11,6 +11,7 @@ import { CalendarPage } from './pages/calendar/calendar.page';
 import { CalendarDayPage } from './pages/calendar/calendar-day.page';
 import { SettingsPage } from './pages/settings/settings.page';
 import { CategoriesPage } from './pages/categories/categories.page';
+import { NotificationsPage } from './pages/notifications/notifications.page';
 
 export const routes: Routes = [
   { path: 'login', canActivate: [guestGuard], loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage) },
@@ -29,6 +30,7 @@ export const routes: Routes = [
       { path: 'calendario/:date', loadComponent: () => import('./pages/calendar/calendar-day.page').then(m => m.CalendarDayPage) },
       { path: 'categorias', loadComponent: () => import('./pages/categories/categories.page').then(m => m.CategoriesPage) },
       { path: 'definicoes', loadComponent: () => import('./pages/settings/settings.page').then(m => m.SettingsPage) },
+      { path: 'notificacoes', loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage) },
     ],
   },
   { path: '**', redirectTo: '' },

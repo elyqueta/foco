@@ -9,6 +9,7 @@ import { SearchService } from '../core/search.service';
 import { AuthService } from '../core/auth/auth.service';
 import { TaskModalService } from '../core/task-modal.service';
 import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
+import { NotificationService } from '../core/notification.service';
 import { toISODate } from '../core/date.utils';
 
 @Component({
@@ -24,6 +25,7 @@ export class TopbarComponent implements OnInit {
   private router = inject(Router);
   private auth = inject(AuthService);
   private modal = inject(TaskModalService);
+  private notifications = inject(NotificationService);
   theme = this.themeService.theme;
   searchQuery = this.search.query;
 
@@ -34,6 +36,7 @@ export class TopbarComponent implements OnInit {
   ];
 
   menuOpen = signal(false);
+  readonly unreadNotifications = this.notifications.unreadCount;
 
   constructor() {}
 

@@ -145,20 +145,32 @@
     </div>
 
     <div class="col-span-12 min-w-0 md:col-span-6 lg:col-span-3">
-      <div class="flex h-full flex-col items-center justify-between rounded-[20px] bg-brand p-6 text-center text-white shadow-float gap-3">
-        <div>
-          <h3 class="text-[20px] font-extrabold">Modo foco</h3>
-          <p class="text-[12px] text-white/80">Faz só UMA coisa agora</p>
+      @if (focusActive()) {
+        <div class="flex h-full flex-col items-center justify-between rounded-[20px] bg-brand p-6 text-center text-white shadow-float gap-3">
+          <div>
+            <h3 class="text-[20px] font-extrabold">Modo foco</h3>
+            <p class="text-[12px] text-white/80">Faz só UMA coisa agora</p>
+          </div>
+          <p class="text-[16px] font-bold">{{ focusSessionTask()?.title }}</p>
+          <div class="text-[40px] font-extrabold leading-none">{{ formatTick(focusTick()) }}</div>
+          <button type="button" (click)="stopFocus()" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Parar</button>
         </div>
-        @if (focusTask()) {
-          <p class="text-[16px] font-bold">{{ focusTask()!.title }}</p>
-          <button type="button" (click)="startFocus(focusTask()!.id)" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Começar</button>
-        } @else {
-          <lucide-icon name="sparkles" class="h-8 w-8" />
-          <p class="text-[12px] text-white/80">Nada urgente. Respira fundo.</p>
-          <a routerLink="/tarefas" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90 inline-block">Ver pendentes</a>
-        }
-      </div>
+      } @else {
+        <div class="flex h-full flex-col items-center justify-between rounded-[20px] bg-brand p-6 text-center text-white shadow-float gap-3">
+          <div>
+            <h3 class="text-[20px] font-extrabold">Modo foco</h3>
+            <p class="text-[12px] text-white/80">Faz só UMA coisa agora</p>
+          </div>
+          @if (focusTask()) {
+            <p class="text-[16px] font-bold">{{ focusTask()!.title }}</p>
+            <button type="button" (click)="startFocus(focusTask()!.id)" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Começar</button>
+          } @else {
+            <lucide-icon name="sparkles" class="h-8 w-8" />
+            <p class="text-[12px] text-white/80">Nada urgente. Respira fundo.</p>
+            <a routerLink="/tarefas" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90 inline-block">Ver pendentes</a>
+          }
+        </div>
+      }
     </div>
 
     <div class="col-span-12 min-w-0 md:col-span-6 lg:col-span-4">

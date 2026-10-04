@@ -52,6 +52,7 @@ export class DashboardPage {
 
   focusTick = this.focus.tick;
   focusActive = this.focus.active;
+  focusPaused = this.focus.paused;
 
   constructor() {
     this.focus.tick;
@@ -106,6 +107,21 @@ export class DashboardPage {
 
   stopFocus(): void {
     this.focus.stop();
+  }
+
+  pauseFocus(): void {
+    this.focus.pause();
+  }
+
+  resumeFocus(): void {
+    this.focus.resume();
+  }
+
+  viewFocusTask(): void {
+    const task = this.focus.session()?.taskId;
+    if (task) {
+      this.router.navigate(['/tarefas', task]);
+    }
   }
 
   weekDays(): string[] {

@@ -153,7 +153,15 @@
           </div>
           <p class="text-[16px] font-bold">{{ focusSessionTask()?.title }}</p>
           <div class="text-[40px] font-extrabold leading-none">{{ formatTick(focusTick()) }}</div>
-          <button type="button" (click)="stopFocus()" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Parar</button>
+          <div class="flex w-full flex-col gap-2">
+            <button type="button" (click)="viewFocusTask()" class="h-10 rounded-xl bg-white/20 px-4 text-[13px] font-semibold text-white backdrop-blur transition hover:bg-white/30">Ver tarefa</button>
+            @if (focusPaused()) {
+              <button type="button" (click)="resumeFocus()" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Continuar</button>
+            } @else {
+              <button type="button" (click)="pauseFocus()" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Pausar</button>
+            }
+            <button type="button" (click)="stopFocus()" class="h-10 rounded-xl bg-white/10 px-5 text-[13px] font-semibold text-white transition hover:bg-white/20">Parar</button>
+          </div>
         </div>
       } @else {
         <div class="flex h-full flex-col items-center justify-between rounded-[20px] bg-brand p-6 text-center text-white shadow-float gap-3">

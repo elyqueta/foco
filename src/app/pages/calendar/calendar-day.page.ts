@@ -1,12 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskModalService } from '../../core/task-modal.service';
 import { ConfirmService } from '../../core/confirm.service';
-import { formatDate, toISODate, parseISODate, toDatePart } from '../../core/date.utils';
+import { toISODate, parseISODate, toDatePart, todayISO } from '../../core/date.utils';
 import { Task } from '../../core/models';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -14,37 +13,7 @@ import { LucideAngularModule } from 'lucide-angular';
   selector: 'app-calendar-day-page',
   standalone: true,
   imports: [CommonModule, EmptyStateComponent, LucideAngularModule],
-  template: `
-    <div class="mt-8 max-w-4xl">
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-3">
-          <button type="button" (click)="back()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&lsaquo;</button>
-          <h2 class="text-[18px] font-bold text-ink">Tarefas para {{ dayLabel() }}</h2>
-        </div>
-        <button type="button" (click)="addTask()" class="h-9 rounded-xl bg-brand px-4 text-[12px] font-semibold text-white transition hover:bg-brand-600">Adicionar tarefa</button>
-      </div>
-
-      @if (tasks().length === 0) {
-        <app-empty-state icon="calendar-days" title="Sem tarefas neste dia" message="Adiciona a tua primeira tarefa para {{ dayLabel() }}." actionLabel="Adicionar tarefa" (actionClick)="addTask()" />
-      } @else {
-        <div class="flex flex-col gap-2">
-          @for (t of tasks(); track t.id) {
-            <div class="flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3 transition hover:shadow-card">
-              <input type="checkbox" class="h-4 w-4 rounded accent-brand" [checked]="t.status === 'done'" (click)="$event.stopPropagation(); toggleTask(t.id)" />
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-[14px] font-semibold text-ink" [class.line-through]="t.status === 'done'" [class.text-ink-400]="t.status === 'done'">{{ t.title }}</p>
-                <p class="text-[11px] text-ink-400">{{ formatDateTime(t.dueDate) }} · {{ t.category }}</p>
-              </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <button (click)="$event.stopPropagation(); editTask(t.id)" class="text-[11px] text-brand font-semibold hover:underline">Editar</button>
-                <button (click)="$event.stopPropagation(); deleteTask(t.id)" class="text-[11px] text-danger font-semibold hover:underline">Eliminar</button>
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './calendar-day.page.html',
 })
 export class CalendarDayPage {
   private route = inject(ActivatedRoute);
@@ -64,9 +33,22 @@ export class CalendarDayPage {
     });
   }
 
+  canAddTask(): boolean {
+    return this.selectedDay() !== null && this.date() >= todayISO();
+  }
+
   dayLabel(): string {
-    const d = parseISODate(this.date());
+    const d = this.selectedDay();
+    if (!d) return 'Data inválida';
     return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short' }).format(d);
+  }
+
+  private selectedDay(): Date | null {
+    const date = this.date();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+
+    const parsed = parseISODate(date);
+    return toISODate(parsed) === date ? parsed : null;
   }
 
   tasks(): Task[] {
@@ -104,6 +86,7 @@ export class CalendarDayPage {
   }
 
   addTask(): void {
+    if (!this.canAddTask()) return;
     this.modal.show(this.date());
   }
 

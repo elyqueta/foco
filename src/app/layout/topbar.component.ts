@@ -7,6 +7,7 @@ import { DataStore } from '../core/data.store';
 import { ThemeService } from '../core/theme.service';
 import { SearchService } from '../core/search.service';
 import { AuthService } from '../core/auth/auth.service';
+import { TaskModalService } from '../core/task-modal.service';
 import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
 import { toISODate } from '../core/date.utils';
 
@@ -22,6 +23,7 @@ export class TopbarComponent implements OnInit {
   private search = inject(SearchService);
   private router = inject(Router);
   private auth = inject(AuthService);
+  private modal = inject(TaskModalService);
   theme = this.themeService.theme;
   searchQuery = this.search.query;
 
@@ -120,9 +122,6 @@ export class TopbarComponent implements OnInit {
   }
 
   openNewTask(): void {
-    const modal = document.querySelector('app-modal') as HTMLElement | null;
-    if (modal) {
-      modal.dispatchEvent(new Event('open'));
-    }
+    this.modal.show();
   }
 }

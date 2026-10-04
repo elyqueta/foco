@@ -1,0 +1,15 @@
+<div class="flex items-center gap-4 rounded-2xl px-3 py-3 hover:bg-surface-app transition cursor-pointer" (click)="click.emit(task().id)">
+      <button (click)="toggle.emit(task().id); $event.stopPropagation()" class="h-5 w-5 rounded-full border-2 flex items-center justify-center transition" [class.bg-brand]="task().status === 'done'" [class.border-brand]="task().status === 'done'" [class.border-ink-300]="task().status !== 'done'">
+        @if (task().status === 'done') {
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        }
+      </button>
+      <div class="flex-1 min-w-0">
+        <p class="text-[14px] font-semibold truncate" [class.line-through]="task().status === 'done'" [class.text-ink-400]="task().status === 'done'">{{ task().title }}</p>
+        <p class="text-[11px] text-ink-400 truncate">{{ projectName() }} &middot; {{ dueLabel() }}</p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <app-badge-urgency [urgency]="task().urgency" [canPostpone]="task().canPostpone" />
+        <app-badge-category [category]="task().category" />
+      </div>
+    </div>

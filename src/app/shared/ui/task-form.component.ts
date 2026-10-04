@@ -9,66 +9,7 @@ import { BadgeCategoryComponent } from './badge-category.component';
   selector: 'app-task-form',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  template: `
-    <form (ngSubmit)="submit.emit(form())" class="flex flex-col gap-4">
-      <div>
-        <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Título</label>
-        <input type="text" [(ngModel)]="form().title" name="title" required class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Título da tarefa" />
-      </div>
-      <div>
-        <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Descrição</label>
-        <textarea [(ngModel)]="form().description" name="description" rows="3" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Descrição"></textarea>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Categoria</label>
-          <select [(ngModel)]="form().category" name="category" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
-            <option value="professional">Profissional</option>
-            <option value="personal">Pessoal</option>
-            <option value="household">Doméstica</option>
-          </select>
-        </div>
-        <div>
-          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Urgência</label>
-          <select [(ngModel)]="form().urgency" name="urgency" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
-            <option value="critical">Crítica</option>
-            <option value="high">Alta</option>
-            <option value="medium">Média</option>
-            <option value="low">Baixa</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Estado</label>
-          <select [(ngModel)]="form().status" name="status" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
-            <option value="todo">Por fazer</option>
-            <option value="in_progress">Em curso</option>
-            <option value="postponed">Adiada</option>
-            <option value="done">Concluída</option>
-          </select>
-        </div>
-        <div>
-          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Prazo</label>
-          <input type="date" [(ngModel)]="form().dueDate" name="dueDate" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" />
-        </div>
-      </div>
-      <div>
-        <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Próximo passo</label>
-        <input type="text" [(ngModel)]="form().nextStep" name="nextStep" class="w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Próximo passo concreto" />
-      </div>
-      <div class="flex items-center justify-between">
-        <label class="flex items-center gap-2 text-[13px] text-ink">
-          <input type="checkbox" [(ngModel)]="form().canPostpone" name="canPostpone" class="h-4 w-4 rounded border-surface-line accent-brand" />
-          Pode adiar
-        </label>
-        <div class="flex gap-3">
-          <button type="button" (click)="cancel.emit()" class="h-10 rounded-xl border border-surface-line px-5 text-[13px] font-semibold text-ink-500 hover:text-ink transition">Cancelar</button>
-          <button type="submit" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white hover:bg-brand-600 transition">{{ task ? 'Guardar' : 'Criar' }}</button>
-        </div>
-      </div>
-    </form>
-  `,
+  templateUrl: './task-form.component.html',
 })
 export class TaskFormComponent {
   @Input() task?: Task;

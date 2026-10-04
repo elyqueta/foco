@@ -1,0 +1,46 @@
+<div class="mt-8">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-[28px] font-extrabold text-ink">Projetos</h1>
+        <button (click)="openModal()" class="h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white hover:bg-ink-700 shadow-card transition">Novo projeto</button>
+      </div>
+
+      <div class="flex items-center gap-3 mb-6">
+        @for (f of filters(); track f) {
+          <button (click)="setFilter(f.value)" class="rounded-full px-4 h-9 text-[12px] font-semibold transition" [class.bg-brand]="filter() === f.value" [class.text-white]="filter() === f.value" [class.bg-white]="filter() !== f.value" [class.text-ink-500]="filter() !== f.value" [class.border]="filter() !== f.value" [class.border-surface-line]="filter() !== f.value">{{ f.label }}</button>
+        }
+      </div>
+
+      @if (filtered().length === 0) {
+        <app-empty-state title="Sem projetos" message="Cria o teu primeiro projeto para começar." actionLabel="Novo projeto" (actionClick)="openModal()" />
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          @for (p of filtered(); track p.id) {
+            <div class="rounded-card bg-white p-5 shadow-card hover:shadow-float transition cursor-pointer" [routerLink]="['/projetos', p.id]">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="h-3 w-3 rounded-full shrink-0" [style.background]="p.color"></span>
+                <h3 class="text-[14px] font-semibold text-ink truncate">{{ p.name }}</h3>
+              </div>
+              <p class="text-[12px] text-ink-500 line-clamp-2 mb-4">{{ p.description || 'Sem descrição' }}</p>
+              <div class="flex items-center gap-3 mb-3">
+                <app-progress-ring [percent]="progress(p.id)" />
+                <div class="flex-1 min-w-0">
+                  <p class="text-[11px] font-bold text-ink">Progresso</p>
+                  <p class="text-[10px] text-ink-400">{{ doneCount(p.id) }} de {{ totalCount(p.id) }} tarefas</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <app-badge-urgency [urgency]="p.urgency" [canPostpone]="p.canPostpone" />
+                <app-badge-category [category]="p.category" />
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (showModal()) {
+        <app-modal (close)="closeModal()">
+          <h2 class="text-[18px] font-bold text-ink mb-4">Novo projeto</h2>
+          <app-project-form (submit)="onSubmit($event)" (cancel)="closeModal()" />
+        </app-modal>
+      }
+    </div>

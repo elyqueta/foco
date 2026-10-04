@@ -16,14 +16,22 @@
 
   <!-- Pesquisa -->
   <div class="relative order-last w-full md:order-none md:w-[260px]">
-    <lucide-icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+    <lucide-icon name="search" class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
     <input
       id="search"
       type="text"
+      [value]="searchQuery()"
+      (input)="onSearch($event)"
+      (keydown.enter)="onSearchEnter()"
       placeholder="Pesquisar tarefa ou projeto"
       aria-label="Pesquisar"
-      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-10 pr-4 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
+      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-11 pr-4 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
     />
+    @if (searchQuery()) {
+      <button type="button" (click)="clearSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-400 hover:text-ink transition">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="18" y2="6"/></svg>
+      </button>
+    }
   </div>
 
   <!-- Ações -->

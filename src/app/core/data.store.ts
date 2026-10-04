@@ -3,10 +3,12 @@ import { AppData, Project, Task, ActivityEntry, Category, Urgency, Status } from
 import { DataRepository, emptyAppData } from './storage.repository';
 import { seedData } from './seed';
 import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime } from './date.utils';
+import { ConfirmService } from './confirm.service';
 
 @Injectable({ providedIn: 'root' })
 export class DataStore {
   private repo = inject(DataRepository);
+  private confirm = inject(ConfirmService);
   private _data = signal<AppData>(this.repo.load());
 
   constructor() {
@@ -112,8 +114,14 @@ export class DataStore {
     }));
   }
 
-  deleteProject(id: string): void {
-    if (!confirm('Apagar projeto e todas as suas tarefas?')) return;
+  async deleteProject(id: string): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Apagar projeto?',
+      message: 'Isto vai apagar o projeto e todas as suas tarefas. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Apagar',
+    });
+    if (!ok) return;
     const now = new Date().toISOString();
     this._data.update((d) => ({
       ...d,
@@ -153,8 +161,14 @@ export class DataStore {
     }));
   }
 
-  deleteTask(id: string): void {
-    if (!confirm('Apagar tarefa?')) return;
+  async deleteTask(id: string): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Apagar tarefa?',
+      message: 'Isto vai apagar a tarefa permanentemente.',
+      confirmLabel: 'Apagar',
+    });
+    if (!ok) return;
     this._data.update((d) => ({
       ...d,
       tasks: d.tasks.filter((t) => t.id !== id),

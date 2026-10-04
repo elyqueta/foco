@@ -4,18 +4,21 @@ import { SidebarComponent } from './sidebar.component';
 import { TopbarComponent } from './topbar.component';
 import { ModalComponent } from '../shared/ui/modal.component';
 import { TaskFormComponent } from '../shared/ui/task-form.component';
+import { ConfirmDialogComponent } from '../shared/ui/confirm-dialog.component';
 import { TaskModalService } from '../core/task-modal.service';
+import { ConfirmService } from '../core/confirm.service';
 import { DataStore } from '../core/data.store';
 import { Task } from '../core/models';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent, ModalComponent, TaskFormComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent, ModalComponent, TaskFormComponent, ConfirmDialogComponent],
   templateUrl: './shell.component.html',
 })
 export class ShellComponent {
   private modal = inject(TaskModalService);
+  private confirm = inject(ConfirmService);
   private store = inject(DataStore);
 
   closeModal(): void {

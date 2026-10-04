@@ -36,13 +36,11 @@ type ConfirmType = 'danger' | 'warning' | 'info' | 'success';
   `,
 })
 export class ConfirmDialogComponent {
-  private sanitizer = inject(DOMPurify); // placeholder, we avoid direct DOM manipulation
-
   title = input.required<string>();
   message = input.required<string>();
   type = input<ConfirmType>('info');
-  confirmLabel = input('Confirmar');
-  cancelLabel = input('Cancelar');
+  confirmLabel = input<string>('Confirmar');
+  cancelLabel = input<string>('Cancelar');
 
   confirm = output<void>();
   cancel = output<void>();

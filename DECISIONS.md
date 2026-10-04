@@ -92,6 +92,17 @@
 ### P3 — /definicoes
 - 3 cartões: Perfil (input nome), Aparência (toggle Claro/Escuro), Dados (Exportar, Restaurar, Apagar tudo).
 
+### Confirm dialog
+- Criado `shared/ui/confirm-dialog.component.ts` com 4 tipos: `danger`, `warning`, `info`, `success`.
+- Criado `core/confirm.service.ts` com método `confirm(config): Promise<boolean>`.
+- Substituídos todos os `confirm()` nativos por `ConfirmService` em `DataStore`, `SettingsPage` e `ConsoleApi`.
+
+### Pesquisa global
+- Criado `core/search.service.ts` com `query` signal.
+- `TopbarComponent` integrado com `SearchService`: input com `pl-11`, ícone a `left-4`, botão de limpar.
+- `TasksPage.filtered()` e `ProjectsPage.filtered()` filtram por título, descrição, tags e nome do projeto.
+- Enter na pesquisa navega para `/tarefas?q=...`.
+
 ### Verificação
 - `ng build` sem erros.
 - `grep -R "dark:" src/app` → sem resultados.

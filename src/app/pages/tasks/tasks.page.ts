@@ -12,6 +12,7 @@ import { TaskFormComponent } from '../../shared/ui/task-form.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { Task, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
+import { SearchService } from '../../core/search.service';
 
 @Component({
   selector: 'app-tasks',
@@ -22,10 +23,12 @@ import { formatDate } from '../../core/date.utils';
 export class TasksPage {
   private store = inject(DataStore);
   private router = inject(Router);
+  private search = inject(SearchService);
   showModal = signal(false);
   catFilter = signal<string>('all');
   urgencyFilter = signal<string>('all');
   showDone = signal(false);
+  searchQuery = this.search.query;
 
   catFilters() {
     return [
@@ -57,6 +60,14 @@ export class TasksPage {
       const pending = tasks.filter((t) => t.status !== 'done');
       const doneTasks = tasks.filter((t) => t.status === 'done');
       tasks = [...pending, ...doneTasks];
+    }
+    const query = this.searchQuery().trim().toLowerCase();
+    if (query) {
+      tasks = tasks.filter((t) => {
+        const project = t.projectId ? this.store.data().projects.find((p) => p.id === t.projectId) : null;
+        const searchText = `${t.title} ${t.description ?? ''} ${project?.name ?? ''} ${(t.tags ?? []).join(' ')}`.toLowerCase();
+        return searchText.includes(query);
+      });
     }
     return tasks;
   }

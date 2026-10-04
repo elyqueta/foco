@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { DataStore } from '../../core/data.store';
 import { CardComponent } from '../../shared/ui/card.component';
@@ -21,6 +21,7 @@ import { Task, ActivityEntry } from '../../core/models';
 })
 export class TaskDetailPage {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private store = inject(DataStore);
   task = signal<Task | null>(null);
 
@@ -81,10 +82,11 @@ export class TaskDetailPage {
     this.store.setTaskStatus(id, 'todo');
   }
 
-  deleteTask(): void {
+  async deleteTask(): Promise<void> {
     const id = this.task()?.id;
     if (!id) return;
-    this.store.deleteTask(id);
+    await this.store.deleteTask(id);
+    this.router.navigate(['/tarefas']);
   }
 
   addNote(text: string): void {

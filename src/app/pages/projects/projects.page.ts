@@ -11,6 +11,7 @@ import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
 import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component';
 import { Project, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
+import { SearchService } from '../../core/search.service';
 
 @Component({
   selector: 'app-projects',
@@ -20,8 +21,10 @@ import { formatDate } from '../../core/date.utils';
 })
 export class ProjectsPage {
   private store = inject(DataStore);
+  private search = inject(SearchService);
   showModal = signal(false);
   filter = signal<string>('all');
+  searchQuery = this.search.query;
 
   filters() {
     return [
@@ -34,9 +37,13 @@ export class ProjectsPage {
 
   filtered() {
     const f = this.filter();
-    const projects = this.store.data().projects;
-    if (f === 'all') return projects;
-    return projects.filter((p) => p.category === f);
+    let projects = this.store.data().projects;
+    if (f !== 'all') projects = projects.filter((p) => p.category === f);
+    const query = this.searchQuery().trim().toLowerCase();
+    if (query) {
+      projects = projects.filter((p) => `${p.name} ${p.description ?? ''}`.toLowerCase().includes(query));
+    }
+    return projects;
   }
 
   setFilter(f: string): void {

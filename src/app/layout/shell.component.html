@@ -17,3 +17,15 @@
     <app-task-form (submit)="onTaskSubmit($event)" (cancel)="closeModal()" />
   </app-modal>
 }
+
+@if (confirm.open()) {
+  <app-confirm-dialog
+    [title]="confirm.config().title"
+    [message]="confirm.config().message"
+    [type]="confirm.config().type ?? 'info'"
+    [confirmLabel]="confirm.config().confirmLabel ?? 'Confirmar'"
+    [cancelLabel]="confirm.config().cancelLabel ?? 'Cancelar'"
+    (confirm)="confirm.onConfirm()"
+    (cancel)="confirm.onCancel()"
+  />
+}

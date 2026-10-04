@@ -112,10 +112,11 @@ export class ProjectDetailPage {
     this.store.addNote('project', p, text.trim());
   }
 
-  deleteProject(): void {
+  async deleteProject(): Promise<void> {
     const p = this.project()?.id;
     if (!p) return;
-    this.store.deleteProject(p);
+    await this.store.deleteProject(p);
+    this.router.navigate(['/projetos']);
   }
 
   openEditProject(): void {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataStore } from '../../core/data.store';
 import { emptyAppData } from '../../core/storage.repository';
+import { ConfirmService } from '../../core/confirm.service';
 import { ThemeService } from '../../core/theme.service';
 
 @Component({
@@ -47,6 +48,7 @@ import { ThemeService } from '../../core/theme.service';
 export class SettingsPage {
   private store = inject(DataStore);
   private themeService = inject(ThemeService);
+  private confirm = inject(ConfirmService);
   theme = this.themeService.theme;
   userName = signal(this.store.data().settings.userName);
 
@@ -75,13 +77,25 @@ export class SettingsPage {
     URL.revokeObjectURL(url);
   }
 
-  restoreSeed(): void {
-    if (!confirm('Isto substitui todos os dados pelos de exemplo. Continuar?')) return;
+  async restoreSeed(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'warning',
+      title: 'Restaurar dados de exemplo?',
+      message: 'Isto substitui todos os dados pelos de exemplo. Continuar?',
+      confirmLabel: 'Restaurar',
+    });
+    if (!ok) return;
     this.store.replaceAll(emptyAppData());
   }
 
-  clearAll(): void {
-    if (!confirm('Isto apaga todos os dados. Continuar?')) return;
+  async clearAll(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Apagar tudo?',
+      message: 'Isto apaga todos os dados. Continuar?',
+      confirmLabel: 'Apagar',
+    });
+    if (!ok) return;
     this.store.clearAll();
   }
 }

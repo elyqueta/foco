@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { DataStore } from './data.store';
 import { ImportService } from './import.service';
+import { ConfirmService } from './confirm.service';
 
 export interface FocoConsoleApi {
   addTask(input: {
@@ -51,6 +52,7 @@ function pickUrgency(u?: string): 'critical' | 'high' | 'medium' | 'low' {
 export class ConsoleApi {
   private store = inject(DataStore);
   private importService = inject(ImportService);
+  private confirm = inject(ConfirmService);
 
   init(): void {
     const api: FocoConsoleApi = {
@@ -118,11 +120,16 @@ export class ConsoleApi {
       export: () => {
         return JSON.stringify(this.store.data(), null, 2);
       },
-      clear: () => {
-        if (confirm('Apagar TODOS os dados?')) {
-          this.store.clearAll();
-          console.log('[foco] Dados apagados.');
-        }
+      clear: async () => {
+        const ok = await this.confirm.confirm({
+          type: 'danger',
+          title: 'Apagar TODOS os dados?',
+          message: 'Isto vai apagar todos os projetos e tarefas.',
+          confirmLabel: 'Apagar',
+        });
+        if (!ok) return;
+        this.store.clearAll();
+        console.log('[foco] Dados apagados.');
       },
     };
 

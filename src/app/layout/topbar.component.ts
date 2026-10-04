@@ -1,8 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { DataStore } from '../core/data.store';
 import { ThemeService } from '../core/theme.service';
+import { SearchService } from '../core/search.service';
 import { toISODate } from '../core/date.utils';
 
 @Component({
@@ -14,8 +16,10 @@ import { toISODate } from '../core/date.utils';
 export class TopbarComponent implements OnInit {
   private store = inject(DataStore);
   private themeService = inject(ThemeService);
+  private search = inject(SearchService);
+  private router = inject(Router);
   theme = this.themeService.theme;
-  searchInput: HTMLInputElement | null = null;
+  searchQuery = this.search.query;
 
   tabs = [
     { path: '/', exact: true, label: 'Dashboard', icon: 'layout-grid' },
@@ -49,6 +53,26 @@ export class TopbarComponent implements OnInit {
 
   setTheme(value: 'light' | 'dark'): void {
     this.themeService.set(value);
+  }
+
+  onSearch(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.search.query.set(input.value);
+  }
+
+  onSearchEnter(): void {
+    const query = this.search.query().trim();
+    if (!query) return;
+    this.router.navigate(['/tarefas'], { queryParams: { q: query } });
+  }
+
+  clearSearch(): void {
+    this.search.query.set('');
+    const input = document.getElementById('search') as HTMLInputElement | null;
+    if (input) {
+      input.value = '';
+    }
+    this.router.navigate(['/tarefas']);
   }
 
   exportData(): void {

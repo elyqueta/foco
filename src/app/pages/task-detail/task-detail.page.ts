@@ -9,14 +9,15 @@ import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
 import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component';
 import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
+import { PostponeModalComponent } from '../../shared/ui/postpone-modal.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { formatDate } from '../../core/date.utils';
-import { Task, ActivityEntry } from '../../core/models';
+import { Task, ActivityEntry, Project } from '../../core/models';
 
 @Component({
   selector: 'app-task-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, LucideAngularModule],
+  imports: [CommonModule, FormsModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, PostponeModalComponent, LucideAngularModule],
   templateUrl: './task-detail.page.html',
 })
 export class TaskDetailPage {
@@ -24,8 +25,19 @@ export class TaskDetailPage {
   private router = inject(Router);
   private store = inject(DataStore);
   task = signal<Task | null>(null);
+  showPostponeModal = signal(false);
 
   formatDate = formatDate;
+
+  projects(): Project[] {
+    return this.store.data().projects;
+  }
+
+  projectName(projectId: string | null): string {
+    if (!projectId) return '';
+    const p = this.store.data().projects.find((x) => x.id === projectId);
+    return p ? p.name : '';
+  }
 
   constructor() {
     this.route.paramMap.subscribe((params) => {
@@ -96,12 +108,18 @@ export class TaskDetailPage {
   }
 
   postpone(): void {
+    this.showPostponeModal.set(true);
+  }
+
+  onPostponeConfirm(date: string): void {
     const id = this.task()?.id;
     if (!id) return;
-    const newDate = prompt('Nova data (YYYY-MM-DD):');
-    if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-      this.store.postponeTask(id, newDate);
-    }
+    this.store.postponeTask(id, date);
+    this.showPostponeModal.set(false);
+  }
+
+  onPostponeCancel(): void {
+    this.showPostponeModal.set(false);
   }
 
   sortedActivity(): ActivityEntry[] {

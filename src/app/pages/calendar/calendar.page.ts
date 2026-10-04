@@ -1,30 +1,31 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
-import { TaskRowComponent } from '../../shared/ui/task-row.component';
-import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
-import { formatDate, toISODate, parseISODate, weekDaysMondayFirst } from '../../core/date.utils';
+import { TaskModalService } from '../../core/task-modal.service';
+import { ConfirmService } from '../../core/confirm.service';
+import { formatDate, toISODate, parseISODate, weekDaysMondayFirst, toDatePart } from '../../core/date.utils';
 import { Task } from '../../core/models';
 import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-calendar-page',
   standalone: true,
-  imports: [CommonModule, TaskRowComponent, LucideAngularModule, RouterLink],
+  imports: [CommonModule, LucideAngularModule],
   templateUrl: './calendar.page.html',
 })
 export class CalendarPage {
   private store = inject(DataStore);
   private router = inject(Router);
+  private modal = inject(TaskModalService);
+  private confirm = inject(ConfirmService);
   currentMonth = signal(new Date());
   selectedDate = signal(toISODate(new Date()));
 
   tasks(): Task[] {
     const d = parseISODate(this.selectedDate());
     const iso = toISODate(d);
-    return this.store.data().tasks.filter((t) => t.dueDate === iso && t.status !== 'done');
+    return this.store.data().tasks.filter((t) => toDatePart(t.dueDate || '') === iso);
   }
 
   monthLabel(): string {
@@ -62,7 +63,7 @@ export class CalendarPage {
       const d = new Date(startDay);
       d.setDate(startDay.getDate() + i);
       const iso = toISODate(d);
-      const tasks = this.store.data().tasks.filter((t) => t.dueDate === iso && t.status !== 'done');
+      const tasks = this.store.data().tasks.filter((t) => toDatePart(t.dueDate || '') === iso);
       days.push({ date: d, inMonth: d.getMonth() === month, tasks });
     }
     return days;
@@ -76,6 +77,10 @@ export class CalendarPage {
     this.selectedDate.set(iso);
   }
 
+  openDay(iso: string): void {
+    this.router.navigate(['/calendario', iso]);
+  }
+
   formatDate = formatDate;
   toISODate = toISODate;
 
@@ -87,5 +92,22 @@ export class CalendarPage {
     const task = this.store.data().tasks.find((t) => t.id === id);
     if (!task) return;
     this.store.setTaskStatus(id, task.status === 'done' ? 'todo' : 'done');
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    const task = this.store.data().tasks.find((t) => t.id === id);
+    if (!task) return;
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Apagar tarefa?',
+      message: `Isto vai apagar "${task.title}" permanentemente.`,
+      confirmLabel: 'Apagar',
+    });
+    if (!ok) return;
+    this.store.deleteTask(id);
+  }
+
+  addTaskForDate(): void {
+    this.modal.show(this.selectedDate());
   }
 }

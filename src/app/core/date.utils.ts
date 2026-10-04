@@ -5,13 +5,25 @@ export function toISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+export function toISODateTime(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${toISODate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function todayISO(): string {
   return toISODate(new Date());
 }
 
 export function parseISODate(s: string): Date {
+  if (s.includes('T')) {
+    return new Date(s);
+  }
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
+}
+
+export function toDatePart(iso: string): string {
+  return iso.split('T')[0];
 }
 
 export function weekDaysMondayFirst(base: Date): Date[] {
@@ -37,6 +49,7 @@ export function formatDate(dateStr: string | null): string {
 }
 
 export function formatDateTime(iso: string): string {
+  if (!iso) return '';
   const d = new Date(iso);
   return new Intl.DateTimeFormat('pt-PT', {
     day: '2-digit',
@@ -49,7 +62,8 @@ export function formatDateTime(iso: string): string {
 
 export function isOverdue(dateStr: string | null): boolean {
   if (!dateStr) return false;
-  return dateStr < todayISO();
+  const datePart = toDatePart(dateStr);
+  return datePart < todayISO();
 }
 
 export function urgencyOrder(u: string): number {

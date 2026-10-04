@@ -20,6 +20,7 @@ export class ShellComponent {
   private modal = inject(TaskModalService);
   private confirm = inject(ConfirmService);
   private store = inject(DataStore);
+  initialDueDate = this.modal.dueDate;
 
   closeModal(): void {
     this.modal.hide();
@@ -33,12 +34,13 @@ export class ShellComponent {
       urgency: patch.urgency ?? 'medium',
       status: patch.status ?? 'todo',
       canPostpone: patch.canPostpone ?? true,
-      dueDate: patch.dueDate ?? null,
+      dueDate: patch.dueDate ?? this.modal.dueDate() ?? null,
       nextStep: patch.nextStep ?? '',
       estimateMinutes: patch.estimateMinutes ?? null,
       tags: patch.tags ?? [],
-      projectId: null,
+      projectId: patch.projectId ?? null,
     });
+    this.modal.dueDate.set(null);
     this.closeModal();
   }
 }

@@ -2,7 +2,7 @@ import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { AppData, Project, Task, ActivityEntry, Category, Urgency, Status } from './models';
 import { DataRepository, emptyAppData } from './storage.repository';
 import { seedData } from './seed';
-import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime } from './date.utils';
+import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime, toDatePart } from './date.utils';
 import { ConfirmService } from './confirm.service';
 
 @Injectable({ providedIn: 'root' })
@@ -33,8 +33,8 @@ export class DataStore {
     return this._data().tasks.filter((tk) => {
       if (tk.status === 'done') return false;
       if (tk.urgency === 'critical') return true;
-      if (tk.dueDate === t) return true;
-      if (tk.dueDate && tk.dueDate < t) return true;
+      if (toDatePart(tk.dueDate || '') === t) return true;
+      if (tk.dueDate && toDatePart(tk.dueDate) < t) return true;
       return false;
     });
   });

@@ -1,0 +1,113 @@
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
+import { DataStore } from '../../core/data.store';
+import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
+import { TaskModalService } from '../../core/task-modal.service';
+import { ConfirmService } from '../../core/confirm.service';
+import { formatDate, toISODate, parseISODate, toDatePart } from '../../core/date.utils';
+import { Task } from '../../core/models';
+import { LucideAngularModule } from 'lucide-angular';
+
+@Component({
+  selector: 'app-calendar-day-page',
+  standalone: true,
+  imports: [CommonModule, EmptyStateComponent, LucideAngularModule],
+  template: `
+    <div class="mt-8 max-w-4xl">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <button type="button" (click)="back()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&lsaquo;</button>
+          <h2 class="text-[18px] font-bold text-ink">Tarefas para {{ dayLabel() }}</h2>
+        </div>
+        <button type="button" (click)="addTask()" class="h-9 rounded-xl bg-brand px-4 text-[12px] font-semibold text-white transition hover:bg-brand-600">Adicionar tarefa</button>
+      </div>
+
+      @if (tasks().length === 0) {
+        <app-empty-state icon="calendar-days" title="Sem tarefas neste dia" message="Adiciona a tua primeira tarefa para {{ dayLabel() }}." actionLabel="Adicionar tarefa" (actionClick)="addTask()" />
+      } @else {
+        <div class="flex flex-col gap-2">
+          @for (t of tasks(); track t.id) {
+            <div class="flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3 transition hover:shadow-card">
+              <input type="checkbox" class="h-4 w-4 rounded accent-brand" [checked]="t.status === 'done'" (click)="$event.stopPropagation(); toggleTask(t.id)" />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-[14px] font-semibold text-ink" [class.line-through]="t.status === 'done'" [class.text-ink-400]="t.status === 'done'">{{ t.title }}</p>
+                <p class="text-[11px] text-ink-400">{{ formatDateTime(t.dueDate) }} · {{ t.category }}</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button (click)="$event.stopPropagation(); editTask(t.id)" class="text-[11px] text-brand font-semibold hover:underline">Editar</button>
+                <button (click)="$event.stopPropagation(); deleteTask(t.id)" class="text-[11px] text-danger font-semibold hover:underline">Eliminar</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  `,
+})
+export class CalendarDayPage {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private store = inject(DataStore);
+  private modal = inject(TaskModalService);
+  private confirm = inject(ConfirmService);
+
+  date = signal(toISODate(new Date()));
+
+  constructor() {
+    this.route.paramMap.subscribe((params) => {
+      const d = params.get('date');
+      if (d) {
+        this.date.set(d);
+      }
+    });
+  }
+
+  dayLabel(): string {
+    const d = parseISODate(this.date());
+    return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short' }).format(d);
+  }
+
+  tasks(): Task[] {
+    const iso = this.date();
+    return this.store.data().tasks.filter((t) => toDatePart(t.dueDate || '') === iso);
+  }
+
+  formatDateTime(date: string | null): string {
+    if (!date) return 'Sem prazo';
+    const d = new Date(date);
+    return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyle: 'short' }).format(d);
+  }
+
+  toggleTask(id: string): void {
+    const task = this.store.data().tasks.find((t) => t.id === id);
+    if (!task) return;
+    this.store.setTaskStatus(id, task.status === 'done' ? 'todo' : 'done');
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    const task = this.store.data().tasks.find((t) => t.id === id);
+    if (!task) return;
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Apagar tarefa?',
+      message: `Isto vai apagar "${task.title}" permanentemente.`,
+      confirmLabel: 'Apagar',
+    });
+    if (!ok) return;
+    this.store.deleteTask(id);
+  }
+
+  editTask(id: string): void {
+    this.router.navigate(['/tarefas', id]);
+  }
+
+  addTask(): void {
+    this.modal.show(this.date());
+  }
+
+  back(): void {
+    this.router.navigate(['/calendario']);
+  }
+}

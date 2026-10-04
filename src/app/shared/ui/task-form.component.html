@@ -41,7 +41,22 @@
         </div>
         <div>
           <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Prazo</label>
-          <input type="date" [(ngModel)]="form().dueDate" name="dueDate" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          <input type="datetime-local" [value]="dueDateTime()" (input)="onDueDateTime($event)" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" />
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Projeto</label>
+          <select [(ngModel)]="form().projectId" name="projectId" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
+            <option value="">Sem projeto</option>
+            @for (p of projects(); track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Duração (minutos)</label>
+          <input type="number" [(ngModel)]="form().estimateMinutes" name="estimateMinutes" min="0" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Ex: 30" />
         </div>
       </div>
       <div>

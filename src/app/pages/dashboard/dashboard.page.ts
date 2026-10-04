@@ -11,7 +11,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { Task, ActivityEntry } from '../../core/models';
-import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISODate } from '../../core/date.utils';
+import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISODate, toDatePart } from '../../core/date.utils';
 
 @Component({
   selector: 'app-dashboard',
@@ -116,7 +116,7 @@ export class DashboardPage {
   }
 
   dayTasks() {
-    return this.store.data().tasks.filter((t) => t.dueDate === this.selectedDate() && t.status !== 'done');
+    return this.store.data().tasks.filter((t) => toDatePart(t.dueDate || '') === this.selectedDate() && t.status !== 'done');
   }
 
   formatDate = formatDate;

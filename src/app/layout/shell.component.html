@@ -14,7 +14,7 @@
 @if (modal.open()) {
   <app-modal (close)="closeModal()">
     <h2 class="text-[18px] font-bold text-ink mb-4">Nova tarefa</h2>
-    <app-task-form (submit)="onTaskSubmit($event)" (cancel)="closeModal()" />
+    <app-task-form [initialDueDate]="initialDueDate()" (submit)="onTaskSubmit($event)" (cancel)="closeModal()" />
   </app-modal>
 }
 

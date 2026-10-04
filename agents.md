@@ -370,7 +370,7 @@ Abaixo do cabeçalho: `mt-5 grid grid-cols-12 gap-5`. Todos os cartões: **`roun
    - À direita: badge de urgência + badge de categoria.
    - Linha com sombra `shadow-float bg-white` quando for a tarefa em foco/hover (como o cartão elevado da imagem).
 2. **Urgentes** (`col-span-12 md:col-span-6 lg:col-span-4`): lista de tarefas críticas/altas. Cada item é um mini-cartão `rounded-2xl border border-surface-line p-4`: tags no topo (categoria `text-[10px]`), título `text-[15px] font-bold leading-snug`, rodapé com badge de urgência à esquerda e prazo à direita. Botão tracejado no fim: `rounded-2xl border-2 border-dashed border-brand/30 bg-brand-50 py-4 text-[13px] font-semibold text-brand` com ícone `+` num quadrado `h-6 w-6 rounded-md bg-brand text-white` ("Adicionar tarefa"), exatamente como o bloco "Add new assignment" da imagem.
-3. **Calendário / semana** (`col-span-12 md:col-span-6 lg:col-span-3`): título = mês e ano (ex.: "Outubro 2026") com setas `‹ ›` em círculos `h-6 w-6 rounded-full bg-surface-app`. Faixa de 7 dias (`grid grid-cols-7 text-center`): letra do dia `text-[10px] text-ink-400` + número `text-[12px] font-semibold`; **dia selecionado**: `h-7 w-7 rounded-full bg-brand text-white`. Abaixo, tarefas com prazo no dia selecionado (item: ícone `h-8 w-8 rounded-xl bg-brand-100`, título `text-[12px] font-semibold`, sub `text-[10px] text-ink-400`).
+3. **Calendário / semana** (`col-span-12 md:col-span-6 lg:col-span-3`): título = mês e ano (ex.: "Outubro 2026") com setas `‹ ›` em círculos `h-6 w-6 rounded-full bg-surface-app`. Faixa de 7 dias (`grid grid-cols-7 text-center`): letra do dia `text-[10px] text-ink-400` + número `text-[12px] font-semibold`; **dia selecionado**: `h-7 w-7 rounded-full bg-brand text-white`. Abaixo, listagem de tarefas do dia selecionado com ações (ver secção 6.7.1).
 
 **Linha 2**
 4. **Próximos passos** (`col-span-12 lg:col-span-5`): cada item é `flex items-start gap-3`: bolinha `mt-1.5 h-2 w-2 rounded-full bg-brand`; texto do próximo passo `text-[13px] font-semibold`; abaixo "de {projeto/tarefa}" `text-[11px] text-ink-400`. Clicar navega à página de vida.
@@ -379,6 +379,16 @@ Abaixo do cabeçalho: `mt-5 grid grid-cols-12 gap-5`. Todos os cartões: **`roun
    - Título `text-[20px] font-extrabold`; texto `text-[12px] text-white/80`; botão `h-10 rounded-xl bg-ink px-5 text-[13px] font-semibold text-white`.
    - Conteúdo: "Faz só UMA coisa agora" + mostra a tarefa nº1 (a mais urgente) e botão "Começar" que a coloca `in_progress`.
 6. **Progresso por categoria** (`col-span-12 md:col-span-6 lg:col-span-4`): 3 mini-cartões lado a lado (`grid grid-cols-3 gap-3`), cada um `rounded-2xl border border-surface-line p-3`: **anel de progresso** (SVG, ver 6.8), rótulo `text-[11px] font-bold text-ink`, sub `text-[10px] text-ink-400` ("3 de 8 feitas"). Categorias: Profissional, Pessoal, Doméstica.
+
+### 6.7.1 Listagem de tarefas do dia (calendário)
+Ao clicar num dia do calendário, a secção abaixo mostra a listagem de todas as tarefas desse dia (pendentes e concluídas).
+- Cabeçalho: `flex items-center justify-between mb-3` com título `text-[16px] font-bold text-ink` ("Tarefas para {data}") e botão `h-9 rounded-xl bg-brand px-4 text-[12px] font-semibold text-white transition hover:bg-brand-600` "Adicionar tarefa".
+- Cada tarefa: `flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3 transition hover:shadow-card`
+  - Checkbox redondo `h-4 w-4 rounded accent-brand` para alternar done/todo
+  - Bloco central `min-w-0 flex-1`: título `truncate text-[14px] font-semibold text-ink` (riscado + `text-ink-400` se done), sub `text-[11px] text-ink-400` com data e categoria
+  - Ações à direita `shrink-0`: link "Editar" `text-[11px] text-brand font-semibold hover:underline` e "Eliminar" `text-[11px] text-danger font-semibold hover:underline`
+- Estado vazio: `<app-empty-state icon="calendar-days" title="Sem tarefas neste dia" message="Adiciona a tua primeira tarefa para {data}." actionLabel="Adicionar tarefa" (actionClick)="addTaskForDate()" />`
+- O botão "Adicionar tarefa" abre o modal de tarefa com o `dueDate` preenchido para o dia selecionado.
 
 ### 6.8 Componentes reutilizáveis
 - **Badge urgência** (`rounded-full px-2.5 py-1 text-[10px] font-bold`):
@@ -393,7 +403,13 @@ Abaixo do cabeçalho: `mt-5 grid grid-cols-12 gap-5`. Todos os cartões: **`roun
 - **Botão secundário**: `h-10 rounded-xl bg-brand-100 px-5 text-[13px] font-semibold text-brand hover:bg-brand-50`.
 - **Input/select/textarea**: `w-full rounded-xl border border-surface-line bg-white px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30`. Label: `mb-1.5 block text-[12px] font-semibold text-ink-700`.
 - **Modal**: overlay `fixed inset-0 z-50 grid place-items-center bg-ink/40 backdrop-blur-sm p-4`; painel `w-full max-w-[560px] rounded-shell bg-white p-8 shadow-float`; fecha com `Esc` e clique no overlay.
-- **Empty state**: ícone grande `h-14 w-14 rounded-2xl bg-brand-100 text-brand`, título `text-[15px] font-bold`, texto `text-[12px] text-ink-500`, botão primário. Mensagem do dashboard vazio: "Dia livre! Adiciona a tua primeira tarefa."
+- **Empty state**: componente padrão `<app-empty-state>` com:
+  - Ícone: `h-14 w-14 rounded-2xl bg-brand-100 text-brand grid place-items-center mb-4` com `<lucide-icon [name]="icon()" class="h-6 w-6" [strokeWidth]="1.75" />`. O ícone é parametrizado por input; padrão `circle-check`.
+  - Título: `text-[15px] font-bold text-ink mb-1`
+  - Mensagem: `text-[12px] text-ink-500 mb-4 max-w-[280px]`
+  - Botão de ação (opcional): `h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white hover:bg-brand-600 transition`
+  - Usar em TODOS os estados vazios da app: dashboard sem tarefas, calendário sem tarefas no dia, projetos sem projetos, tarefas sem tarefas, detalhes sem atividade.
+  - Exemplos de ícones por contexto: `calendar-days` (calendário vazio), `folder-kanban` (sem projetos), `square-check` (sem tarefas), `circle-check` (sucesso/dia livre).
 - Hover/transições: `transition duration-150`. Foco visível sempre (`focus-visible:ring-2 focus-visible:ring-brand/40`).
 
 ### 6.9 Paleta de cores de projeto

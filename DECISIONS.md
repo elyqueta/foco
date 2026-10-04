@@ -103,6 +103,18 @@
 - `TasksPage.filtered()` e `ProjectsPage.filtered()` filtram por título, descrição, tags e nome do projeto.
 - Enter na pesquisa navega para `/tarefas?q=...`.
 
+### Modal de adiamento
+- Criado `shared/ui/postpone-modal.component.ts` para substituir o `prompt()` nativo.
+- `TaskDetailPage` usa o modal com input de data nativo estilizado com as classes do design system.
+- Botão "Adiar" desabilitado até que a data seja válida.
+
+### Calendário com histórico
+- `CalendarPage` agora mostra todas as tarefas de cada dia no grid mensal, incluindo concluídas.
+- Tarefas pendentes: `bg-brand-100 text-brand-fg`
+- Tarefas concluídas: `bg-success-soft text-success line-through`
+- Até 3 tarefas visíveis por célula, com `+N` para restantes.
+- Lista inferior do dia selecionado também inclui tarefas concluídas.
+
 ### Verificação
 - `ng build` sem erros.
 - `grep -R "dark:" src/app` → sem resultados.

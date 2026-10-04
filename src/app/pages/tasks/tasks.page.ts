@@ -127,7 +127,7 @@ export class TasksPage {
       nextStep: patch.nextStep ?? '',
       estimateMinutes: patch.estimateMinutes ?? null,
       tags: patch.tags ?? [],
-      projectId: null,
+      projectId: patch.projectId ?? null,
     });
     this.closeModal();
   }

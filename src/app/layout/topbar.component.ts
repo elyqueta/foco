@@ -5,12 +5,13 @@ import { LucideAngularModule } from 'lucide-angular';
 import { DataStore } from '../core/data.store';
 import { ThemeService } from '../core/theme.service';
 import { SearchService } from '../core/search.service';
+import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
 import { toISODate } from '../core/date.utils';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule],
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule, SearchDropdownComponent],
   templateUrl: './topbar.component.html',
 })
 export class TopbarComponent implements OnInit {

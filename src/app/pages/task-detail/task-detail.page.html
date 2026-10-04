@@ -51,9 +51,9 @@
               </div>
               <div class="mt-4">
                 <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Adicionar nota</label>
-                <div class="flex gap-2">
-                  <input type="text" #noteInput class="flex-1 rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Escreve uma nota..." (keydown.enter)="addNote(noteInput.value); noteInput.value=''" />
-                  <button (click)="addNote(noteInput.value); noteInput.value=''" class="h-10 rounded-xl bg-brand px-4 text-[13px] font-semibold text-white transition hover:bg-brand-600">Adicionar</button>
+                <div class="flex gap-1.5">
+                  <input type="text" #noteInput class="min-w-0 flex-1 rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Escreve uma nota..." (keydown.enter)="addNote(noteInput.value); noteInput.value=''" />
+                  <button (click)="addNote(noteInput.value); noteInput.value=''" class="shrink-0 rounded-xl bg-brand px-3 text-[13px] font-semibold text-white transition hover:bg-brand-600">Adicionar</button>
                 </div>
               </div>
             </app-card>

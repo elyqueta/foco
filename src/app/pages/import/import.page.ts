@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataStore } from '../../core/data.store';
 import { ImportService } from '../../core/import.service';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-import',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppButtonComponent],
   templateUrl: './import.page.html',
 })
 export class ImportPage {

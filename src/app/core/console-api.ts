@@ -57,36 +57,52 @@ export class ConsoleApi {
   init(): void {
     const api: FocoConsoleApi = {
       addTask: (input) => {
+        const category = pickCategory(input.category);
+        const urgency = pickUrgency(input.urgency);
         const existingProject = input.projectName
           ? this.store.data().projects.find((p) => p.name.toLowerCase() === input.projectName!.toLowerCase())
           : null;
-        const projectId = existingProject ? existingProject.id : null;
-        const category = pickCategory(input.category);
-        const urgency = pickUrgency(input.urgency);
-        this.store.addTask({
-          title: input.title,
-          description: input.description ?? '',
-          category,
-          urgency,
-          status: 'todo',
-          canPostpone: input.canPostpone ?? true,
-          dueDate: input.dueDate ?? null,
-          nextStep: input.nextStep ?? '',
-          estimateMinutes: input.estimateMinutes ?? null,
-          tags: input.tags ?? [],
-          projectId,
-        });
+
         if (!existingProject && input.projectName) {
-          this.store.addProject({
+          const project = {
             name: input.projectName,
             category,
-            urgency: pickUrgency(input.urgency),
+            urgency,
             dueDate: input.dueDate ?? null,
             nextStep: input.nextStep ?? '',
             description: input.description ?? '',
             color: '#6C5CE7',
-            status: 'active',
-            canPostpone: true,
+            status: 'active' as const,
+            canPostpone: input.canPostpone ?? true,
+          };
+          this.store.addProject(project);
+          const created = this.store.data().projects.find((p) => p.name.toLowerCase() === input.projectName!.toLowerCase());
+          this.store.addTask({
+            title: input.title,
+            description: input.description ?? '',
+            category,
+            urgency,
+            status: 'todo',
+            canPostpone: input.canPostpone ?? true,
+            dueDate: input.dueDate ?? null,
+            nextStep: input.nextStep ?? '',
+            estimateMinutes: input.estimateMinutes ?? null,
+            tags: input.tags ?? [],
+            projectId: created?.id ?? null,
+          });
+        } else {
+          this.store.addTask({
+            title: input.title,
+            description: input.description ?? '',
+            category,
+            urgency,
+            status: 'todo',
+            canPostpone: input.canPostpone ?? true,
+            dueDate: input.dueDate ?? null,
+            nextStep: input.nextStep ?? '',
+            estimateMinutes: input.estimateMinutes ?? null,
+            tags: input.tags ?? [],
+            projectId: existingProject?.id ?? null,
           });
         }
         console.log(`[foco] Tarefa criada: ${input.title}`);

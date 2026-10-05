@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ConsoleApi } from './core/console-api';
-import { ThemeService } from './core/theme.service';
+import { ColorSchemeService } from './core/color-scheme.service';
 
 @Component({
   selector: 'app-root',
@@ -11,10 +11,9 @@ import { ThemeService } from './core/theme.service';
 })
 export class App {
   private consoleApi = inject(ConsoleApi);
-  private theme = inject(ThemeService);
+  private colorScheme = inject(ColorSchemeService);
 
   constructor() {
     this.consoleApi.init();
-    this.theme.init();
   }
 }

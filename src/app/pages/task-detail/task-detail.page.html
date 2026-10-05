@@ -1,17 +1,17 @@
 @if (task(); as task) {
       <div class="mt-8">
         <a routerLink="/tarefas" class="mb-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 hover:text-brand-fg">
-          <app-icon name="arrow-left" class="h-4 w-4" /> Tarefas
+          <app-icon name="arrow-left" [size]="16" /> Tarefas
         </a>
         <div class="flex items-center justify-between mb-4">
           <h1 class="text-[28px] font-extrabold leading-tight tracking-tight text-ink">{{ task.title }}</h1>
           <div class="flex gap-3">
             @if (task.status === 'done') {
-              <button (click)="reopenTask()" class="h-10 rounded-xl bg-brand-100 px-5 text-[13px] font-semibold text-brand-fg transition hover:bg-brand-50">Reabrir</button>
+              <app-button variant="secondary" icon="rotate-ccw" label="Reabrir" (click)="reopenTask()"></app-button>
             } @else {
-              <button (click)="completeTask()" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white transition hover:bg-brand-600">Concluir</button>
+              <app-button icon="check" label="Concluir" (click)="completeTask()"></app-button>
             }
-            <button (click)="deleteTask()" class="h-10 rounded-xl border border-danger/40 bg-surface-card px-5 text-[13px] font-semibold text-danger transition hover:bg-danger-soft">Apagar</button>
+            <app-button variant="danger" icon="trash-2" label="Apagar" (click)="deleteTask()"></app-button>
           </div>
         </div>
 
@@ -26,7 +26,7 @@
           <span [class]="statusClass(task.status)">{{ statusLabel(task.status) }}</span>
           @if (task.dueDate) {
             <span class="inline-flex items-center gap-1 text-[12px] text-ink-500">
-              <app-icon name="calendar" class="h-3.5 w-3.5" />
+              <app-icon name="calendar" [size]="14" />
               {{ formatDate(task.dueDate) }}
             </span>
           }
@@ -58,7 +58,7 @@
                 <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Adicionar nota</label>
                 <div class="flex gap-1.5">
                   <input type="text" #noteInput class="min-w-0 flex-1 rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Escreve uma nota..." (keydown.enter)="addNote(noteInput.value); noteInput.value=''" />
-                  <button (click)="addNote(noteInput.value); noteInput.value=''" class="shrink-0 rounded-xl bg-brand px-3 text-[13px] font-semibold text-white transition hover:bg-brand-600">Adicionar</button>
+                  <app-button icon="plus" label="Adicionar" [iconOnlyBelow]="null" buttonClass="shrink-0" (click)="addNote(noteInput.value); noteInput.value=''"></app-button>
                 </div>
               </div>
             </app-card>
@@ -116,7 +116,7 @@
                   </label>
                 </div>
                 @if (task.canPostpone) {
-                  <button (click)="postpone()" class="h-10 rounded-xl border border-brand text-brand px-5 text-[13px] font-semibold transition hover:bg-brand-50">Adiar tarefa</button>
+                  <app-button variant="secondary" icon="alarm-clock-plus" label="Adiar tarefa" (click)="postpone()"></app-button>
                 } @else {
                   <p class="text-[11px] text-ink-400">Esta tarefa não pode ser adiada.</p>
                 }

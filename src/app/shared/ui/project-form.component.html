@@ -48,7 +48,7 @@
         <input type="text" [(ngModel)]="form().nextStep" name="nextStep" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Próximo passo concreto" />
       </div>
       <div class="flex justify-end gap-3">
-        <button type="button" (click)="cancel.emit()" class="h-10 rounded-xl border border-surface-line bg-surface-card px-5 text-[13px] font-semibold text-ink-500 hover:text-ink transition">Cancelar</button>
-          <button type="submit" [disabled]="!form().name?.trim() || (form().name?.trim()?.length ?? 0) < 2" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed">{{ project ? 'Guardar' : 'Criar' }}</button>
+        <app-button type="button" variant="secondary" icon="x" label="Cancelar" [iconOnlyBelow]="null" (click)="cancel.emit()"></app-button>
+        <app-button type="submit" icon="save" [label]="project ? 'Guardar' : 'Criar'" [disabled]="!form().name?.trim() || (form().name?.trim()?.length ?? 0) < 2" [iconOnlyBelow]="null"></app-button>
       </div>
     </form>

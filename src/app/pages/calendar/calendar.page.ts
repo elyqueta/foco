@@ -6,12 +6,12 @@ import { TaskModalService } from '../../core/task-modal.service';
 import { ConfirmService } from '../../core/confirm.service';
 import { formatDate, toISODate, parseISODate, weekDaysMondayFirst, toDatePart } from '../../core/date.utils';
 import { Task } from '../../core/models';
-import { LucideAngularModule } from 'lucide-angular';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-calendar-page',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, AppButtonComponent],
   templateUrl: './calendar.page.html',
 })
 export class CalendarPage {

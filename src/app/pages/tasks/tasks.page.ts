@@ -13,11 +13,12 @@ import { AppIconComponent } from '../../shared/ui/icon.component';
 import { Task, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
 import { SearchService } from '../../core/search.service';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, AppIconComponent],
+  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, AppIconComponent, AppButtonComponent],
   templateUrl: './tasks.page.html',
 })
 export class TasksPage {

@@ -6,7 +6,7 @@ import { BadgeUrgencyComponent } from './badge-urgency.component';
 import { BadgeCategoryComponent } from './badge-category.component';
 import { DataStore } from '../../core/data.store';
 import { formatDate } from '../../core/date.utils';
-import { AppIconComponent } from '../ui/icon.component';
+import { AppIconComponent } from './icon.component';
 
 @Component({
   selector: 'app-task-row',

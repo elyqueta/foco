@@ -12,11 +12,12 @@ import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component
 import { Project, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
 import { SearchService } from '../../core/search.service';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule, RouterLink, EmptyStateComponent, ModalComponent, ProjectFormComponent, ProgressRingComponent, BadgeUrgencyComponent, BadgeCategoryComponent],
+  imports: [CommonModule, RouterLink, EmptyStateComponent, ModalComponent, ProjectFormComponent, ProgressRingComponent, BadgeUrgencyComponent, BadgeCategoryComponent, AppButtonComponent],
   templateUrl: './projects.page.html',
 })
 export class ProjectsPage {

@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, inject } from '@angular/core';
-import { NgFor } from '@angular/common';
+import { ChangeDetectionStrategy, Component, HostListener, inject } from '@angular/core';
 import { ThemeService } from '../../core/theme.service';
 import { AppIconComponent } from './icon.component';
 
@@ -14,28 +13,45 @@ import { AppIconComponent } from './icon.component';
     '[attr.aria-label]': '"Tema"',
   },
   template: `
-    @for (opt of options; track opt.value) {
+    @for (option of options; track option.value) {
       <button
+        #radioOption
         type="button"
         role="radio"
-        [attr.aria-checked]="theme() === opt.value"
-        [class]="theme() === opt.value ? 'bg-surface-card text-ink shadow-sm ring-1 ring-surface-line' : 'text-ink-500 hover:text-ink'"
-        (click)="select(opt.value)"
-        class="h-8 min-w-8 rounded-lg px-2.5 gap-1.5 inline-flex items-center justify-center text-xs font-semibold transition-colors duration-150"
+        [attr.aria-checked]="theme() === option.value"
+        [class]="theme() === option.value
+          ? 'inline-flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-ink shadow-sm ring-1 ring-surface-line transition-colors duration-150 bg-surface-card'
+          : 'inline-flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-ink-500 transition-colors duration-150 hover:text-ink'"
+        (click)="select(option.value)"
       >
-        <app-icon [name]="opt.icon" [size]="14" [class]="theme() === opt.value ? 'text-brand-fg' : ''" />
-        <span class="hidden md:inline">{{ opt.label }}</span>
+        <app-icon [name]="option.icon" [size]="14" [class]="theme() === option.value ? 'text-brand-fg' : ''" />
+        <span class="hidden md:inline">{{ option.label }}</span>
       </button>
     }
   `,
 })
 export class AppThemeToggleComponent {
   private readonly themeService = inject(ThemeService);
-  theme = this.themeService.theme;
-  select = (value: 'light' | 'dark') => this.themeService.set(value);
-
-  options = [
+  readonly theme = this.themeService.theme;
+  readonly options = [
     { value: 'light' as const, label: 'Claro', icon: 'sun' },
     { value: 'dark' as const, label: 'Escuro', icon: 'moon' },
   ];
+
+  select(value: 'light' | 'dark'): void {
+    this.themeService.set(value);
+  }
+
+  @HostListener('keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const nextTheme = this.theme() === 'light' ? 'dark' : 'light';
+    this.select(nextTheme);
+    const currentTarget = event.currentTarget;
+    if (currentTarget instanceof HTMLElement) {
+      const nextIndex = this.options.findIndex((option) => option.value === nextTheme);
+      currentTarget.querySelectorAll<HTMLElement>('[role="radio"]')[nextIndex]?.focus();
+    }
+  }
 }

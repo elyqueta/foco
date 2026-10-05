@@ -70,8 +70,8 @@
           Pode adiar
         </label>
         <div class="flex gap-3">
-          <button type="button" (click)="cancel.emit()" class="h-10 rounded-xl border border-surface-line px-5 text-[13px] font-semibold text-ink-500 hover:text-ink transition">Cancelar</button>
-          <button type="submit" [disabled]="!form().title?.trim() || (form().title?.trim()?.length ?? 0) < 2" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed">{{ task ? 'Guardar' : 'Criar' }}</button>
+          <app-button type="button" variant="secondary" icon="x" label="Cancelar" [iconOnlyBelow]="null" (click)="cancel.emit()"></app-button>
+          <app-button type="submit" icon="save" [label]="task ? 'Guardar' : 'Criar'" [disabled]="!form().title?.trim() || (form().title?.trim()?.length ?? 0) < 2" [iconOnlyBelow]="null"></app-button>
         </div>
       </div>
     </form>

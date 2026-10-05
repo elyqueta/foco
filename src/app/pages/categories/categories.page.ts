@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataStore } from '../../core/data.store';
 import { ConfirmService } from '../../core/confirm.service';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-categories-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppButtonComponent],
   template: `
     <div class="mt-8 max-w-[720px]">
       <h1 class="text-[28px] font-extrabold text-ink mb-2">Categorias</h1>
@@ -17,7 +18,7 @@ import { ConfirmService } from '../../core/confirm.service';
         <h3 class="text-[16px] font-bold text-ink mb-4">Nova categoria</h3>
         <div class="flex gap-3">
           <input type="text" [(ngModel)]="newName" name="newCategory" class="min-w-0 flex-1 rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Nome da categoria" (keydown.enter)="add()" />
-          <button type="button" (click)="add()" [disabled]="!canAdd()" class="h-10 shrink-0 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed">Adicionar</button>
+          <app-button icon="plus" label="Adicionar" [disabled]="!canAdd()" buttonClass="shrink-0" (click)="add()"></app-button>
         </div>
         @if (error()) {
           <p class="mt-1.5 text-[11px] text-danger">{{ error() }}</p>
@@ -31,7 +32,7 @@ import { ConfirmService } from '../../core/confirm.service';
             <div class="flex items-center justify-between rounded-xl border border-surface-line px-4 py-3">
               <span class="text-[13px] font-semibold text-ink">{{ cat }}</span>
               @if (cat !== 'professional' && cat !== 'personal' && cat !== 'household') {
-                <button type="button" (click)="remove(cat)" class="text-[12px] font-semibold text-danger transition hover:underline">Remover</button>
+                <app-button variant="danger" size="sm" icon="trash-2" label="Remover" (click)="remove(cat)"></app-button>
               } @else {
                 <span class="text-[11px] text-ink-400">Padrão</span>
               }

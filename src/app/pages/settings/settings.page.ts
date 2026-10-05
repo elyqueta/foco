@@ -4,14 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { DataStore } from '../../core/data.store';
 import { emptyAppData } from '../../core/storage.repository';
 import { ConfirmService } from '../../core/confirm.service';
-import { ThemeService } from '../../core/theme.service';
 import { ColorSchemeService, ColorScheme } from '../../core/color-scheme.service';
+import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppThemeToggleComponent],
+  imports: [CommonModule, FormsModule, AppIconComponent, AppThemeToggleComponent, AppButtonComponent],
   template: `
     <div class="mt-8 max-w-[720px]">
       <h1 class="text-[28px] font-extrabold text-ink mb-6">Definições</h1>
@@ -27,12 +28,16 @@ import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component'
         <app-theme-toggle />
 
         <label class="mt-4 mb-1.5 block text-[12px] font-semibold text-ink-700">Cor principal</label>
-        <div class="grid grid-cols-4 gap-3">
+        <div class="grid grid-cols-4 gap-3" role="radiogroup" aria-label="Esquema de cores">
           @for (option of colorOptions; track option.key) {
             <button type="button" (click)="setColor(option.key)"
+              role="radio" [attr.aria-checked]="colorScheme() === option.key" [attr.aria-label]="'Seleccionar esquema ' + option.label"
               [class]="'flex flex-col items-center justify-center gap-2 rounded-2xl border p-3 transition ' + (colorScheme() === option.key ? 'border-brand bg-brand-50' : 'border-surface-line bg-surface-app hover:border-brand/50')">
               <span class="h-8 w-8 rounded-full border border-black/5" [style]="'background: ' + option.cssColor"></span>
               <span class="text-[12px] font-semibold text-ink">{{ option.label }}</span>
+              @if (colorScheme() === option.key) {
+                <app-icon name="check" [size]="14" class="text-brand-fg" />
+              }
             </button>
           }
         </div>
@@ -41,9 +46,9 @@ import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component'
       <div class="rounded-card bg-surface-card p-5 shadow-card mb-5">
         <h3 class="text-[16px] font-bold text-ink mb-4">Dados</h3>
         <div class="flex flex-col gap-3">
-          <button (click)="exportJson()" class="h-10 rounded-xl border border-surface-line bg-surface-card px-5 text-[13px] font-semibold text-ink-500 transition hover:text-ink">Exportar JSON</button>
-          <button (click)="restoreSeed()" class="h-10 rounded-xl border border-surface-line bg-surface-card px-5 text-[13px] font-semibold text-ink-500 transition hover:text-ink">Restaurar dados de exemplo</button>
-          <button (click)="clearAll()" class="h-10 rounded-xl border border-danger/40 bg-surface-card px-5 text-[13px] font-semibold text-danger transition hover:bg-danger-soft">Apagar tudo</button>
+          <app-button variant="secondary" icon="download" label="Exportar JSON" buttonClass="w-full justify-start" (click)="exportJson()"></app-button>
+          <app-button variant="secondary" icon="rotate-ccw" label="Restaurar dados de exemplo" buttonClass="w-full justify-start" (click)="restoreSeed()"></app-button>
+          <app-button variant="danger" icon="trash-2" label="Apagar tudo" buttonClass="w-full justify-start" (click)="clearAll()"></app-button>
         </div>
       </div>
     </div>
@@ -51,10 +56,8 @@ import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component'
 })
 export class SettingsPage {
   private store = inject(DataStore);
-  private themeService = inject(ThemeService);
   private confirm = inject(ConfirmService);
   private colorService = inject(ColorSchemeService);
-  theme = this.themeService.theme;
   colorScheme = this.colorService.scheme;
   userName = signal(this.store.data().settings.userName);
 
@@ -69,10 +72,6 @@ export class SettingsPage {
     effect(() => {
       this.userName.set(this.store.data().settings.userName);
     });
-  }
-
-  setTheme(value: 'light' | 'dark'): void {
-    this.themeService.set(value);
   }
 
   setColor(value: ColorScheme): void {

@@ -2,17 +2,18 @@ import { Component, inject, signal, computed, afterNextRender } from '@angular/c
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { AppIconComponent } from '../../shared/ui/icon.component';
+import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthError } from '../../core/auth/auth.models';
 import { MOCK_LOGIN_HINT } from '../../core/auth/mock-auth.repository';
 import { environment } from '../../../environments/environment';
-import { AppIconComponent } from '../../shared/ui/icon.component';
-import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AppIconComponent, AppThemeToggleComponent],
+  imports: [CommonModule, ReactiveFormsModule, AppIconComponent, AppThemeToggleComponent, AppButtonComponent],
   templateUrl: './login.page.html',
 })
 export class LoginPage {
@@ -20,7 +21,6 @@ export class LoginPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
-
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],

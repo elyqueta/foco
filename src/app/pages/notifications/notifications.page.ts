@@ -1,19 +1,20 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AppIconComponent } from '../../shared/ui/icon.component';
 import { NotificationService } from '../../core/notification.service';
 import { AppNotification } from '../../core/models';
+import { AppIconComponent } from '../../shared/ui/icon.component';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-notifications-page',
   standalone: true,
-  imports: [CommonModule, AppIconComponent],
+  imports: [CommonModule, AppIconComponent, AppButtonComponent],
   template: `
     <div class="mt-8 max-w-[720px]">
       <div class="flex items-center justify-between">
         <h1 class="text-[28px] font-extrabold text-ink">Notificações</h1>
         @if (unreadCount() > 0) {
-          <button type="button" (click)="markAllRead()" class="text-[12px] font-semibold text-brand-fg hover:underline">Marcar tudo como lido</button>
+          <app-button variant="ghost" icon="check" label="Marcar tudo como lido" (click)="markAllRead()"></app-button>
         }
       </div>
 
@@ -28,13 +29,13 @@ import { AppNotification } from '../../core/models';
               </div>
               <div class="shrink-0">
                 @if (item.type === 'focus') {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand text-white"><app-icon name="target" class="h-4 w-4" /></span>
+                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand text-white"><app-icon name="target" /></span>
                 } @else if (item.type === 'success') {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-success text-white"><app-icon name="check" class="h-4 w-4" /></span>
+                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-success text-white"><app-icon name="check" /></span>
                 } @else if (item.type === 'warning') {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-warn text-white"><app-icon name="triangle-alert" class="h-4 w-4" /></span>
+                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-warn text-white"><app-icon name="triangle-alert" /></span>
                 } @else {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-surface-app text-ink-500"><app-icon name="info" class="h-4 w-4" /></span>
+                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-surface-app text-ink-500"><app-icon name="info" /></span>
                 }
               </div>
             </div>

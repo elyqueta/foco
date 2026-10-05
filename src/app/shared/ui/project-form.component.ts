@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Project, Category, Urgency } from '../../core/models';
 import { DataStore } from '../../core/data.store';
+import { AppButtonComponent } from './button.component';
 
 @Component({
   selector: 'app-project-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppButtonComponent],
   templateUrl: './project-form.component.html',
 })
 export class ProjectFormComponent {

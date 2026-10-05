@@ -3,8 +3,8 @@
         <h3 class="text-[16px] font-bold text-ink mb-3">Exportar</h3>
         <p class="text-[12px] text-ink-500 mb-4">Descarrega o ficheiro JSON com todos os teus dados ou copia um prompt para uma IA.</p>
         <div class="flex flex-col gap-3">
-          <button (click)="exportJson()" class="h-10 rounded-xl border border-surface-line bg-surface-card px-5 text-[13px] font-semibold text-ink-500 transition hover:text-ink">Exportar JSON</button>
-          <button (click)="copyPrompt()" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white transition hover:bg-brand-600">{{ copied() ? 'Copiado!' : 'Copiar prompt para IA' }}</button>
+          <app-button variant="secondary" icon="download" label="Exportar JSON" (click)="exportJson()"></app-button>
+          <app-button icon="copy" [label]="copied() ? 'Copiado!' : 'Copiar prompt para IA'" (click)="copyPrompt()"></app-button>
         </div>
       </div>
 
@@ -27,8 +27,8 @@
           </div>
         }
         <div class="mt-4 flex gap-3">
-          <button (click)="importJson()" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white transition hover:bg-brand-600">Importar</button>
-          <button (click)="clearForm()" class="h-10 rounded-xl border border-surface-line bg-surface-card px-5 text-[13px] font-semibold text-ink-500 transition hover:text-ink">Limpar</button>
+          <app-button icon="upload" label="Importar" (click)="importJson()"></app-button>
+          <app-button variant="secondary" icon="eraser" label="Limpar" (click)="clearForm()"></app-button>
         </div>
       </div>
     </div>

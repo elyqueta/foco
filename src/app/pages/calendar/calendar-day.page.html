@@ -1,11 +1,11 @@
 <div class="mt-8 max-w-4xl">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <button type="button" (click)="back()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&lsaquo;</button>
+        <app-button variant="ghost" size="sm" icon="arrow-left" label="Voltar ao calendário" [iconOnly]="true" (click)="back()"></app-button>
         <h2 class="text-[18px] font-bold text-ink">Tarefas para {{ dayLabel() }}</h2>
       </div>
       @if (canAddTask()) {
-        <button type="button" (click)="addTask()" class="h-9 rounded-xl bg-brand px-4 text-[12px] font-semibold text-white transition hover:bg-brand-600">Adicionar tarefa</button>
+        <app-button size="sm" icon="plus" label="Adicionar tarefa" (click)="addTask()"></app-button>
       }
     </div>
 
@@ -27,8 +27,8 @@
             <p class="text-[11px] text-ink-400">{{ formatDateTime(t.dueDate) }} · {{ t.category }}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <button (click)="$event.stopPropagation(); editTask(t.id)" class="text-[11px] text-brand font-semibold hover:underline">Editar</button>
-            <button (click)="$event.stopPropagation(); deleteTask(t.id)" class="text-[11px] text-danger font-semibold hover:underline">Eliminar</button>
+            <app-button variant="ghost" size="sm" icon="pencil" label="Editar" (click)="$event.stopPropagation(); editTask(t.id)"></app-button>
+            <app-button variant="danger" size="sm" icon="trash-2" label="Eliminar" (click)="$event.stopPropagation(); deleteTask(t.id)"></app-button>
           </div>
         </div>
       }

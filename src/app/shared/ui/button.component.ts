@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, computed } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { AppIconComponent } from './icon.component';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark';
@@ -8,52 +7,24 @@ export type ButtonSize = 'md' | 'sm';
 @Component({
   selector: 'app-button',
   standalone: true,
-  imports: [NgIf, AppIconComponent],
+  imports: [AppIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    '[class.inline-flex]': 'true',
-    '[class.items-center]': 'true',
-    '[class.justify-center]': 'true',
-    '[class.gap-2]': 'true',
-    '[class.rounded-xl]': 'true',
-    '[class.font-semibold]': 'true',
-    '[class.transition-all]': 'true',
-    '[class.duration-150]': 'true',
-    '[class.outline-none]': 'true',
-    '[class.h-10]': 'size() === "md"',
-    '[class.h-9]': 'size() === "sm"',
-    '[class.px-4]': 'size() === "md" && shouldShowLabel()',
-    '[class.px-3]': 'size() === "sm" && shouldShowLabel()',
-    '[class.w-10]': '!shouldShowLabel()',
-    '[class.p-0]': '!shouldShowLabel()',
-    '[class.text-sm]': 'size() === "md"',
-    '[class.text-xs]': 'size() === "sm"',
-    '[class.active:scale-[.98]]': '!disabled()',
-    '[class.focus-visible:ring-2]': 'true',
-    '[class.focus-visible:ring-brand/40]': 'true',
-    '[class.focus-visible:ring-offset-2]': 'true',
-    '[class.focus-visible:ring-offset-surface-card]': 'true',
-    '[class.disabled:opacity-50]': 'disabled()',
-    '[class.disabled:cursor-not-allowed]': 'disabled()',
-    '[class.cursor-pointer]': '!disabled()',
-    '[class.bg-brand]': 'variant() === "primary"',
-    '[class.text-white]': 'variant() === "primary" || variant() === "dark"',
-    '[class.hover:bg-brand-600]': 'variant() === "primary"',
-    '[class.bg-strong]': 'variant() === "dark"',
-    '[class.bg-surface-app]': 'variant() === "secondary" || variant() === "ghost"',
-    '[class.border]': 'variant() === "secondary" || variant() === "danger"',
-    '[class.border-surface-line]': 'variant() === "secondary"',
-    '[class.text-ink]': 'variant() === "secondary"',
-    '[class.text-ink-500]': 'variant() === "ghost"',
-    '[class.hover:bg-surface-app]': 'variant() === "ghost"',
-    '[class.text-danger]': 'variant() === "danger"',
-    '[class.border-danger/40]': 'variant() === "danger"',
-    '[class.hover:bg-danger-soft]': 'variant() === "danger"',
-  },
   template: `
-    <app-icon *ngIf="!loading()" [name]="icon()" [size]="iconSize()" [class]="iconClass()" />
-    <app-icon *ngIf="loading()" name="loader-circle" [size]="iconSize()" [class]="iconClass()" class="animate-spin" />
-    <span *ngIf="shouldShowLabel()" class="hidden sm:inline">{{ label() }}</span>
+    <button
+      [type]="type()"
+      [disabled]="disabled() || loading()"
+      [attr.aria-label]="label()"
+      [attr.title]="label()"
+      [attr.aria-expanded]="ariaExpanded()"
+      [class]="buttonClasses()"
+    >
+      @if (loading()) {
+        <app-icon name="loader-circle" [size]="iconSize()" class="animate-spin" />
+      } @else {
+        <app-icon [name]="icon()" [size]="iconSize()" />
+      }
+      <span [class]="labelClasses()">{{ text() ?? label() }}</span>
+    </button>
   `,
 })
 export class AppButtonComponent {
@@ -61,24 +32,61 @@ export class AppButtonComponent {
   size = input<ButtonSize>('md');
   icon = input.required<string>();
   label = input.required<string>();
-  iconOnlyBelow = input<'sm' | 'md' | null>(null);
+  text = input<string | null>(null);
+  ariaExpanded = input<boolean | null>(null);
+  iconOnlyBelow = input<'sm' | 'md' | null>('sm');
   type = input<'button' | 'submit' | 'reset'>('button');
-  disabled = input<boolean>(false);
-  loading = input<boolean>(false);
+  disabled = input(false);
+  loading = input(false);
+  buttonClass = input('');
+  iconOnly = input(false);
 
-  shouldShowLabel = computed(() => {
-    const below = this.iconOnlyBelow();
-    if (below === null) return true;
-    return below === 'md'; // 'md' means show label on md+, hide on sm; 'sm' means show on sm+, hide below
+  readonly iconSize = computed(() => (this.size() === 'sm' ? 16 : 18));
+
+  readonly labelClasses = computed(() => {
+    if (this.iconOnly()) return 'sr-only';
+    const breakpoint = this.iconOnlyBelow();
+    if (breakpoint === 'sm') return 'hidden sm:inline';
+    if (breakpoint === 'md') return 'hidden md:inline';
+    return 'inline';
   });
 
-  iconSize = computed(() => (this.size() === 'sm' ? 16 : 18));
-
-  iconClass = computed(() => {
-    const v = this.variant();
-    if (v === 'primary' || v === 'dark') return 'text-white';
-    if (v === 'danger') return 'text-danger';
-    if (v === 'ghost') return 'text-ink-500';
-    return 'text-brand';
+  readonly buttonClasses = computed(() => {
+    const size = this.size();
+    const responsiveSize = {
+      sm: {
+        md: 'h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3',
+        mdAt: 'h-9 w-9 p-0 md:h-9 md:w-auto md:px-3',
+        full: 'h-9 px-3',
+      },
+      md: {
+        md: 'h-10 w-10 p-0 sm:h-10 sm:w-auto sm:px-4',
+        mdAt: 'h-10 w-10 p-0 md:h-10 md:w-auto md:px-4',
+        full: 'h-10 px-4',
+      },
+    }[size];
+    const variant: Record<ButtonVariant, string> = {
+      primary: 'bg-brand text-primary-fg hover:bg-brand-600',
+      secondary: 'border border-surface-line bg-surface-app text-ink hover:bg-brand-50',
+      ghost: 'bg-transparent text-ink-500 hover:bg-surface-app hover:text-ink',
+      danger: 'border border-danger/40 bg-transparent text-danger hover:bg-danger-soft',
+      dark: 'bg-strong text-white hover:opacity-90',
+    };
+    const textSize = size === 'sm' ? 'text-xs' : 'text-[13px]';
+    return [
+      'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-150',
+      'active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40',
+      'focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card disabled:cursor-not-allowed disabled:opacity-50',
+      this.iconOnly()
+        ? (size === 'sm' ? 'h-9 w-9 p-0' : 'h-10 w-10 p-0')
+        : this.iconOnlyBelow() === 'sm'
+        ? responsiveSize.md
+        : this.iconOnlyBelow() === 'md'
+          ? responsiveSize.mdAt
+          : responsiveSize.full,
+      textSize,
+      variant[this.variant()],
+      this.buttonClass(),
+    ].join(' ');
   });
 }

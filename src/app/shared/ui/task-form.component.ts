@@ -5,11 +5,12 @@ import { Task, Category, Urgency, Status, Project } from '../../core/models';
 import { BadgeUrgencyComponent } from './badge-urgency.component';
 import { BadgeCategoryComponent } from './badge-category.component';
 import { DataStore } from '../../core/data.store';
+import { AppButtonComponent } from './button.component';
 
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppButtonComponent],
   templateUrl: './task-form.component.html',
 })
 export class TaskFormComponent {

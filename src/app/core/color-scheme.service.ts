@@ -1,110 +1,87 @@
-import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { effect, inject, Injectable, computed } from '@angular/core';
 import { DataStore } from './data.store';
 import { ThemeService } from './theme.service';
+import { focoBadgeSvg, svgToDataUri } from '../shared/brand/foco-brand';
 
 export type ColorScheme = 'purple' | 'blue' | 'red' | 'gray';
 
-const SCHEMES: Record<ColorScheme, { brand: string; brand600: string; brand400: string; strong: string; rgb: [number, number, number]; focoLogo: string }> = {
-  purple: {
-    brand: '108 92 231',
-    brand600: '91 75 214',
-    brand400: '133 119 240',
-    strong: '27 24 64',
-    rgb: [108, 92, 231],
-    focoLogo: '#6C5CE7',
-  },
-  blue: {
-    brand: '37 99 235',
-    brand600: '29 78 216',
-    brand400: '59 130 246',
-    strong: '15 23 42',
-    rgb: [37, 99, 235],
-    focoLogo: '#2563EB',
-  },
-  red: {
-    brand: '220 38 38',
-    brand600: '185 28 28',
-    brand400: '248 113 113',
-    strong: '30 27 27',
-    rgb: [220, 38, 38],
-    focoLogo: '#DC2626',
-  },
-  gray: {
-    brand: '75 85 99',
-    brand600: '55 65 81',
-    brand400: '148 163 184',
-    strong: '15 23 42',
-    rgb: [75, 85, 99],
-    focoLogo: '#4B5563',
-  },
-};
+interface SchemeColors {
+  brand: string;
+  brand600: string;
+  brand400: string;
+  strong: string;
+  rgb: [number, number, number];
+  logo: string;
+}
 
-const luminance = ([r, g, b]: [number, number, number]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+const SCHEMES: Record<ColorScheme, SchemeColors> = {
+  purple: { brand: '108 92 231', brand600: '91 75 214', brand400: '133 119 240', strong: '27 24 64', rgb: [108, 92, 231], logo: '#6C5CE7' },
+  blue: { brand: '37 99 235', brand600: '29 78 216', brand400: '59 130 246', strong: '15 23 42', rgb: [37, 99, 235], logo: '#2563EB' },
+  red: { brand: '220 38 38', brand600: '185 28 28', brand400: '248 113 113', strong: '30 27 27', rgb: [220, 38, 38], logo: '#DC2626' },
+  gray: { brand: '75 85 99', brand600: '55 65 81', brand400: '148 163 184', strong: '15 23 42', rgb: [75, 85, 99], logo: '#4B5563' },
+};
 
 @Injectable({ providedIn: 'root' })
 export class ColorSchemeService {
   private readonly store = inject(DataStore);
-  private readonly themeService = inject(ThemeService);
-  private readonly _scheme = signal<ColorScheme>(this.read());
-  readonly scheme = this._scheme.asReadonly();
+  private readonly theme = inject(ThemeService);
+  private readonly document = inject(DOCUMENT);
+
+  readonly scheme = computed<ColorScheme>(() => {
+    const current = this.store.data().settings.colorScheme;
+    return current === 'purple' || current === 'blue' || current === 'red' || current === 'gray'
+      ? current
+      : 'purple';
+  });
 
   constructor() {
-    effect(() => {
-      const theme = this.themeService.theme();
-      this.apply(this._scheme(), theme);
-    });
+    effect(() => this.apply(this.scheme(), this.theme.theme()));
   }
 
   set(scheme: ColorScheme): void {
-    this._scheme.set(scheme);
     this.store.setColorScheme(scheme);
   }
 
   colors(): Record<string, string> {
-    const scheme = SCHEMES[this._scheme()];
-    const { rgb: _, ...rest } = scheme;
-    return rest;
+    const { rgb: _rgb, ...colors } = SCHEMES[this.scheme()];
+    return colors;
   }
 
   rgb(): [number, number, number] {
-    return SCHEMES[this._scheme()].rgb;
+    return SCHEMES[this.scheme()].rgb;
   }
 
   private apply(scheme: ColorScheme, theme: 'light' | 'dark'): void {
     const colors = SCHEMES[scheme];
-    const root = document.documentElement;
+    const root = this.document.documentElement;
+    const foreground = theme === 'dark' ? colors.brand400 : colors.brand;
+    const luminance = (channel: number): number => {
+      const normalized = channel / 255;
+      return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+    };
+    const brandLuminance = 0.2126 * luminance(colors.rgb[0]) + 0.7152 * luminance(colors.rgb[1]) + 0.0722 * luminance(colors.rgb[2]);
+    const darkTextLuminance = 0.2126 * luminance(27) + 0.7152 * luminance(24) + 0.0722 * luminance(64);
+    const lightContrast = 1.05 / (brandLuminance + 0.05);
+    const darkContrast = (brandLuminance + 0.05) / (darkTextLuminance + 0.05);
+    const primaryForeground = darkContrast > lightContrast ? '27 24 64' : '255 255 255';
+
     root.style.setProperty('--c-brand', colors.brand);
     root.style.setProperty('--c-brand-600', colors.brand600);
     root.style.setProperty('--c-brand-400', colors.brand400);
-    root.style.setProperty('--c-strong', colors.strong);
-    root.style.setProperty('--c-brand-fg', theme === 'dark' ? colors.brand400 : colors.brand);
-    root.style.setProperty('--primary-fg', luminance(colors.rgb) > 0.6 ? '17 24 39' : '255 255 255');
-    root.style.setProperty('--foco-logo', colors.focoLogo);
-    this.updateFavicon(colors.focoLogo);
-    this.updateThemeColor(colors.focoLogo);
-  }
+    root.style.setProperty('--c-brand-fg', foreground);
+    root.style.setProperty('--c-strong', theme === 'dark' ? '58 54 110' : colors.strong);
+    root.style.setProperty('--primary-fg', primaryForeground);
+    root.style.setProperty('--foco-logo', colors.logo);
 
-  private updateFavicon(hex: string): void {
-    const { focoBadgeSvg, svgToDataUri } = require('../shared/brand/foco-brand');
-    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
+    let favicon = this.document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!favicon) {
+      favicon = this.document.createElement('link');
+      favicon.rel = 'icon';
+      this.document.head.appendChild(favicon);
     }
-    link.type = 'image/svg+xml';
-    link.href = svgToDataUri(focoBadgeSvg(hex));
-  }
-
-  private updateThemeColor(hex: string): void {
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', hex);
-  }
-
-  private read(): ColorScheme {
-    const stored = this.store.data().settings.colorScheme;
-    if (stored === 'purple' || stored === 'blue' || stored === 'red' || stored === 'gray') {
-      return stored;
-    }
-    return 'purple';
+    favicon.type = 'image/svg+xml';
+    favicon.href = svgToDataUri(focoBadgeSvg(colors.logo));
+    this.document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.logo);
   }
 }

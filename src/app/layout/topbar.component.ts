@@ -3,7 +3,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Router } from '@angular/router';
 import { HostListener } from '@angular/core';
 import { DataStore } from '../core/data.store';
-import { ThemeService } from '../core/theme.service';
 import { SearchService } from '../core/search.service';
 import { AuthService } from '../core/auth/auth.service';
 import { TaskModalService } from '../core/task-modal.service';
@@ -12,23 +11,22 @@ import { NotificationService } from '../core/notification.service';
 import { ExportDialogComponent } from '../shared/ui/export-dialog.component';
 import { AppIconComponent } from '../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../shared/ui/theme-toggle.component';
+import { AppButtonComponent } from '../shared/ui/button.component';
 import { toISODate } from '../core/date.utils';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, AppIconComponent, SearchDropdownComponent, ExportDialogComponent, AppThemeToggleComponent],
+  imports: [RouterLink, RouterLinkActive, AppIconComponent, AppThemeToggleComponent, AppButtonComponent, SearchDropdownComponent, ExportDialogComponent],
   templateUrl: './topbar.component.html',
 })
 export class TopbarComponent implements OnInit {
   private store = inject(DataStore);
-  private themeService = inject(ThemeService);
   private search = inject(SearchService);
   private router = inject(Router);
   private auth = inject(AuthService);
   private modal = inject(TaskModalService);
   private notifications = inject(NotificationService);
-  theme = this.themeService.theme;
   searchQuery = this.search.query;
 
   tabs = [
@@ -88,10 +86,6 @@ export class TopbarComponent implements OnInit {
     return parts[0]?.slice(0, 2).toUpperCase() ?? 'U';
   }
 
-  setTheme(value: 'light' | 'dark'): void {
-    this.themeService.set(value);
-  }
-
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.search.query.set(input.value);
@@ -136,4 +130,3 @@ export class TopbarComponent implements OnInit {
     // PDF export logic moved to ExportService
   }
 }
-

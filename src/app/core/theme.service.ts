@@ -1,23 +1,17 @@
-import { Injectable, signal, computed, effect, inject } from '@angular/core';
-import { DataStore } from './data.store';
+import { Injectable, computed, effect, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { DataStore } from './data.store';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly store = inject(DataStore);
-  private readonly doc = inject(DOCUMENT);
+  private readonly document = inject(DOCUMENT);
   theme = computed(() => this.store.data().settings.theme);
 
   constructor() {
     effect(() => {
-      this.doc.documentElement.setAttribute('data-theme', this.theme());
+      this.document.documentElement.setAttribute('data-theme', this.theme());
     });
-    this.init();
-  }
-
-  init(): void {
-    const stored = this.store.data().settings.theme;
-    this.doc.documentElement.setAttribute('data-theme', stored);
   }
 
   set(theme: 'light' | 'dark'): void {

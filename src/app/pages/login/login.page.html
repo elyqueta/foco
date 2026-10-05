@@ -1,5 +1,5 @@
 <div class="relative grid min-h-screen place-items-center bg-surface-page p-4 md:p-8">
-  <app-theme-toggle class="absolute right-4 top-4" />
+  <div class="absolute right-4 top-4"><app-theme-toggle /></div>
 
   <div class="grid w-full max-w-[1080px] overflow-clip rounded-[28px] bg-surface-card p-1.5 shadow-float lg:min-h-[640px] lg:grid-cols-2">
     <div class="relative hidden overflow-hidden rounded-[22px] bg-gradient-to-br from-brand-400 via-brand to-[#2B2780] p-8 text-white lg:flex lg:flex-col lg:justify-between">
@@ -8,7 +8,7 @@
 
       <div class="relative z-10 flex items-center gap-2">
         <div class="grid h-8 w-8 place-items-center rounded-lg bg-white/20 backdrop-blur">
-          <app-icon name="target" class="h-4 w-4 text-white" />
+          <app-icon name="target" class="text-white" />
         </div>
         <span class="text-[16px] font-bold tracking-tight text-white">Foco</span>
       </div>
@@ -37,7 +37,7 @@
     <div class="flex flex-col justify-center px-6 py-12 sm:px-12">
       <div class="mb-8 flex items-center justify-center gap-2 lg:hidden">
         <div class="grid h-8 w-8 place-items-center rounded-lg bg-brand text-white">
-          <app-icon name="target" class="h-4 w-4" />
+          <app-icon name="target" />
         </div>
         <span class="text-[16px] font-bold tracking-tight text-ink">Foco</span>
       </div>
@@ -59,7 +59,7 @@
               class="h-11 w-full rounded-xl bg-surface-app px-4 pr-11 text-[13px] text-ink placeholder:text-ink-400 transition focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-brand/30"
               [ngClass]="emailInvalid() ? 'ring-2 ring-danger/40' : ''" />
             @if (emailValid()) {
-              <app-icon name="check" class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-success" />
+              <app-icon name="check" class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-success" />
             }
           </div>
           @if (emailInvalid()) { <p class="mt-1.5 text-[11px] text-danger">{{ emailError() }}</p> }
@@ -72,28 +72,19 @@
               [attr.aria-invalid]="passwordInvalid()"
               class="h-11 w-full rounded-xl bg-surface-app px-4 pr-11 text-[13px] text-ink placeholder:text-ink-400 transition focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-brand/30"
               [ngClass]="passwordInvalid() ? 'ring-2 ring-danger/40' : ''" />
-            <button type="button" (click)="showPassword.set(!showPassword())"
-              [attr.aria-label]="showPassword() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'"
-              class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-400 transition hover:text-ink">
-              <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" class="h-4 w-4" />
-            </button>
+            <app-button variant="ghost" size="sm" [icon]="showPassword() ? 'eye-off' : 'eye'" [label]="showPassword() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'" [iconOnly]="true" buttonClass="absolute right-3 top-1/2 -translate-y-1/2" (click)="showPassword.set(!showPassword())"></app-button>
           </div>
           @if (passwordInvalid()) { <p class="mt-1.5 text-[11px] text-danger">{{ passwordError() }}</p> }
         </div>
 
-        <button type="submit" [disabled]="loading()"
-          class="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[14px] font-semibold text-white shadow-card transition hover:bg-brand-600 focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60">
-          @if (loading()) {
-            <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> A entrar…
-          } @else { Entrar }
-        </button>
+        <app-button type="submit" icon="log-in" [label]="loading() ? 'A entrar…' : 'Entrar'" [loading]="loading()" [disabled]="loading()" [iconOnlyBelow]="null" buttonClass="w-full !h-11 !text-[14px]"></app-button>
       </form>
 
       @if (mock) {
         <div class="mx-auto mt-4 w-full max-w-[400px] rounded-xl bg-brand-50 px-4 py-3 text-[12px] text-ink-500">
           <p class="font-semibold text-ink-700">Modo demonstração</p>
           <p class="mt-1">{{ hint.email }} · {{ hint.password }}</p>
-          <button type="button" (click)="fillDemo()" class="mt-2 text-[12px] font-semibold text-brand-fg hover:underline">Preencher automaticamente</button>
+          <app-button variant="ghost" size="sm" icon="copy" label="Preencher automaticamente" [iconOnlyBelow]="null" buttonClass="mt-2 !h-auto !px-0 text-[12px] hover:!bg-transparent hover:underline" (click)="fillDemo()"></app-button>
         </div>
       }
 

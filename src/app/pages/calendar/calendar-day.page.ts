@@ -7,12 +7,12 @@ import { TaskModalService } from '../../core/task-modal.service';
 import { ConfirmService } from '../../core/confirm.service';
 import { toISODate, parseISODate, toDatePart, todayISO } from '../../core/date.utils';
 import { Task } from '../../core/models';
-import { LucideAngularModule } from 'lucide-angular';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-calendar-day-page',
   standalone: true,
-  imports: [CommonModule, EmptyStateComponent, LucideAngularModule],
+  imports: [CommonModule, EmptyStateComponent, AppButtonComponent],
   templateUrl: './calendar-day.page.html',
 })
 export class CalendarDayPage {

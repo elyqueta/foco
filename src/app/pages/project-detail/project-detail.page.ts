@@ -14,13 +14,14 @@ import { TaskFormComponent } from '../../shared/ui/task-form.component';
 import { ProjectFormComponent } from '../../shared/ui/project-form.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
 import { AppIconComponent } from '../../shared/ui/icon.component';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 import { formatDate } from '../../core/date.utils';
 import { Task, Project, ActivityEntry } from '../../core/models';
 
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, ProjectFormComponent, TaskRowComponent, AppIconComponent],
+  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, ProjectFormComponent, TaskRowComponent, AppIconComponent, AppButtonComponent],
   templateUrl: './project-detail.page.html',
 })
 export class ProjectDetailPage {

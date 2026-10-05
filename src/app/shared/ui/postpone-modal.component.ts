@@ -2,11 +2,12 @@ import { Component, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataStore } from '../../core/data.store';
 import { toISODateTime } from '../../core/date.utils';
+import { AppButtonComponent } from './button.component';
 
 @Component({
   selector: 'app-postpone-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AppButtonComponent],
   template: `
     <div class="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm p-4" (click)="onOverlayClick()">
       <div class="w-full max-w-[400px] rounded-card bg-surface-card p-6 shadow-float" (click)="$event.stopPropagation()">
@@ -19,8 +20,8 @@ import { toISODateTime } from '../../core/date.utils';
         </div>
 
         <div class="flex items-center justify-end gap-3">
-          <button type="button" (click)="cancel.emit()" class="h-10 rounded-xl border border-surface-line bg-surface-card px-5 text-[13px] font-semibold text-ink-500 transition hover:text-ink">Cancelar</button>
-          <button type="button" (click)="confirm.emit(dateTime())" [disabled]="!isValid()" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed">Adiar</button>
+          <app-button type="button" variant="secondary" icon="x" label="Cancelar" [iconOnlyBelow]="null" (click)="cancel.emit()"></app-button>
+          <app-button type="button" icon="alarm-clock-plus" label="Adiar" [disabled]="!isValid()" [iconOnlyBelow]="null" (click)="confirm.emit(dateTime())"></app-button>
         </div>
       </div>
     </div>

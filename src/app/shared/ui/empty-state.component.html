@@ -5,6 +5,6 @@
       <h3 class="text-[15px] font-bold text-ink mb-1">{{ title() }}</h3>
       <p class="text-[12px] text-ink-500 mb-4 max-w-[280px]">{{ message() }}</p>
       @if (actionLabel()) {
-        <button (click)="actionClick.emit()" class="h-10 rounded-xl bg-brand px-5 text-[13px] font-semibold text-white hover:bg-brand-600 transition">{{ actionLabel() }}</button>
+        <app-button icon="plus" [label]="actionLabel() ?? ''" [iconOnlyBelow]="null" (click)="actionClick.emit()"></app-button>
       }
     </div>

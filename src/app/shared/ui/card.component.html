@@ -2,7 +2,7 @@
   <div class="flex items-center justify-between mb-4 min-w-0">
     <h3 class="truncate text-base font-semibold text-ink">{{ title() }}</h3>
     @if (actionLabel()) {
-      <button class="shrink-0 text-sm font-medium text-ink-500 hover:text-primary transition" (click)="actionClick.emit()">{{ actionLabel() }}</button>
+      <app-button variant="ghost" size="sm" icon="chevron-right" [label]="actionLabel() ?? ''" (click)="actionClick.emit()"></app-button>
     }
   </div>
   <ng-content />

@@ -11,13 +11,14 @@ import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { PostponeModalComponent } from '../../shared/ui/postpone-modal.component';
 import { AppIconComponent } from '../../shared/ui/icon.component';
+import { AppButtonComponent } from '../../shared/ui/button.component';
 import { formatDate } from '../../core/date.utils';
 import { Task, ActivityEntry, Project } from '../../core/models';
 
 @Component({
   selector: 'app-task-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, PostponeModalComponent, AppIconComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, PostponeModalComponent, AppIconComponent, AppButtonComponent],
   templateUrl: './task-detail.page.html',
 })
 export class TaskDetailPage {

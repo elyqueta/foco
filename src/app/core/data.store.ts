@@ -38,9 +38,8 @@ export class DataStore {
     const t = todayISO();
     return this._data().tasks.filter((tk) => {
       if (tk.status === 'done') return false;
-      if (tk.status === 'expired') return false;
       if (tk.urgency === 'critical') return true;
-      if (toDatePart(tk.dueDate || '') === t) return true;
+      if (tk.dueDate && toDatePart(tk.dueDate) === t) return true;
       if (tk.dueDate && toDatePart(tk.dueDate) < t) return true;
       return false;
     });
@@ -53,7 +52,7 @@ export class DataStore {
 
   urgentTasks = computed(() => {
     return this._data().tasks
-      .filter((tk) => tk.status !== 'done' && tk.status !== 'expired' && (tk.urgency === 'critical' || tk.urgency === 'high'))
+      .filter((tk) => tk.status !== 'done' && (tk.urgency === 'critical' || tk.urgency === 'high'))
       .sort((a, b) => urgencyOrder(a.urgency) - urgencyOrder(b.urgency) || (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
   });
 
@@ -65,7 +64,7 @@ export class DataStore {
       }
     }
     for (const t of this._data().tasks) {
-      if (t.nextStep && t.status !== 'done' && t.status !== 'expired') {
+      if (t.nextStep && t.status !== 'done') {
         items.push({ kind: 'task', id: t.id, title: t.title, nextStep: t.nextStep, urgency: t.urgency });
       }
     }
@@ -147,10 +146,9 @@ export class DataStore {
   addTask(input: Omit<Task, 'id' | 'activity' | 'createdAt' | 'updatedAt' | 'completedAt'>): void {
     const title = input.title?.trim();
     if (!title || title.length < 2) return;
-    if (input.dueDate && toDatePart(input.dueDate) < todayISO()) return;
     const now = new Date().toISOString();
     const status = input.status ?? 'todo';
-    const finalStatus = (input.dueDate && toDatePart(input.dueDate) < todayISO()) ? 'expired' : status;
+    const finalStatus = input.dueDate && toDatePart(input.dueDate) < todayISO() ? 'expired' : status;
     const task: Task = {
       ...input,
       title,
@@ -159,7 +157,7 @@ export class DataStore {
       activity: [{ id: crypto.randomUUID(), at: now, type: 'created', message: 'Tarefa criada' }],
       createdAt: now,
       updatedAt: now,
-      completedAt: null,
+      completedAt: finalStatus === 'done' ? now : null,
     };
     this._data.update((d) => ({ ...d, tasks: [...d.tasks, task] }));
   }

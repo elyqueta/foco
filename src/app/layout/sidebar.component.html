@@ -1,4 +1,4 @@
-<nav class="fixed inset-x-4 bottom-4 z-40 flex h-16 items-center justify-around rounded-3xl bg-primary px-3 shadow-float lg:static lg:inset-auto lg:my-10 lg:h-auto lg:w-[76px] lg:shrink-0 lg:flex-col lg:justify-start lg:gap-2 lg:rounded-l-none lg:rounded-r-[2rem] lg:px-0 lg:py-6 lg:shadow-none lg:sticky lg:top-10 lg:self-start lg:h-[calc(100vh-128px)] lg:max-h-[720px]">
+<nav class="fixed inset-x-4 bottom-4 z-40 flex h-16 items-center justify-around rounded-3xl bg-brand px-3 shadow-float lg:static lg:inset-auto lg:my-10 lg:h-auto lg:w-[76px] lg:shrink-0 lg:flex-col lg:justify-start lg:gap-2 lg:rounded-l-none lg:rounded-r-[2rem] lg:px-0 lg:py-6 lg:shadow-none lg:sticky lg:top-10 lg:self-start lg:h-[calc(100vh-128px)] lg:max-h-[720px]">
   <foco-logo class="hidden lg:flex text-primary-fg mb-4" variant="symbol" [size]="34"></foco-logo>
   @for (item of items; track item.path) {
     <a
@@ -7,7 +7,7 @@
       [routerLinkActiveOptions]="{ exact: item.exact }"
       [attr.aria-label]="item.label"
       [title]="item.label"
-      class="grid h-11 w-11 place-items-center rounded-2xl text-white/80 transition hover:bg-surface-card/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+      class="grid h-11 w-11 place-items-center rounded-2xl text-primary-fg/80 transition hover:bg-brand-600/60 hover:text-primary-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60"
     >
       <app-icon [name]="item.icon" [size]="20" />
     </a>

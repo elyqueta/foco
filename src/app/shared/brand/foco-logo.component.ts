@@ -1,24 +1,25 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { NgIf } from '@angular/common';
 
 export type FocoLogoVariant = 'symbol' | 'badge' | 'full';
 
 @Component({
   selector: 'foco-logo',
   standalone: true,
-  imports: [NgIf],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'inline-flex shrink-0 items-center' },
   template: `
-    <svg *ngIf="variant === 'symbol'" viewBox="0 0 64 64" fill="none" role="img" aria-label="Foco"
+    @if (variant === 'symbol') {
+    <svg viewBox="0 0 64 64" fill="none" role="img" aria-label="Foco"
          [attr.width]="size" [attr.height]="size">
       <g stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
         <path d="M56 46 32 60 8 46V18L32 4l14.4 8.4" />
         <path d="M23 46V22h33M23 34h20" />
       </g>
     </svg>
+    }
 
-    <svg *ngIf="variant === 'badge'" viewBox="0 0 64 64" fill="none" role="img" aria-label="Foco"
+    @if (variant === 'badge') {
+    <svg viewBox="0 0 64 64" fill="none" role="img" aria-label="Foco"
          [attr.width]="size" [attr.height]="size">
       <rect width="64" height="64" rx="16" fill="currentColor" />
       <g transform="translate(12 12) scale(.625)" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
@@ -26,8 +27,10 @@ export type FocoLogoVariant = 'symbol' | 'badge' | 'full';
         <path d="M23 46V22h33M23 34h20" />
       </g>
     </svg>
+    }
 
-    <svg *ngIf="variant === 'full'" viewBox="0 0 204 64" fill="none" role="img" aria-label="Foco"
+    @if (variant === 'full') {
+    <svg viewBox="0 0 204 64" fill="none" role="img" aria-label="Foco"
          [attr.width]="size * 3.1875" [attr.height]="size">
       <g stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
         <path d="M56 46 32 60 8 46V18L32 4l14.4 8.4" />
@@ -40,6 +43,7 @@ export type FocoLogoVariant = 'symbol' | 'badge' | 'full';
         <circle cx="193" cy="38" r="10" />
       </g>
     </svg>
+    }
   `,
 })
 export class FocoLogoComponent {

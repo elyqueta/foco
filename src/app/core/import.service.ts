@@ -67,6 +67,8 @@ export class ImportService {
           errors.push(`tasks[${i}].urgency: valor inválido (${urgency})`);
         }
         const now = new Date().toISOString();
+        const dueDate = t.dueDate ?? null;
+        const status = dueDate && new Date(dueDate).getTime() < new Date(new Date().toDateString()).getTime() ? 'expired' : 'todo';
         tasks.push({
           id: crypto.randomUUID(),
           projectId: t.projectId ?? null,
@@ -74,9 +76,9 @@ export class ImportService {
           description: t.description ?? '',
           category: category ?? 'professional',
           urgency: urgency ?? 'medium',
-          status: 'todo',
+          status,
           canPostpone: t.canPostpone ?? true,
-          dueDate: t.dueDate ?? null,
+          dueDate,
           nextStep: t.nextStep ?? '',
           estimateMinutes: t.estimateMinutes ?? null,
           tags: Array.isArray(t.tags) ? t.tags : [],

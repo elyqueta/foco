@@ -1,75 +1,80 @@
-# DECISÕES — Ecrã de Login e Autenticação
+# DECISÕES — UI Retificação (Fase 0)
 
-## 1. Estrutura de autenticação
-- **Repository pattern** com `AuthRepository` abstrata e duas implementações: `MockAuthRepository` (ativa por omissão) e `ApiAuthRepository` (desligada até a API Laravel estar pronta).
-- A troca entre mock e API faz-se apenas mudando `useMockAuth` em `environment*.ts`.
+## 14. Tokens de cor unificados
+- `brand` é o único conjunto de cor do tema; `primary` passou a ser alias de `brand` no `tailwind.config.js`.
+- `--primary` e `--primary-dark` removidos do CSS base; `--primary-fg` é calculado por luminância em `ColorSchemeService`.
+- `brand.100` e `brand.50` passaram a ser derivados com alpha (`rgb(var(--c-brand) / 0.14)` e `0.07`) para funcionar em claro e escuro.
+- `amber`, `rose`, `emerald` removidos do config; usar apenas `success`, `danger`, `warn` com tokens semânticos.
+- `ColorSchemeService` é o único serviço que aplica cores: define `--c-brand*`, `--primary-fg` (por luminância), `--foco-logo`, favicon e `theme-color`.
+- `ThemeService` ficou só com claro/escuro (`data-theme`).
 
-## 2. Sessão
-- Sessão guardada em `localStorage` com a chave `foco:auth:v1`.
-- `AuthService` usa signals: `_session`, `user`, `isAuthenticated`, `token`.
-- `isAuthenticated` considera a expiração (`expiresAt`).
+## 15. Sistema único de ícones
+- Standard: `lucide-angular` via wrapper `<app-icon>` (`shared/ui/icon.component.ts`).
+- Todos os `<foco-icon>` e `<lucide-icon>` foram substituídos por `<app-icon>`.
+- `FOCO_ICONS` e `foco-icon.component.ts` apagados.
+- Mapeamento fixo: Nova tarefa=`plus`, Novo projeto=`folder-plus`, Guardar=`save`, Cancelar=`x`, Concluir=`check`, Reabrir=`rotate-ccw`, Adiar=`alarm-clock-plus`, Apagar=`trash-2`, Editar=`pencil`, Exportar=`download`, Importar=`upload`, Copiar=`copy`, Limpar=`eraser`, Entrar=`log-in`, Sair=`log-out`, Começar=`play`, Pausar=`pause`, Parar=`square`, Notificações=`bell`, Tema=`sun`/`moon`.
+- Falha de ícone não registado: `console.warn` em dev.
 
-## 3. Proteção de rotas
-- `authGuard` protege o shell (todas as rotas autenticadas).
-- `guestGuard` impede acesso ao login quando já existe sessão.
-- `/login` fica FORA do shell, sem sidebar/topbar.
+## 16. Componente `<app-button>`
+- Criado `shared/ui/button.component.ts` com variants `primary|secondary|ghost|danger|dark` e sizes `md|sm`.
+- Responsivo: `iconOnlyBelow` controla quando o botão fica só ícone.
+- Estados: `hover`, `active:scale-[.98]`, `focus-visible:ring-2 ring-brand/40 ring-offset-2 ring-offset-surface-card`, `disabled:opacity-50`.
+- `loading` troca ícone por `loader-circle` com `animate-spin`.
 
-## 4. Interceptor
-- Adiciona `Accept: application/json` e `Authorization: Bearer <token>` a todos os pedidos a `environment.apiBaseUrl`.
-- Em `401` (exceto `/auth/login`), faz `clearLocal()` e redireciona para `/login`.
+## 17. Seleccionador de tema `<app-theme-toggle>`
+- Criado `shared/ui/theme-toggle.component.ts`.
+- Usado na topbar, Definições e Login.
+- Dois botões `role="radio"` com ícone `sun`/`moon` + texto `Claro`/`Escuro`.
+- Inactivo: `text-ink-500 hover:text-ink`; activo: `bg-surface-card text-ink shadow-sm ring-1 ring-surface-line`.
 
-## 5. Login page
-- Mock com delay de 600 ms e credenciais: `admin@todo.ao` / `12345678`.
-- Formulário reativo com validação e mensagens em português.
-- Dica de demonstração visível apenas quando `useMockAuth` é true.
-- Tema alternativo no canto superior direito (sol/lua).
-- Design com painel gradiente esquerdo (exceção hex `#2B2780` e `#1B1470`) e formulário direito.
+## 18. NotificationService corrigido
+- Bug do `seed().concat(read())` corrigido: agora lê primeiro e só faz seed se storage estiver vazio.
+- IDs estáveis (`seed-welcome`).
+- Textos falsos removidos; começa com 1 notificação de boas-vindas.
+- Limite de 50 itens persistidos.
 
-## 6. Topbar
-- Menu do utilizador adicionado depois do botão "Nova tarefa".
-- Dropdown com iniciais, nome, email, link para definições e "Terminar sessão".
-- Fecha ao clicar fora ou com `Esc`.
+## 19. Ficheiros alterados na Fase 0
+- `tailwind.config.js`
+- `src/app/core/color-scheme.service.ts`
+- `src/app/core/theme.service.ts`
+- `src/app/core/notification.service.ts`
+- `src/app/core/icons.ts`
+- `src/app/shared/ui/icon.component.ts` (novo)
+- `src/app/shared/ui/button.component.ts` (novo)
+- `src/app/shared/ui/theme-toggle.component.ts` (novo)
+- `src/app/shared/brand/foco-icon.component.ts` (apagado)
+- `src/app/layout/topbar.component.ts`
+- `src/app/layout/topbar.component.html`
+- `src/app/layout/sidebar.component.ts`
+- `src/app/layout/sidebar.component.html`
+- `src/app/shared/ui/card.component.html`
+- `src/app/shared/ui/task-row.component.ts`
+- `src/app/shared/ui/task-row.component.html`
+- `src/app/shared/ui/badge-category.component.html`
+- `src/app/shared/ui/focus-widget.component.ts`
+- `src/app/shared/ui/focus-widget.component.html`
+- `src/app/shared/ui/empty-state.component.ts`
+- `src/app/shared/ui/search-dropdown.component.ts`
+- `src/app/shared/ui/confirm-dialog.component.ts`
+- `src/app/pages/dashboard/dashboard.page.ts`
+- `src/app/pages/dashboard/dashboard.page.html`
+- `src/app/pages/project-detail/project-detail.page.ts`
+- `src/app/pages/project-detail/project-detail.page.html`
+- `src/app/pages/task-detail/task-detail.page.ts`
+- `src/app/pages/task-detail/task-detail.page.html`
+- `src/app/pages/tasks/tasks.page.ts`
+- `src/app/pages/tasks/tasks.page.html`
+- `src/app/pages/notifications/notifications.page.ts`
+- `src/app/pages/notifications/notifications.page.html`
+- `src/app/pages/settings/settings.page.ts`
+- `src/app/pages/login/login.page.ts`
+- `src/app/pages/login/login.page.html`
+- `src/app/app.ts`
 
-## 7. Dashboard
-- Saudação passa a usar `auth.user()?.name ?? settings.userName`.
-- Card "Modo foco" com temporizador regressivo em tempo real (`MM:SS`).
-- Ações no card: Ver tarefa, Pausar/Continuar, Parar.
+## 20. Fonte
+- Tipo de letra alterado para **Poppins** (Google Fonts).
+- Pesos carregados: 400, 500, 600, 700, 800.
+- `tailwind.config.js` actualizado para `fontFamily.sans = ['Poppins', 'Inter', 'system-ui', 'sans-serif']`.
+- `src/index.html` actualizado com o link do Google Fonts para Poppins.
+- Referências a Plus Jakarta Sans removidas.
 
-## 8. Modo foco
-- `FocusService` gere sessão com estado pausado/retomado.
-- Tick atualizado a cada segundo via intervalo.
-- Sessão persistida em `localStorage` (`foco:focus:v1`).
-- Widget flutuante global arrastável (`FocusWidgetComponent`).
-- Posição do widget guardada em `localStorage` (`foco:focus-widget-pos:v1`).
-- Widget aparece só depois de iniciar uma tarefa.
-- Botões do widget sincronizados com o card do dashboard.
-
-## 9. Notificações
-- Página `/notificacoes` com lista mockada.
-- `NotificationService` com seed e persistência em `localStorage` (`foco:notifications:v1`).
-- Badge de não lidas no menu do utilizador.
-
-## 10. Exportação
-- Diálogo de escolha de formato antes de exportar.
-- Suporte a JSON (backup) e PDF (relatório formatado).
-- PDF gerado com jsPDF + autotable, com tabelas estilizadas para projetos e tarefas.
-- Cor do PDF segue o esquema de cores escolhido pelo utilizador.
-
-## 11. Personalização de cores
-- Esquemas disponíveis: roxo, azul, vermelho e cinza.
-- Preferência guardada em `localStorage` através do `DataStore`.
-- Cores aplicadas via variáveis CSS dinâmicas (`--c-brand`, `--c-brand-600`, etc.).
-- `ColorSchemeService` gere a lógica de aplicação e leitura do esquema.
-
-## 12. Proxy
-- `proxy.conf.json` encaminha `/api` para `http://localhost:8000` (container Laravel).
-- Configurado em `angular.json` para `ng serve`.
-
-## 13. Verificações realizadas
-- `ng build` sem erros.
-- Ícone de pesquisa ajustado (left-3) para não sobrepor o placeholder.
-- Novos ícones adicionados: `Eye`, `EyeOff`, `LogOut`, `Target`, `Sun`, `Moon`, `BellRing` (mantidos `Check` e `Sparkles` existentes).
-- Contagem regressiva do foco atualizada a cada segundo.
-- Widget flutuante arrastável com botões sincronizados com o card do dashboard.
-- Exportação JSON e PDF funcionais.
-- Personalização de cores sem destruir funcionalidades existentes.

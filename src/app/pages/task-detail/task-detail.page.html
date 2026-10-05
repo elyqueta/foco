@@ -1,7 +1,7 @@
 @if (task(); as task) {
       <div class="mt-8">
         <a routerLink="/tarefas" class="mb-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 hover:text-brand-fg">
-          <lucide-icon name="arrow-left" class="h-4 w-4" /> Tarefas
+          <app-icon name="arrow-left" class="h-4 w-4" /> Tarefas
         </a>
         <div class="flex items-center justify-between mb-4">
           <h1 class="text-[28px] font-extrabold leading-tight tracking-tight text-ink">{{ task.title }}</h1>
@@ -26,7 +26,7 @@
           <span [class]="statusClass(task.status)">{{ statusLabel(task.status) }}</span>
           @if (task.dueDate) {
             <span class="inline-flex items-center gap-1 text-[12px] text-ink-500">
-              <lucide-icon name="calendar" class="h-3.5 w-3.5" />
+              <app-icon name="calendar" class="h-3.5 w-3.5" />
               {{ formatDate(task.dueDate) }}
             </span>
           }
@@ -112,7 +112,7 @@
                   <label class="relative inline-flex cursor-pointer items-center">
                     <input type="checkbox" class="peer sr-only" [checked]="task.canPostpone" (change)="setCanPostpone($any($event.target).checked)" />
                     <span class="h-6 w-11 rounded-full bg-ink-300 transition peer-checked:bg-brand peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40"></span>
-                    <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+                    <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-surface-card shadow transition peer-checked:translate-x-5"></span>
                   </label>
                 </div>
                 @if (task.canPostpone) {

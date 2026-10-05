@@ -5,9 +5,9 @@
       <p class="mt-3 max-w-[420px] text-sm text-ink-500">Aqui está o que precisas de fazer hoje. Foca-te numa coisa de cada vez.</p>
     </div>
     <div class="col-span-12 grid min-w-0 grid-cols-2 gap-5 sm:grid-cols-4 xl:col-span-7">
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
         <div class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
-          <foco-icon name="clock" [size]="20" />
+          <app-icon name="clock" [size]="20" />
         </div>
         <div>
           <div class="text-3xl font-bold tabular-nums text-ink">{{ todayTasks().length }}</div>
@@ -15,9 +15,9 @@
           <div class="text-xs text-ink-500">Tarefas para hoje</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
-        <div class="grid h-10 w-10 place-items-center rounded-xl bg-amber-100 text-amber-600">
-          <foco-icon name="check-circle" [size]="20" />
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-warn-soft text-warn">
+          <app-icon name="check-circle" [size]="20" />
         </div>
         <div>
           <div class="text-3xl font-bold tabular-nums text-ink">{{ pendingTasks().length }}</div>
@@ -25,9 +25,9 @@
           <div class="text-xs text-ink-500">Por fazer ou em curso</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
-        <div class="grid h-10 w-10 place-items-center rounded-xl bg-rose-100 text-rose-600">
-          <foco-icon name="alert-triangle" [size]="20" />
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-danger-soft text-danger">
+          <app-icon name="alert-triangle" [size]="20" />
         </div>
         <div>
           <div class="text-3xl font-bold tabular-nums text-ink">{{ urgentTasks().length }}</div>
@@ -35,9 +35,9 @@
           <div class="text-xs text-ink-500">Críticas e altas</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
-        <div class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
-          <foco-icon name="trending-up" [size]="20" />
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-success-soft text-success">
+          <app-icon name="trending-up" [size]="20" />
         </div>
         <div>
           <div class="text-3xl font-bold tabular-nums text-ink">{{ completedThisWeek() }}</div>
@@ -83,7 +83,7 @@
           }
           <button (click)="openModal()" class="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 py-4 text-sm font-semibold text-primary transition hover:border-primary/60">
             <span class="grid h-6 w-6 place-items-center rounded-md bg-primary text-white">
-              <foco-icon name="plus" [size]="14" />
+              <app-icon name="plus" [size]="14" />
             </span>
             Adicionar tarefa
           </button>
@@ -112,7 +112,7 @@
           @for (t of dayTasks(); track t.id) {
             <div class="flex items-center gap-3 cursor-pointer min-w-0" (click)="goTask(t.id)">
               <div class="h-8 w-8 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0">
-                <foco-icon name="clock" [size]="14" />
+                <app-icon name="clock" [size]="14" />
               </div>
               <div class="min-w-0">
                 <p class="text-sm font-semibold text-ink truncate">{{ t.title }}</p>
@@ -149,7 +149,7 @@
         <div class="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-6 text-primary-fg shadow-lg shadow-primary/30">
           <foco-logo class="absolute -right-6 -top-6 opacity-10" variant="symbol" [size]="160" />
           <div>
-            <span class="inline-grid h-10 w-10 place-items-center rounded-xl bg-white/20"><foco-icon name="target" [size]="20" /></span>
+            <span class="inline-grid h-10 w-10 place-items-center rounded-xl bg-white/20"><app-icon name="target" [size]="20" /></span>
             <h3 class="mt-3 text-lg font-bold">Modo foco</h3>
             <p class="text-sm opacity-80">Faz só UMA coisa agora</p>
           </div>
@@ -159,9 +159,9 @@
           </div>
           <p class="text-4xl font-extrabold leading-none tabular-nums">{{ formatTick(focusTick()) }}</p>
           <div class="flex w-full flex-col gap-2">
-            <button type="button" (click)="viewFocusTask()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white/90 font-semibold text-slate-900 transition hover:bg-white active:scale-[.98]">Ver tarefa</button>
+            <button type="button" (click)="viewFocusTask()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-card/90 font-semibold text-ink transition hover:bg-surface-card active:scale-[.98]">Ver tarefa</button>
             @if (focusPaused()) {
-              <button type="button" (click)="resumeFocus()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white font-semibold text-slate-900 transition hover:bg-white/90 active:scale-[.98]">Continuar</button>
+              <button type="button" (click)="resumeFocus()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-card font-semibold text-ink transition hover:bg-surface-card/90 active:scale-[.98]">Continuar</button>
             } @else {
               <button type="button" (click)="pauseFocus()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white/20 font-semibold text-white transition hover:bg-white/30 active:scale-[.98]">Pausar</button>
             }
@@ -172,7 +172,7 @@
         <div class="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-6 text-primary-fg shadow-lg shadow-primary/30">
           <foco-logo class="absolute -right-6 -top-6 opacity-10" variant="symbol" [size]="160" />
           <div>
-            <span class="inline-grid h-10 w-10 place-items-center rounded-xl bg-white/20"><foco-icon name="target" [size]="20" /></span>
+            <span class="inline-grid h-10 w-10 place-items-center rounded-xl bg-white/20"><app-icon name="target" [size]="20" /></span>
             <h3 class="mt-3 text-lg font-bold">Modo foco</h3>
             <p class="text-sm opacity-80">Faz só UMA coisa agora</p>
           </div>
@@ -181,15 +181,15 @@
               <p class="text-xs uppercase tracking-wide opacity-70">Tarefa actual</p>
               <p class="mt-1 text-xl font-semibold leading-snug">{{ focusTask()!.title }}</p>
             </div>
-            <button type="button" (click)="startFocus(focusTask()!.id)" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white font-semibold text-slate-900 transition hover:bg-white/90 active:scale-[.98]">
-              <foco-icon name="play" [size]="16" /> Começar
+             <button type="button" (click)="startFocus(focusTask()!.id)" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-card font-semibold text-ink transition hover:bg-surface-card/90 active:scale-[.98]">
+              <app-icon name="play" [size]="16" /> Começar
             </button>
           } @else {
             <div class="my-6">
-              <foco-icon name="sparkles" [size]="32" class="opacity-80" />
+              <app-icon name="sparkles" [size]="32" class="opacity-80" />
               <p class="mt-2 text-sm opacity-80">Nada urgente. Respira fundo.</p>
             </div>
-            <a routerLink="/tarefas" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white font-semibold text-slate-900 transition hover:bg-white/90 active:scale-[.98]">Ver pendentes</a>
+            <a routerLink="/tarefas" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-card font-semibold text-ink transition hover:bg-surface-card/90 active:scale-[.98]">Ver pendentes</a>
           }
         </div>
       }

@@ -1,17 +1,6 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { DataStore } from './data.store';
 import { DOCUMENT } from '@angular/common';
-import { focoBadgeSvg, svgToDataUri } from '../shared/brand/foco-brand';
-
-const DEFAULT_PRIMARY = '#DC2626';
-
-const hexToRgb = (hex: string): [number, number, number] => {
-  const h = hex.replace('#', '');
-  const f = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
-  return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)];
-};
-const shade = ([r, g, b]: number[], k: number) => [r, g, b].map((v) => Math.round(v * (1 - k)));
-const luminance = ([r, g, b]: number[]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -27,50 +16,11 @@ export class ThemeService {
   }
 
   init(): void {
-    const scheme = this.store.data().settings.colorScheme;
-    const hex = this.schemeToHex(scheme);
-    this.applyColor(hex);
-    this.updateFavicon(hex);
+    const stored = this.store.data().settings.theme;
+    this.doc.documentElement.setAttribute('data-theme', stored);
   }
 
   set(theme: 'light' | 'dark'): void {
     this.store.setTheme(theme);
-  }
-
-  setColorScheme(scheme: 'purple' | 'blue' | 'red' | 'gray'): void {
-    const hex = this.schemeToHex(scheme);
-    this.applyColor(hex);
-    this.updateFavicon(hex);
-  }
-
-  private schemeToHex(scheme: string): string {
-    const map: Record<string, string> = {
-      purple: '#6C5CE7',
-      blue: '#2563EB',
-      red: '#DC2626',
-      gray: '#4B5563',
-    };
-    return map[scheme] ?? DEFAULT_PRIMARY;
-  }
-
-  private applyColor(hex: string): void {
-    const rgb = hexToRgb(hex);
-    const root = this.doc.documentElement.style;
-    root.setProperty('--primary', rgb.join(' '));
-    root.setProperty('--primary-dark', shade(rgb, 0.22).join(' '));
-    root.setProperty('--primary-fg', luminance(rgb) > 0.6 ? '17 24 39' : '255 255 255');
-    root.setProperty('--foco-logo', hex);
-  }
-
-  private updateFavicon(hex: string): void {
-    let link = this.doc.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (!link) {
-      link = this.doc.createElement('link');
-      link.rel = 'icon';
-      this.doc.head.appendChild(link);
-    }
-    link.type = 'image/svg+xml';
-    link.href = svgToDataUri(focoBadgeSvg(hex));
-    this.doc.querySelector('meta[name="theme-color"]')?.setAttribute('content', hex);
   }
 }

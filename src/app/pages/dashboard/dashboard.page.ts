@@ -9,7 +9,7 @@ import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component
 import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
-import { FocoIconComponent } from '../../shared/brand/foco-icon.component';
+import { AppIconComponent } from '../../shared/ui/icon.component';
 import { FocoLogoComponent } from '../../shared/brand/foco-logo.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { FocusService } from '../../core/focus.service';
@@ -19,7 +19,7 @@ import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISO
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, FocoIconComponent, FocoLogoComponent],
+  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, AppIconComponent, FocoLogoComponent],
   templateUrl: './dashboard.page.html',
 })
 export class DashboardPage {

@@ -9,7 +9,7 @@ import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { ModalComponent } from '../../shared/ui/modal.component';
 import { TaskFormComponent } from '../../shared/ui/task-form.component';
-import { LucideAngularModule } from 'lucide-angular';
+import { AppIconComponent } from '../../shared/ui/icon.component';
 import { Task, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
 import { SearchService } from '../../core/search.service';
@@ -17,7 +17,7 @@ import { SearchService } from '../../core/search.service';
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, LucideAngularModule],
+  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, AppIconComponent],
   templateUrl: './tasks.page.html',
 })
 export class TasksPage {

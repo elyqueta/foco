@@ -1,7 +1,7 @@
 import { Component, input, output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule } from 'lucide-angular';
+import { AppIconComponent } from './icon.component';
 import { DataStore } from '../../core/data.store';
 import { SearchService } from '../../core/search.service';
 import { formatDate } from '../../core/date.utils';
@@ -26,7 +26,7 @@ interface SearchGroup {
 @Component({
   selector: 'app-search-dropdown',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule],
+  imports: [CommonModule, RouterLink, AppIconComponent],
   template: `
     @if (searchQuery(); as query) {
       @if (groupedResults().length > 0) {
@@ -41,7 +41,7 @@ interface SearchGroup {
                      (click)="clearSearch.emit()">
                     <div class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
                          [class]="item.iconBg">
-                      <lucide-icon [name]="item.icon" class="h-4 w-4" [strokeWidth]="1.75" [class]="item.iconColor" />
+                      <app-icon [name]="item.icon" class="h-4 w-4" [strokeWidth]="1.75" [class]="item.iconColor" />
                     </div>
                     <div class="min-w-0 flex-1">
                       <p class="truncate text-[13px] font-medium text-ink">{{ item.title }}</p>

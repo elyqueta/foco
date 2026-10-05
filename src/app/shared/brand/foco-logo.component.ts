@@ -45,5 +45,5 @@ export type FocoLogoVariant = 'symbol' | 'badge' | 'full';
 export class FocoLogoComponent {
   @Input() variant: FocoLogoVariant = 'symbol';
   @Input() size = 32;
-  @Input() textClass = 'text-slate-900 dark:text-white';
+  @Input() textClass = 'text-ink';
 }

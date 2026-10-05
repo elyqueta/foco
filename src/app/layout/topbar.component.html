@@ -8,7 +8,7 @@
         [routerLinkActiveOptions]="{ exact: tab.exact }"
         class="flex items-center gap-2 text-[13px] font-medium text-ink-500 transition hover:text-ink"
       >
-        <foco-icon [name]="tab.icon" [size]="16" />
+        <app-icon [name]="tab.icon" [size]="16" />
         {{ tab.label }}
       </a>
     }
@@ -16,7 +16,7 @@
 
   <!-- Pesquisa -->
   <div class="relative order-last w-full md:order-none md:w-[260px]">
-    <foco-icon name="search" [size]="16" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+    <app-icon name="search" [size]="16" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
     <input
       id="search"
       #search
@@ -30,7 +30,7 @@
     />
     @if (searchQuery()) {
       <button type="button" (click)="clearSearch()" aria-label="Limpar pesquisa" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-400 hover:text-ink transition">
-        <foco-icon name="x" [size]="14" />
+          <app-icon name="x" [size]="14" />
       </button>
     }
     <app-search-dropdown [searchQuery]="searchQuery()" (clearSearch)="clearSearch()" />
@@ -38,30 +38,21 @@
 
   <!-- Ações -->
   <div class="flex items-center gap-3">
-    <div class="inline-flex rounded-xl bg-surface-app p-1" role="group" aria-label="Tema">
-      <button type="button" (click)="setTheme('light')"
-        [class]="theme() === 'light' ? 'rounded-lg bg-surface-card text-primary shadow-sm' : 'rounded-lg px-3 py-1.5 text-xs font-medium text-ink-500 hover:text-ink'">
-        <foco-icon name="sun" [size]="14" class="inline-block align-middle mr-1.5" /> Claro
-      </button>
-      <button type="button" (click)="setTheme('dark')"
-        [class]="theme() === 'dark' ? 'rounded-lg bg-surface-card text-primary shadow-sm' : 'rounded-lg px-3 py-1.5 text-xs font-medium text-ink-500 hover:text-ink'">
-        <foco-icon name="moon" [size]="14" class="inline-block align-middle mr-1.5" /> Escuro
-      </button>
-    </div>
+    <app-theme-toggle />
 
     <button type="button" (click)="showExportDialog.set(true)"
       class="hidden h-9 items-center gap-2 rounded-xl border border-surface-line bg-surface-card px-4 text-sm font-medium text-ink-500 transition hover:bg-surface-app hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:flex">
-      <foco-icon name="download" [size]="16" /> Exportar
+      <app-icon name="download" [size]="16" /> Exportar
     </button>
 
     <button type="button" (click)="openNewTask()"
-      class="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 dark:bg-white dark:text-slate-900">
-      <foco-icon name="plus" [size]="16" /> Nova tarefa
+      class="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-ink/90 active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2">
+      <app-icon name="plus" [size]="16" /> Nova tarefa
     </button>
 
     <button type="button" [routerLink]="['/notificacoes']" aria-label="Notificações"
       class="relative grid h-10 w-10 place-items-center rounded-xl text-ink-500 transition hover:bg-surface-app focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
-      <foco-icon name="bell" [size]="20" />
+      <app-icon name="bell" [size]="20" />
       @if (unreadNotifications() > 0) {
         <span class="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">{{ unreadNotifications() }}</span>
       }
@@ -80,13 +71,13 @@
             <p class="text-[11px] text-ink-400">{{ auth.user()?.email ?? '' }}</p>
           </div>
           <a routerLink="/notificacoes" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-surface-app text-ink">
-            <foco-icon name="bell" [size]="16" /> Notificações
+            <app-icon name="bell" [size]="16" /> Notificações
           </a>
           <a routerLink="/definicoes" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-surface-app text-ink">
-            <foco-icon name="settings" [size]="16" /> Definições
+            <app-icon name="settings" [size]="16" /> Definições
           </a>
           <button type="button" (click)="logout()" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold text-danger transition hover:bg-surface-app">
-            <foco-icon name="log-out" [size]="16" /> Terminar sessão
+            <app-icon name="log-out" [size]="16" /> Terminar sessão
           </button>
         </div>
       }

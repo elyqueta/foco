@@ -1,7 +1,7 @@
 @if (project(); as project) {
       <div class="mt-8">
         <a routerLink="/projetos" class="mb-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-500 hover:text-brand-fg">
-          <lucide-icon name="arrow-left" class="h-4 w-4" /> Projetos
+          <app-icon name="arrow-left" class="h-4 w-4" /> Projetos
         </a>
         <div class="flex items-center gap-3 mb-4">
           <span class="h-4 w-4 rounded-full shrink-0" [style.background]="project.color"></span>
@@ -13,7 +13,7 @@
           <span [class]="statusClass(project.status)">{{ statusLabel(project.status) }}</span>
           @if (project.dueDate) {
             <span class="inline-flex items-center gap-1 text-[12px] text-ink-500">
-              <lucide-icon name="calendar" class="h-3.5 w-3.5" />
+              <app-icon name="calendar" class="h-3.5 w-3.5" />
               {{ formatDate(project.dueDate) }}
             </span>
           }
@@ -44,7 +44,7 @@
               }
               <button (click)="openTaskModal()" class="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-brand/30 bg-brand-50 py-4 text-[13px] font-semibold text-brand-fg transition hover:border-brand/60">
                 <span class="h-6 w-6 rounded-md bg-brand text-white grid place-items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+                  <app-icon name="plus" [size]="14" />
                 </span>
                 Adicionar tarefa a este projeto
               </button>

@@ -3,13 +3,13 @@
   @for (item of items; track item.path) {
     <a
       [routerLink]="item.path"
-      routerLinkActive="bg-white text-primary shadow-md"
+      routerLinkActive="bg-surface-card text-brand-fg shadow-md"
       [routerLinkActiveOptions]="{ exact: item.exact }"
       [attr.aria-label]="item.label"
       [title]="item.label"
-      class="grid h-11 w-11 place-items-center rounded-2xl text-primary-fg/80 transition hover:bg-white/15 hover:text-primary-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+      class="grid h-11 w-11 place-items-center rounded-2xl text-white/80 transition hover:bg-surface-card/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
     >
-      <foco-icon [name]="item.icon" [size]="20" />
+      <app-icon [name]="item.icon" [size]="20" />
     </a>
   }
 </nav>

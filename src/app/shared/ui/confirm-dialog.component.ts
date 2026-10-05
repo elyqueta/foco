@@ -1,19 +1,19 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule } from 'lucide-angular';
+import { AppIconComponent } from './icon.component';
 
 type ConfirmType = 'danger' | 'warning' | 'info' | 'success';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, AppIconComponent],
   template: `
     <div class="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm p-4" (click)="onOverlayClick()">
       <div class="w-full max-w-[400px] rounded-card bg-surface-card p-6 shadow-float" (click)="$event.stopPropagation()">
         <div class="flex flex-col items-center text-center gap-3">
           <div class="grid h-12 w-12 place-items-center rounded-full" [class]="iconBg()">
-            <lucide-icon [name]="iconName()" class="h-6 w-6" [strokeWidth]="2" [class]="iconColor()" />
+            <app-icon [name]="iconName()" class="h-6 w-6" [strokeWidth]="2" [class]="iconColor()" />
           </div>
 
           <h2 class="text-[18px] font-bold text-ink">{{ title() }}</h2>

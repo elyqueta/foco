@@ -5,7 +5,7 @@ const STORAGE_KEY = 'foco:notifications:v1';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private readonly _items = signal<AppNotification[]>(this.seed().concat(this.read()));
+  private readonly _items = signal<AppNotification[]>(this.read());
 
   readonly items = this._items.asReadonly();
   readonly unreadCount = computed(() => this._items().filter((n) => !n.read).length);
@@ -13,7 +13,7 @@ export class NotificationService {
   constructor() {
     effect(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this._items()));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this._items().slice(0, 50)));
       } catch {
         // ignore
       }
@@ -28,52 +28,37 @@ export class NotificationService {
     this._items.update((items) => items.map((item) => (item.id === id ? { ...item, read: true } : item)));
   }
 
+  add(item: Omit<AppNotification, 'id' | 'read' | 'createdAt'>): void {
+    const notification: AppNotification = {
+      ...item,
+      id: crypto.randomUUID(),
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+    this._items.update((items) => [notification, ...items].slice(0, 50));
+  }
+
   private read(): AppNotification[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
+      if (!raw) return this.seed();
       const parsed = JSON.parse(raw) as AppNotification[];
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) return this.seed();
       return parsed;
     } catch {
-      return [];
+      return this.seed();
     }
   }
 
   private seed(): AppNotification[] {
-    const now = new Date().toISOString();
     return [
       {
-        id: crypto.randomUUID(),
-        title: 'Sessão iniciada',
-        message: 'Começaste o modo foco na tarefa "Revisar proposta do projeto X".',
-        type: 'focus',
-        read: false,
-        createdAt: new Date(new Date(now).getTime() - 1000 * 60 * 3).toISOString(),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Tarefa concluída',
-        message: 'A tarefa "Enviar relatório semanal" foi marcada como concluída.',
-        type: 'success',
-        read: false,
-        createdAt: new Date(new Date(now).getTime() - 1000 * 60 * 45).toISOString(),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Lembrete de prazo',
-        message: 'A tarefa "Preparar apresentação" vence hoje às 18:00.',
-        type: 'warning',
-        read: true,
-        createdAt: new Date(new Date(now).getTime() - 1000 * 60 * 60 * 2).toISOString(),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: 'Novo comentário',
-        message: 'O João comentou na tarefa "Revisar orçamento".',
+        id: 'seed-welcome',
+        title: 'Bem-vindo ao Foco',
+        message: 'Começa por criar uma tarefa ou projeto para organizar o teu dia.',
         type: 'info',
-        read: true,
-        createdAt: new Date(new Date(now).getTime() - 1000 * 60 * 60 * 5).toISOString(),
+        read: false,
+        createdAt: new Date().toISOString(),
       },
     ];
   }

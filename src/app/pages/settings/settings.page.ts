@@ -6,12 +6,12 @@ import { emptyAppData } from '../../core/storage.repository';
 import { ConfirmService } from '../../core/confirm.service';
 import { ThemeService } from '../../core/theme.service';
 import { ColorSchemeService, ColorScheme } from '../../core/color-scheme.service';
-import { LucideAngularModule } from 'lucide-angular';
+import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, AppThemeToggleComponent],
   template: `
     <div class="mt-8 max-w-[720px]">
       <h1 class="text-[28px] font-extrabold text-ink mb-6">Definições</h1>
@@ -24,16 +24,7 @@ import { LucideAngularModule } from 'lucide-angular';
 
       <div class="rounded-card bg-surface-card p-5 shadow-card mb-5">
         <h3 class="text-[16px] font-bold text-ink mb-4">Aparência</h3>
-        <div class="flex h-9 items-center rounded-xl bg-surface-app p-1">
-          <button type="button" (click)="setTheme('light')"
-            [class]="theme() === 'light' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500'">
-            Claro
-          </button>
-          <button type="button" (click)="setTheme('dark')"
-            [class]="theme() === 'dark' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500'">
-            Escuro
-          </button>
-        </div>
+        <app-theme-toggle />
 
         <label class="mt-4 mb-1.5 block text-[12px] font-semibold text-ink-700">Cor principal</label>
         <div class="grid grid-cols-4 gap-3">

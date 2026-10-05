@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 @Component({
   selector: 'app-progress-ring',
@@ -10,8 +10,9 @@ export class ProgressRingComponent {
   isOverdue = input(false);
 
   circumference = 2 * Math.PI * 15.5;
+  displayPercent = computed(() => Math.min(100, Math.max(0, this.percent())));
 
   offset(): number {
-    return this.circumference - (this.percent() / 100) * this.circumference;
+    return this.circumference - (this.displayPercent() / 100) * this.circumference;
   }
 }

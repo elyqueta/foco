@@ -1,8 +1,9 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { afterNextRender, Component, HostListener, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FocusService } from '../../core/focus.service';
 import { DataStore } from '../../core/data.store';
+import { AppIconComponent } from './icon.component';
 import { AppButtonComponent } from './button.component';
 
 const STORAGE_KEY = 'foco:focus-widget-pos:v1';
@@ -15,7 +16,7 @@ interface WidgetPosition {
 @Component({
   selector: 'app-focus-widget',
   standalone: true,
-  imports: [CommonModule, RouterLink, AppButtonComponent],
+  imports: [CommonModule, RouterLink, AppIconComponent, AppButtonComponent],
   templateUrl: './focus-widget.component.html',
 })
 export class FocusWidgetComponent implements OnInit {
@@ -31,7 +32,18 @@ export class FocusWidgetComponent implements OnInit {
   dragging = signal(false);
   offset = { x: 0, y: 0 };
 
-  ngOnInit(): void {}
+  constructor() {
+    afterNextRender(() => this.clampPosition());
+  }
+
+  ngOnInit(): void {
+    this.clampPosition();
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.clampPosition();
+  }
 
   formatTick(totalSeconds: number): string {
     const minutes = Math.floor(totalSeconds / 60);
@@ -71,9 +83,10 @@ export class FocusWidgetComponent implements OnInit {
 
   onPointerMove(event: PointerEvent): void {
     if (!this.dragging()) return;
-    const x = Math.max(0, event.clientX - this.offset.x);
-    const y = Math.max(0, event.clientY - this.offset.y);
+    const x = event.clientX - this.offset.x;
+    const y = event.clientY - this.offset.y;
     this.position.set({ x, y });
+    this.clampPosition();
   }
 
   onPointerUp(event: PointerEvent): void {
@@ -91,15 +104,45 @@ export class FocusWidgetComponent implements OnInit {
   private readPosition(): WidgetPosition {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { x: 0, y: 0 };
+      if (!raw) return this.defaultPosition();
       const parsed = JSON.parse(raw) as WidgetPosition;
       if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-        return parsed;
+        return this.clamp(parsed);
       }
     } catch {
       // ignore
     }
-    return { x: 0, y: 0 };
+    return this.defaultPosition();
+  }
+
+  private defaultPosition(): WidgetPosition {
+    if (typeof window === 'undefined') return { x: 12, y: 12 };
+    const compact = window.innerWidth < 1024;
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const width = Math.min(viewportWidth - 24, compact ? 280 : 360);
+    const height = compact ? 88 : 140;
+    const bottomOffset = compact ? 96 : 24;
+    return {
+      x: Math.max(12, viewportWidth - width - 12),
+      y: Math.max(12, window.innerHeight - height - bottomOffset),
+    };
+  }
+
+  private clampPosition(): void {
+    this.position.update((position) => this.clamp(position));
+  }
+
+  private clamp(position: WidgetPosition): WidgetPosition {
+    if (typeof window === 'undefined') return position;
+    const compact = window.innerWidth < 1024;
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const width = Math.min(viewportWidth - 24, compact ? 280 : 360);
+    const height = compact ? 88 : 140;
+    const bottomOffset = compact ? 96 : 24;
+    return {
+      x: Math.min(Math.max(12, position.x), Math.max(12, viewportWidth - width - 12)),
+      y: Math.min(Math.max(12, position.y), Math.max(12, window.innerHeight - height - bottomOffset)),
+    };
   }
 
   private persistPosition(): void {

@@ -1,15 +1,42 @@
-<nav class="fixed inset-x-4 bottom-4 z-40 flex h-16 items-center justify-around rounded-3xl bg-brand px-3 shadow-float lg:static lg:inset-auto lg:my-10 lg:h-auto lg:w-[76px] lg:shrink-0 lg:flex-col lg:justify-start lg:gap-2 lg:rounded-l-none lg:rounded-r-[2rem] lg:px-0 lg:py-6 lg:shadow-none lg:sticky lg:top-10 lg:self-start lg:h-[calc(100vh-128px)] lg:max-h-[720px]">
+<nav class="fixed inset-x-2 bottom-4 z-40 flex h-16 items-center justify-around gap-0 rounded-3xl bg-brand px-2 shadow-float lg:static lg:inset-auto lg:my-10 lg:h-auto lg:w-[76px] lg:shrink-0 lg:flex-col lg:justify-start lg:gap-2 lg:rounded-l-none lg:rounded-r-[2rem] lg:px-0 lg:py-6 lg:shadow-none lg:sticky lg:top-10 lg:self-start lg:h-[calc(100vh-128px)] lg:max-h-[720px]">
   <foco-logo class="hidden lg:flex text-primary-fg mb-4" variant="symbol" [size]="34"></foco-logo>
   @for (item of items; track item.path) {
     <a
       [routerLink]="item.path"
-      routerLinkActive="bg-surface-card text-brand-fg shadow-md"
+      routerLinkActive="bg-surface-card shadow-md"
       [routerLinkActiveOptions]="{ exact: item.exact }"
+      #activeLink="routerLinkActive"
       [attr.aria-label]="item.label"
       [title]="item.label"
-      class="grid h-11 w-11 place-items-center rounded-2xl text-primary-fg/80 transition hover:bg-brand-600/60 hover:text-primary-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60"
+      [attr.aria-current]="activeLink.isActive ? 'page' : null"
+      [class.text-brand]="activeLink.isActive"
+      [class.text-primary-fg/80]="!activeLink.isActive"
+      [class.hover:bg-brand-600/60]="!activeLink.isActive"
+      [class.hover:text-primary-fg]="!activeLink.isActive"
+      [ngClass]="isMobileOverflowItem(item) ? 'hidden lg:grid' : 'grid'"
+      class="h-11 w-11 shrink-0 place-items-center rounded-2xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60"
     >
       <app-icon [name]="item.icon" [size]="20" />
     </a>
+  }
+  <app-button
+    class="lg:hidden"
+    variant="ghost"
+    icon="settings"
+    label="Mais opções"
+    [iconOnly]="true"
+    [ariaExpanded]="moreOpen()"
+    buttonClass="h-11 w-11 !rounded-2xl !text-white hover:!bg-white/15"
+    (click)="moreOpen.set(!moreOpen())"
+  ></app-button>
+  @if (moreOpen()) {
+    <div class="absolute bottom-20 right-2 z-50 min-w-40 rounded-2xl border border-surface-line bg-surface-card p-2 shadow-float lg:hidden">
+      <a routerLink="/importar" (click)="moreOpen.set(false)" class="flex h-11 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-ink hover:bg-surface-app">
+        <app-icon name="upload" [size]="16" /> Importar
+      </a>
+      <a routerLink="/definicoes" (click)="moreOpen.set(false)" class="flex h-11 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-ink hover:bg-surface-app">
+        <app-icon name="settings" [size]="16" /> Definições
+      </a>
+    </div>
   }
 </nav>

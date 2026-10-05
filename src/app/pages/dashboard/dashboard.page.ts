@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DataStore } from '../../core/data.store';
 import { TaskModalService } from '../../core/task-modal.service';
 import { CardComponent } from '../../shared/ui/card.component';
@@ -20,7 +20,7 @@ import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISO
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, AppIconComponent, AppButtonComponent, FocoLogoComponent],
+  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, AppIconComponent, AppButtonComponent, FocoLogoComponent],
   templateUrl: './dashboard.page.html',
 })
 export class DashboardPage {

@@ -16,13 +16,14 @@ export class FocusService {
   private readonly _session = signal<FocusSession | null>(this.read());
   private readonly _paused = signal(false);
   private readonly _tick = signal(0);
-  private readonly _widgetVisible = signal(false);
+  private readonly _widgetVisible = signal(this._session() !== null);
 
   readonly session = this._session.asReadonly();
   readonly paused = this._paused.asReadonly();
   readonly widgetVisible = this._widgetVisible.asReadonly();
 
   constructor() {
+    this._paused.set(this._session()?.paused ?? false);
     this.tick;
     setInterval(() => {
       this._tick.update((prev) => prev + 1);

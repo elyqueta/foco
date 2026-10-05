@@ -1,5 +1,5 @@
 <div class="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm p-4" (click)="close.emit()">
-  <div class="w-full max-w-[560px] rounded-shell bg-surface-card p-8 shadow-float" (click)="$event.stopPropagation()">
+  <div class="w-full max-w-[560px] rounded-shell bg-surface-card p-4 shadow-float min-[400px]:p-8" (click)="$event.stopPropagation()">
     <ng-content />
   </div>
 </div>

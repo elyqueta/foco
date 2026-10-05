@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { DataStore } from '../../core/data.store';
+import { FocusService } from '../../core/focus.service';
 import { CardComponent } from '../../shared/ui/card.component';
 import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
 import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component';
@@ -25,6 +26,7 @@ export class TaskDetailPage {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private store = inject(DataStore);
+  private focus = inject(FocusService);
   task = signal<Task | null>(null);
   showPostponeModal = signal(false);
 
@@ -94,6 +96,16 @@ export class TaskDetailPage {
     const id = this.task()?.id;
     if (!id) return;
     this.store.setTaskStatus(id, 'todo');
+  }
+
+  startFocus(): void {
+    const task = this.task();
+    if (!task || task.status === 'done') return;
+    if (task.status !== 'in_progress') {
+      this.store.setTaskStatus(task.id, 'in_progress');
+    }
+    this.focus.start(task);
+    this.task.set(this.store.data().tasks.find((item) => item.id === task.id) ?? task);
   }
 
   async deleteTask(): Promise<void> {

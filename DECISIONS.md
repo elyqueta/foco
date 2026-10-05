@@ -85,3 +85,10 @@
 - A otimização de fontes externas fica sem inline no build de produção: mantém-se o carregamento da Google Font no browser sem tornar `ng build` dependente de acesso à Internet.
 - Migrados nesta fase: tokens globais e paleta semântica; wrappers de ícones e botões; topbar, sidebar, dashboard, calendário, listas e detalhes; notificações, importação, definições, login, formulários, modais e widget de foco.
 - Validação desta fase: `ng build` conclui sem erros nem avisos do compilador Angular. Permanecem os avisos existentes do bundle inicial (913,20 kB face ao limite de 500 kB) e dependências CommonJS usadas por `canvg`/`jspdf`; não foram alteradas porque a otimização dessas dependências não faz parte desta fase.
+
+## 15. Ajustes responsivos e temporizador
+- O atalho "Ver pendentes" usa `RouterLink` importado explicitamente no dashboard standalone para navegar para `/tarefas`.
+- O botão "Começar temporizador" na página de detalhe inicia o foco da tarefa, actualiza o seu estado para "Em curso" e apresenta o widget global.
+- Em larguras abaixo de `lg`, o widget de foco usa uma barra compacta arrastável com tempo, pausa/retoma e paragem; a posição é limitada ao ecrã, mantida em `localStorage` e reajustada ao redimensionar. Sessões persistidas voltam a mostrar o widget.
+- Em ecrãs abaixo de 360px, os cartões de progresso por categoria passam a uma lista horizontalmente legível; os anéis reduzem de tamanho, limitam percentagens ao intervalo 0–100 e usam verde a partir de 60%.
+- O shell, topbar e modais reduzem espaçamentos para acomodar larguras a partir de 320px. A navegação inferior mantém cinco destinos frequentes e agrupa Importar/Definições num menu "Mais", preservando alvos de toque de 44px sem barra de scroll.

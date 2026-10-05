@@ -37,19 +37,19 @@
               <h3 class="mb-2 text-[13px] font-bold text-ink">{{ group.label }} <span class="text-ink-400">· {{ group.tasks.length }}</span></h3>
               <div class="flex flex-col gap-1">
                 @for (t of group.tasks; track t.id) {
-                  <a [routerLink]="['/tarefas', t.id]" class="flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3 transition hover:shadow-card">
-                    <input type="checkbox" class="h-4 w-4 rounded accent-brand" [checked]="t.status === 'done'" (click)="$event.stopPropagation(); toggleTask(t.id)" />
-                    <div class="min-w-0 flex-1">
-                      <p class="truncate text-[14px] font-semibold text-ink" [class.line-through]="t.status === 'done'" [class.text-ink-400]="t.status === 'done'">{{ t.title }}</p>
+                  <a [routerLink]="['/tarefas', t.id]" class="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 rounded-2xl border border-surface-line bg-surface-card px-3 py-3 transition hover:border-brand/30 hover:shadow-card sm:flex sm:items-center sm:gap-4 sm:px-4">
+                    <input type="checkbox" [attr.aria-label]="'Marcar ' + t.title + ' como concluída'" class="row-span-2 mt-1 h-4 w-4 shrink-0 rounded accent-brand sm:mt-0" [checked]="t.status === 'done'" (click)="$event.stopPropagation(); toggleTask(t.id)" />
+                    <div class="min-w-0 sm:flex-1">
+                      <p class="break-words text-[14px] font-semibold leading-snug text-ink" [class.line-through]="t.status === 'done'" [class.text-ink-400]="t.status === 'done'">{{ t.title }}</p>
                       @if (taskMeta(t).length > 0) {
-                        <p class="text-[11px] text-ink-400">{{ taskMeta(t).join(' · ') }}</p>
+                        <p class="mt-1 break-words text-[11px] leading-snug text-ink-400">{{ taskMeta(t).join(' · ') }}</p>
                       }
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="col-start-2 flex min-w-0 flex-wrap items-center gap-1.5 sm:ml-auto sm:shrink-0 sm:flex-nowrap sm:gap-2">
                       <app-badge-urgency [urgency]="t.urgency" [canPostpone]="t.canPostpone" />
                       <app-badge-category [category]="t.category" />
                     </div>
-                    <app-icon name="chevron-right" [size]="16" class="text-ink-300" />
+                    <app-icon name="chevron-right" [size]="16" class="hidden shrink-0 text-ink-300 sm:block" />
                   </a>
                 }
               </div>

@@ -1,14 +1,16 @@
-<a [routerLink]="['/tarefas', task().id]" class="flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3 transition hover:shadow-card">
-  <input type="checkbox" class="h-4 w-4 rounded accent-brand" [checked]="task().status === 'done'" (click)="$event.stopPropagation(); toggle.emit(task().id)" />
+<a [routerLink]="['/tarefas', task().id]" class="group flex items-center gap-4 rounded-2xl border border-slate-100 bg-white px-4 py-3 transition hover:border-primary/30 hover:shadow-sm">
+  <input type="checkbox" class="h-5 w-5 rounded-md border-slate-300 text-primary focus:ring-primary/40" [checked]="task().status === 'done'" (click)="$event.stopPropagation(); toggle.emit(task().id)" />
   <div class="min-w-0 flex-1">
-    <p class="truncate text-[14px] font-semibold text-ink" [class.line-through]="task().status === 'done'" [class.text-ink-400]="task().status === 'done'">{{ task().title }}</p>
+    <p class="truncate text-sm font-semibold text-slate-900" [class.line-through]="task().status === 'done'" [class.text-slate-400]="task().status === 'done'">{{ task().title }}</p>
     @if (taskMeta().length > 0) {
-      <p class="text-[11px] text-ink-400">{{ taskMeta().join(' · ') }}</p>
+      <p class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+        <foco-icon name="clock" [size]="12" /> {{ taskMeta().join(' · ') }}
+      </p>
     }
   </div>
   <div class="flex items-center gap-2 shrink-0">
     <app-badge-urgency [urgency]="task().urgency" [canPostpone]="task().canPostpone" />
     <app-badge-category [category]="task().category" />
   </div>
-  <lucide-icon name="chevron-right" class="h-4 w-4 text-ink-300" />
+  <foco-icon name="chevron-right" [size]="16" class="text-slate-300 transition group-hover:text-primary" />
 </a>

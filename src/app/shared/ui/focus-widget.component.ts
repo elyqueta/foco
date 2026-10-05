@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FocusService } from '../../core/focus.service';
 import { DataStore } from '../../core/data.store';
-import { LucideAngularModule } from 'lucide-angular';
+import { FocoIconComponent } from '../brand/foco-icon.component';
 
 const STORAGE_KEY = 'foco:focus-widget-pos:v1';
 
@@ -15,7 +15,7 @@ interface WidgetPosition {
 @Component({
   selector: 'app-focus-widget',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule],
+  imports: [CommonModule, RouterLink, FocoIconComponent],
   templateUrl: './focus-widget.component.html',
 })
 export class FocusWidgetComponent implements OnInit {

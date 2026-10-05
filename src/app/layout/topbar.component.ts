@@ -2,7 +2,6 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Router } from '@angular/router';
 import { HostListener } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
 import { DataStore } from '../core/data.store';
 import { ThemeService } from '../core/theme.service';
 import { SearchService } from '../core/search.service';
@@ -11,12 +10,13 @@ import { TaskModalService } from '../core/task-modal.service';
 import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
 import { NotificationService } from '../core/notification.service';
 import { ExportDialogComponent } from '../shared/ui/export-dialog.component';
+import { FocoIconComponent } from '../shared/brand/foco-icon.component';
 import { toISODate } from '../core/date.utils';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule, SearchDropdownComponent, ExportDialogComponent],
+  imports: [RouterLink, RouterLinkActive, FocoIconComponent, SearchDropdownComponent, ExportDialogComponent],
   templateUrl: './topbar.component.html',
 })
 export class TopbarComponent implements OnInit {
@@ -31,9 +31,9 @@ export class TopbarComponent implements OnInit {
   searchQuery = this.search.query;
 
   tabs = [
-    { path: '/', exact: true, label: 'Dashboard', icon: 'layout-grid' },
-    { path: '/projetos', exact: false, label: 'Projetos', icon: 'folder-kanban' },
-    { path: '/tarefas', exact: false, label: 'Tarefas', icon: 'square-check' },
+    { path: '/', exact: true, label: 'Dashboard', icon: 'dashboard' },
+    { path: '/projetos', exact: false, label: 'Projetos', icon: 'folder' },
+    { path: '/tarefas', exact: false, label: 'Tarefas', icon: 'check-square' },
   ];
 
   menuOpen = signal(false);

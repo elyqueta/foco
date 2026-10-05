@@ -3,7 +3,7 @@ import { DataStore } from './data.store';
 
 export type ColorScheme = 'purple' | 'blue' | 'red' | 'gray';
 
-const SCHEMES: Record<ColorScheme, { brand: string; brand600: string; brand400: string; brand100: string; brand50: string; brandFg: string; strong: string; rgb: [number, number, number] }> = {
+const SCHEMES: Record<ColorScheme, { brand: string; brand600: string; brand400: string; brand100: string; brand50: string; brandFg: string; strong: string; rgb: [number, number, number]; primary: string; primaryDark: string; primaryFg: string; focoLogo: string }> = {
   purple: {
     brand: '108 92 231',
     brand600: '91 75 214',
@@ -13,6 +13,10 @@ const SCHEMES: Record<ColorScheme, { brand: string; brand600: string; brand400: 
     brandFg: '108 92 231',
     strong: '27 24 64',
     rgb: [108, 92, 231],
+    primary: '108 92 231',
+    primaryDark: '86 75 186',
+    primaryFg: '255 255 255',
+    focoLogo: '#6C5CE7',
   },
   blue: {
     brand: '37 99 235',
@@ -23,6 +27,10 @@ const SCHEMES: Record<ColorScheme, { brand: string; brand600: string; brand400: 
     brandFg: '37 99 235',
     strong: '15 23 42',
     rgb: [37, 99, 235],
+    primary: '37 99 235',
+    primaryDark: '29 78 216',
+    primaryFg: '255 255 255',
+    focoLogo: '#2563EB',
   },
   red: {
     brand: '220 38 38',
@@ -33,6 +41,10 @@ const SCHEMES: Record<ColorScheme, { brand: string; brand600: string; brand400: 
     brandFg: '220 38 38',
     strong: '30 27 27',
     rgb: [220, 38, 38],
+    primary: '220 38 38',
+    primaryDark: '175 30 30',
+    primaryFg: '255 255 255',
+    focoLogo: '#DC2626',
   },
   gray: {
     brand: '75 85 99',
@@ -43,6 +55,10 @@ const SCHEMES: Record<ColorScheme, { brand: string; brand600: string; brand400: 
     brandFg: '75 85 99',
     strong: '15 23 42',
     rgb: [75, 85, 99],
+    primary: '75 85 99',
+    primaryDark: '55 65 81',
+    primaryFg: '255 255 255',
+    focoLogo: '#4B5563',
   },
 };
 
@@ -83,6 +99,10 @@ export class ColorSchemeService {
     root.style.setProperty('--c-brand-50', colors.brand50);
     root.style.setProperty('--c-brand-fg', colors.brandFg);
     root.style.setProperty('--c-strong', colors.strong);
+    root.style.setProperty('--primary', colors.primary);
+    root.style.setProperty('--primary-dark', colors.primaryDark);
+    root.style.setProperty('--primary-fg', colors.primaryFg);
+    root.style.setProperty('--foco-logo', colors.focoLogo);
   }
 
   private read(): ColorScheme {

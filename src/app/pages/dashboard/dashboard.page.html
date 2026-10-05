@@ -1,48 +1,48 @@
 <div class="mt-8">
   <section class="grid min-w-0 grid-cols-12 items-stretch gap-5">
     <div class="col-span-12 min-w-0 xl:col-span-5">
-      <h1 class="text-[28px] leading-[36px] md:text-[36px] md:leading-[44px] font-extrabold tracking-tight text-ink">Olá, {{ userName() }}! O que tens planeado para hoje?</h1>
-      <p class="mt-3 max-w-[420px] text-[14px] leading-[22px] text-ink-500">Aqui está o que precisas de fazer hoje. Foca-te numa coisa de cada vez.</p>
+      <h1 class="text-3xl font-bold tracking-tight text-ink text-balance">Olá, {{ userName() }}! O que tens planeado para hoje?</h1>
+      <p class="mt-3 max-w-[420px] text-sm text-ink-500">Aqui está o que precisas de fazer hoje. Foca-te numa coisa de cada vez.</p>
     </div>
     <div class="col-span-12 grid min-w-0 grid-cols-2 gap-5 sm:grid-cols-4 xl:col-span-7">
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
-        <div class="h-11 w-11 rounded-2xl bg-brand-100 text-brand grid place-items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+          <foco-icon name="clock" [size]="20" />
         </div>
         <div>
-          <div class="text-[32px] font-extrabold text-ink leading-none">{{ todayTasks().length }}</div>
-          <div class="text-[13px] font-semibold text-ink">Hoje</div>
-          <div class="text-[11px] text-ink-400">Tarefas para hoje</div>
+          <div class="text-3xl font-bold tabular-nums text-ink">{{ todayTasks().length }}</div>
+          <div class="text-sm font-semibold text-ink">Hoje</div>
+          <div class="text-xs text-ink-500">Tarefas para hoje</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
-        <div class="h-11 w-11 rounded-2xl bg-brand-100 text-brand grid place-items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-amber-100 text-amber-600">
+          <foco-icon name="check-circle" [size]="20" />
         </div>
         <div>
-          <div class="text-[32px] font-extrabold text-ink leading-none">{{ pendingTasks().length }}</div>
-          <div class="text-[13px] font-semibold text-ink">Pendentes</div>
-          <div class="text-[11px] text-ink-400">Por fazer ou em curso</div>
+          <div class="text-3xl font-bold tabular-nums text-ink">{{ pendingTasks().length }}</div>
+          <div class="text-sm font-semibold text-ink">Pendentes</div>
+          <div class="text-xs text-ink-500">Por fazer ou em curso</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
-        <div class="h-11 w-11 rounded-2xl bg-danger-soft text-danger grid place-items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-rose-100 text-rose-600">
+          <foco-icon name="alert-triangle" [size]="20" />
         </div>
         <div>
-          <div class="text-[32px] font-extrabold text-ink leading-none">{{ urgentTasks().length }}</div>
-          <div class="text-[13px] font-semibold text-ink">Urgentes</div>
-          <div class="text-[11px] text-ink-400">Críticas e altas</div>
+          <div class="text-3xl font-bold tabular-nums text-ink">{{ urgentTasks().length }}</div>
+          <div class="text-sm font-semibold text-ink">Urgentes</div>
+          <div class="text-xs text-ink-500">Críticas e altas</div>
         </div>
       </div>
-      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-[20px] bg-surface-card p-5 shadow-card">
-        <div class="h-11 w-11 rounded-2xl bg-success-soft text-success grid place-items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-white p-5 shadow-card ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-white/10">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
+          <foco-icon name="trending-up" [size]="20" />
         </div>
         <div>
-          <div class="text-[32px] font-extrabold text-ink leading-none">{{ completedThisWeek() }}</div>
-          <div class="text-[13px] font-semibold text-ink">Concluídas</div>
-          <div class="text-[11px] text-ink-400">Esta semana</div>
+          <div class="text-3xl font-bold tabular-nums text-ink">{{ completedThisWeek() }}</div>
+          <div class="text-sm font-semibold text-ink">Concluídas</div>
+          <div class="text-xs text-ink-500">Esta semana</div>
         </div>
       </div>
     </div>
@@ -70,20 +70,20 @@
             <div class="rounded-2xl border border-surface-line bg-surface-card p-4 hover:shadow-card transition cursor-pointer" (click)="goTask(task.id)">
               <div class="flex items-center gap-2 mb-2 min-w-0">
                 <app-badge-category [category]="task.category" />
-                <span class="text-[10px] text-ink-400 truncate">{{ task.tags.join(', ') }}</span>
+                <span class="text-xs text-ink-500 truncate">{{ task.tags.join(', ') }}</span>
               </div>
-              <p class="text-[15px] font-bold leading-snug text-ink truncate">{{ task.title }}</p>
+              <p class="text-base font-bold leading-snug text-ink truncate">{{ task.title }}</p>
               <div class="flex items-center justify-between mt-3">
                 <app-badge-urgency [urgency]="task.urgency" [canPostpone]="task.canPostpone" />
-                <span class="text-[11px] text-ink-400">{{ formatDate(task.dueDate) }}</span>
+                <span class="text-xs text-ink-500">{{ formatDate(task.dueDate) }}</span>
               </div>
             </div>
           } @empty {
-            <p class="text-[12px] text-ink-500">Nenhuma tarefa urgente.</p>
+            <p class="text-sm text-ink-500">Nenhuma tarefa urgente.</p>
           }
-          <button (click)="openModal()" class="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-brand/30 bg-brand-50 py-4 text-[13px] font-semibold text-brand-fg transition hover:border-brand/60">
-            <span class="h-6 w-6 rounded-md bg-brand text-white grid place-items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+          <button (click)="openModal()" class="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 py-4 text-sm font-semibold text-primary transition hover:border-primary/60">
+            <span class="grid h-6 w-6 place-items-center rounded-md bg-primary text-white">
+              <foco-icon name="plus" [size]="14" />
             </span>
             Adicionar tarefa
           </button>
@@ -94,33 +94,33 @@
     <div class="col-span-12 min-w-0 md:col-span-6 lg:col-span-3">
       <app-card title="Calendário" class="flex h-full flex-col">
         <div class="flex items-center justify-between mb-3">
-          <button type="button" (click)="prevWeek()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&lsaquo;</button>
-          <span class="text-[13px] font-semibold text-ink">{{ monthLabel() }}</span>
-          <button type="button" (click)="nextWeek()" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&rsaquo;</button>
+          <button type="button" (click)="prevWeek()" aria-label="Semana anterior" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&lsaquo;</button>
+          <span class="text-sm font-semibold text-ink">{{ monthLabel() }}</span>
+          <button type="button" (click)="nextWeek()" aria-label="Semana seguinte" class="grid h-6 w-6 place-items-center rounded-full bg-surface-app text-ink-500 hover:text-ink transition">&rsaquo;</button>
         </div>
         <div class="grid grid-cols-7 gap-y-2 text-center mb-2">
           @for (d of weekDays(); track d) {
-            <div class="text-[10px] font-bold text-ink-400">{{ d }}</div>
+            <div class="text-xs font-bold text-ink-400">{{ d }}</div>
           }
         </div>
         <div class="grid grid-cols-7 text-center gap-y-1">
           @for (day of weekDates(); track day.full) {
-            <button type="button" (click)="selectDate(day.full)" class="h-7 w-7 rounded-full mx-auto grid place-items-center text-[12px] font-semibold transition" [class.bg-brand]="day.full === selectedDate()" [class.text-white]="day.full === selectedDate()" [class.text-ink]="day.full !== selectedDate()" [class.opacity-40]="!day.inMonth">{{ day.num }}</button>
+            <button type="button" (click)="selectDate(day.full)" class="h-7 w-7 rounded-full mx-auto grid place-items-center text-xs font-semibold transition" [class.bg-primary]="day.full === selectedDate()" [class.text-white]="day.full === selectedDate()" [class.text-ink]="day.full !== selectedDate()" [class.opacity-40]="!day.inMonth">{{ day.num }}</button>
           }
         </div>
         <div class="mt-4 flex flex-col gap-2">
           @for (t of dayTasks(); track t.id) {
             <div class="flex items-center gap-3 cursor-pointer min-w-0" (click)="goTask(t.id)">
-              <div class="h-8 w-8 rounded-xl bg-brand-100 text-brand grid place-items-center shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div class="h-8 w-8 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0">
+                <foco-icon name="clock" [size]="14" />
               </div>
               <div class="min-w-0">
-                <p class="text-[12px] font-semibold text-ink truncate">{{ t.title }}</p>
-                <p class="text-[10px] text-ink-400">{{ formatDate(t.dueDate) }}</p>
+                <p class="text-sm font-semibold text-ink truncate">{{ t.title }}</p>
+                <p class="text-xs text-ink-500">{{ formatDate(t.dueDate) }}</p>
               </div>
             </div>
           } @empty {
-            <p class="text-[11px] text-ink-400">Sem tarefas neste dia.</p>
+            <p class="text-xs text-ink-500">Sem tarefas neste dia.</p>
           }
         </div>
       </app-card>
@@ -131,14 +131,14 @@
         <div class="flex flex-col gap-3">
           @for (item of nextSteps(); track item.id) {
             <div class="flex items-start gap-3 cursor-pointer min-w-0" (click)="go(item.kind, item.id)">
-              <span class="mt-1.5 h-2 w-2 rounded-full bg-brand shrink-0"></span>
+              <span class="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0"></span>
               <div class="min-w-0">
-                <p class="text-[13px] font-semibold text-ink truncate">{{ item.nextStep }}</p>
-                <p class="text-[11px] text-ink-400">de {{ item.title }}</p>
+                <p class="text-sm font-semibold text-ink truncate">{{ item.nextStep }}</p>
+                <p class="text-xs text-ink-500">de {{ item.title }}</p>
               </div>
             </div>
           } @empty {
-            <p class="text-[12px] text-ink-500">Sem próximos passos.</p>
+            <p class="text-sm text-ink-500">Sem próximos passos.</p>
           }
         </div>
       </app-card>
@@ -146,36 +146,50 @@
 
     <div class="col-span-12 min-w-0 md:col-span-6 lg:col-span-3">
       @if (focusActive()) {
-        <div class="flex h-full flex-col items-center justify-between rounded-[20px] bg-brand p-6 text-center text-white shadow-float gap-3">
+        <div class="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-6 text-primary-fg shadow-lg shadow-primary/30">
+          <foco-logo class="absolute -right-6 -top-6 opacity-10" variant="symbol" [size]="160" />
           <div>
-            <h3 class="text-[20px] font-extrabold">Modo foco</h3>
-            <p class="text-[12px] text-white/80">Faz só UMA coisa agora</p>
+            <span class="inline-grid h-10 w-10 place-items-center rounded-xl bg-white/20"><foco-icon name="target" [size]="20" /></span>
+            <h3 class="mt-3 text-lg font-bold">Modo foco</h3>
+            <p class="text-sm opacity-80">Faz só UMA coisa agora</p>
           </div>
-          <p class="text-[16px] font-bold">{{ focusSessionTask()?.title }}</p>
-          <div class="text-[40px] font-extrabold leading-none">{{ formatTick(focusTick()) }}</div>
+          <div class="my-6">
+            <p class="text-xs uppercase tracking-wide opacity-70">Tarefa actual</p>
+            <p class="mt-1 text-xl font-semibold leading-snug">{{ focusSessionTask()?.title ?? 'Escolhe uma tarefa para começar' }}</p>
+          </div>
+          <p class="text-4xl font-extrabold leading-none tabular-nums">{{ formatTick(focusTick()) }}</p>
           <div class="flex w-full flex-col gap-2">
-            <button type="button" (click)="viewFocusTask()" class="h-10 rounded-xl bg-white/20 px-4 text-[13px] font-semibold text-white backdrop-blur transition hover:bg-white/30">Ver tarefa</button>
+            <button type="button" (click)="viewFocusTask()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white/90 font-semibold text-slate-900 transition hover:bg-white active:scale-[.98]">Ver tarefa</button>
             @if (focusPaused()) {
-              <button type="button" (click)="resumeFocus()" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Continuar</button>
+              <button type="button" (click)="resumeFocus()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white font-semibold text-slate-900 transition hover:bg-white/90 active:scale-[.98]">Continuar</button>
             } @else {
-              <button type="button" (click)="pauseFocus()" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Pausar</button>
+              <button type="button" (click)="pauseFocus()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white/20 font-semibold text-white transition hover:bg-white/30 active:scale-[.98]">Pausar</button>
             }
-            <button type="button" (click)="stopFocus()" class="h-10 rounded-xl bg-white/10 px-5 text-[13px] font-semibold text-white transition hover:bg-white/20">Parar</button>
+            <button type="button" (click)="stopFocus()" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white/10 font-semibold text-white transition hover:bg-white/20 active:scale-[.98]">Parar</button>
           </div>
         </div>
       } @else {
-        <div class="flex h-full flex-col items-center justify-between rounded-[20px] bg-brand p-6 text-center text-white shadow-float gap-3">
+        <div class="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-6 text-primary-fg shadow-lg shadow-primary/30">
+          <foco-logo class="absolute -right-6 -top-6 opacity-10" variant="symbol" [size]="160" />
           <div>
-            <h3 class="text-[20px] font-extrabold">Modo foco</h3>
-            <p class="text-[12px] text-white/80">Faz só UMA coisa agora</p>
+            <span class="inline-grid h-10 w-10 place-items-center rounded-xl bg-white/20"><foco-icon name="target" [size]="20" /></span>
+            <h3 class="mt-3 text-lg font-bold">Modo foco</h3>
+            <p class="text-sm opacity-80">Faz só UMA coisa agora</p>
           </div>
           @if (focusTask()) {
-            <p class="text-[16px] font-bold">{{ focusTask()!.title }}</p>
-            <button type="button" (click)="startFocus(focusTask()!.id)" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90">Começar</button>
+            <div class="my-6">
+              <p class="text-xs uppercase tracking-wide opacity-70">Tarefa actual</p>
+              <p class="mt-1 text-xl font-semibold leading-snug">{{ focusTask()!.title }}</p>
+            </div>
+            <button type="button" (click)="startFocus(focusTask()!.id)" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white font-semibold text-slate-900 transition hover:bg-white/90 active:scale-[.98]">
+              <foco-icon name="play" [size]="16" /> Começar
+            </button>
           } @else {
-            <lucide-icon name="sparkles" class="h-8 w-8" />
-            <p class="text-[12px] text-white/80">Nada urgente. Respira fundo.</p>
-            <a routerLink="/tarefas" class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90 inline-block">Ver pendentes</a>
+            <div class="my-6">
+              <foco-icon name="sparkles" [size]="32" class="opacity-80" />
+              <p class="mt-2 text-sm opacity-80">Nada urgente. Respira fundo.</p>
+            </div>
+            <a routerLink="/tarefas" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white font-semibold text-slate-900 transition hover:bg-white/90 active:scale-[.98]">Ver pendentes</a>
           }
         </div>
       }
@@ -185,10 +199,10 @@
       <app-card title="Progresso por categoria" class="flex h-full flex-col">
         <div class="grid grid-cols-3 gap-3">
           @for (cat of categories(); track cat.key) {
-            <div class="rounded-2xl border border-surface-line bg-surface-card p-3 flex flex-col items-center">
+            <div class="flex flex-col items-center rounded-2xl border border-surface-line bg-surface-card p-3">
               <app-progress-ring [percent]="cat.value.percent" />
-              <span class="text-[11px] font-bold text-ink mt-1">{{ cat.label }}</span>
-              <span class="text-[10px] text-ink-400">{{ cat.value.done }} de {{ cat.value.total }}</span>
+              <span class="text-sm font-bold text-ink mt-1">{{ cat.label }}</span>
+              <span class="text-xs text-ink-500">{{ cat.value.done }} de {{ cat.value.total }}</span>
             </div>
           }
         </div>

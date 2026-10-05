@@ -69,8 +69,9 @@ export class DataStore {
         items.push({ kind: 'task', id: t.id, title: t.title, nextStep: t.nextStep, urgency: t.urgency });
       }
     }
-    items.sort((a, b) => urgencyOrder(a.urgency) - urgencyOrder(b.urgency));
-    return items.slice(0, 6);
+    const unique = [...new Map(items.map((i) => [i.id, i])).values()];
+    unique.sort((a, b) => urgencyOrder(a.urgency) - urgencyOrder(b.urgency));
+    return unique.slice(0, 6);
   });
 
   statsByCategory = computed(() => {

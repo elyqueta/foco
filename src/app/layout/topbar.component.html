@@ -8,7 +8,7 @@
         [routerLinkActiveOptions]="{ exact: tab.exact }"
         class="flex items-center gap-2 text-[13px] font-medium text-ink-500 transition hover:text-ink"
       >
-        <lucide-icon [name]="tab.icon" class="h-4 w-4" [strokeWidth]="1.75" />
+        <foco-icon [name]="tab.icon" [size]="16" />
         {{ tab.label }}
       </a>
     }
@@ -16,10 +16,7 @@
 
   <!-- Pesquisa -->
   <div class="relative order-last w-full md:order-none md:w-[260px]">
-    <lucide-icon
-      name="search"
-      class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
-    />
+    <foco-icon name="search" [size]="16" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
     <input
       id="search"
       #search
@@ -29,11 +26,11 @@
       (keydown.enter)="onSearchEnter()"
       placeholder="Pesquisar tarefa ou projeto"
       aria-label="Pesquisar"
-      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-11 pr-4 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
+      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-9 pr-3 text-sm text-ink placeholder:text-ink-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
     />
     @if (searchQuery()) {
-      <button type="button" (click)="clearSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-400 hover:text-ink transition">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="18" y2="6"/></svg>
+      <button type="button" (click)="clearSearch()" aria-label="Limpar pesquisa" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-400 hover:text-ink transition">
+        <foco-icon name="x" [size]="14" />
       </button>
     }
     <app-search-dropdown [searchQuery]="searchQuery()" (clearSearch)="clearSearch()" />
@@ -41,26 +38,33 @@
 
   <!-- Ações -->
   <div class="flex items-center gap-3">
-    <div class="flex h-9 items-center rounded-xl bg-surface-card p-1">
+    <div class="inline-flex rounded-xl bg-surface-app p-1" role="group" aria-label="Tema">
       <button type="button" (click)="setTheme('light')"
-        [class]="theme() === 'light' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500'">
-        Claro
+        [class]="theme() === 'light' ? 'rounded-lg bg-surface-card text-primary shadow-sm' : 'rounded-lg px-3 py-1.5 text-xs font-medium text-ink-500 hover:text-ink'">
+        <foco-icon name="sun" [size]="14" class="inline-block align-middle mr-1.5" /> Claro
       </button>
       <button type="button" (click)="setTheme('dark')"
-        [class]="theme() === 'dark' ? 'rounded-lg bg-brand-100 px-3 py-1 text-[12px] font-semibold text-brand' : 'rounded-lg px-3 py-1 text-[12px] text-ink-500'">
-        Escuro
+        [class]="theme() === 'dark' ? 'rounded-lg bg-surface-card text-primary shadow-sm' : 'rounded-lg px-3 py-1.5 text-xs font-medium text-ink-500 hover:text-ink'">
+        <foco-icon name="moon" [size]="14" class="inline-block align-middle mr-1.5" /> Escuro
       </button>
     </div>
 
     <button type="button" (click)="showExportDialog.set(true)"
-      class="hidden h-9 items-center gap-2 rounded-xl border border-surface-line bg-surface-card px-4 text-[12px] font-semibold text-ink-500 transition hover:text-ink sm:flex">
-      <lucide-icon name="download" class="h-4 w-4" />
-      Exportar
+      class="hidden h-9 items-center gap-2 rounded-xl border border-surface-line bg-surface-card px-4 text-sm font-medium text-ink-500 transition hover:bg-surface-app hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:flex">
+      <foco-icon name="download" [size]="16" /> Exportar
     </button>
 
     <button type="button" (click)="openNewTask()"
-      class="h-10 rounded-xl bg-strong px-5 text-[13px] font-semibold text-white shadow-card transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand/40">
-      Nova tarefa
+      class="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 dark:bg-white dark:text-slate-900">
+      <foco-icon name="plus" [size]="16" /> Nova tarefa
+    </button>
+
+    <button type="button" [routerLink]="['/notificacoes']" aria-label="Notificações"
+      class="relative grid h-10 w-10 place-items-center rounded-xl text-ink-500 transition hover:bg-surface-app focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+      <foco-icon name="bell" [size]="20" />
+      @if (unreadNotifications() > 0) {
+        <span class="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">{{ unreadNotifications() }}</span>
+      }
     </button>
 
     <div class="relative">
@@ -68,9 +72,6 @@
         class="flex h-10 items-center gap-2 rounded-xl bg-surface-card pl-1 pr-3 shadow-card transition hover:opacity-90">
         <div class="grid h-8 w-8 place-items-center rounded-lg bg-brand text-[12px] font-bold text-white">{{ initials(userName) }}</div>
         <span class="hidden text-[12px] font-semibold text-ink md:block">{{ userName.split(' ')[0] }}</span>
-        @if (unreadNotifications() > 0) {
-          <span class="grid h-5 min-w-[20px] place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">{{ unreadNotifications() }}</span>
-        }
       </button>
       @if (menuOpen()) {
         <div class="absolute right-0 top-12 z-50 w-[220px] rounded-2xl border border-surface-line bg-surface-card p-2 shadow-float">
@@ -79,13 +80,13 @@
             <p class="text-[11px] text-ink-400">{{ auth.user()?.email ?? '' }}</p>
           </div>
           <a routerLink="/notificacoes" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-surface-app text-ink">
-            <lucide-icon name="bell-ring" class="h-4 w-4" /> Notificações
+            <foco-icon name="bell" [size]="16" /> Notificações
           </a>
           <a routerLink="/definicoes" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-surface-app text-ink">
-            <lucide-icon name="settings" class="h-4 w-4" /> Definições
+            <foco-icon name="settings" [size]="16" /> Definições
           </a>
           <button type="button" (click)="logout()" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold text-danger transition hover:bg-surface-app">
-            <lucide-icon name="log-out" class="h-4 w-4" /> Terminar sessão
+            <foco-icon name="log-out" [size]="16" /> Terminar sessão
           </button>
         </div>
       }

@@ -16,9 +16,9 @@ export class BadgeCategoryComponent {
 
   categoryClass(): string {
     const map: Record<Category, string> = {
-      professional: 'bg-brand text-white',
-      personal: 'bg-teal-tag text-white',
-      household: 'bg-warn text-white',
+      professional: 'bg-brand',
+      personal: 'bg-teal-tag',
+      household: 'bg-warn',
     };
     return map[this.category()];
   }

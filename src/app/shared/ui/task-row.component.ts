@@ -6,12 +6,12 @@ import { BadgeUrgencyComponent } from './badge-urgency.component';
 import { BadgeCategoryComponent } from './badge-category.component';
 import { DataStore } from '../../core/data.store';
 import { formatDate } from '../../core/date.utils';
-import { LucideAngularModule } from 'lucide-angular';
+import { FocoIconComponent } from '../brand/foco-icon.component';
 
 @Component({
   selector: 'app-task-row',
   standalone: true,
-  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, LucideAngularModule],
+  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, FocoIconComponent],
   templateUrl: './task-row.component.html',
 })
 export class TaskRowComponent {

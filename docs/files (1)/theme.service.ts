@@ -1,9 +1,10 @@
-import { Injectable, signal, computed, effect, inject } from '@angular/core';
-import { DataStore } from './data.store';
 import { DOCUMENT } from '@angular/common';
-import { focoBadgeSvg, svgToDataUri } from '../shared/brand/foco-brand';
+import { Injectable, inject } from '@angular/core';
+import { focoBadgeSvg, svgToDataUri } from './foco-brand';
 
-const DEFAULT_PRIMARY = '#DC2626';
+const KEY_COLOR = 'foco.theme.color';
+const KEY_MODE = 'foco.theme.mode';
+export const DEFAULT_PRIMARY = '#DC2626';
 
 const hexToRgb = (hex: string): [number, number, number] => {
   const h = hex.replace('#', '');
@@ -13,56 +14,36 @@ const hexToRgb = (hex: string): [number, number, number] => {
 const shade = ([r, g, b]: number[], k: number) => [r, g, b].map((v) => Math.round(v * (1 - k)));
 const luminance = ([r, g, b]: number[]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
+/**
+ * Aplica a cor do tema: define as CSS variables usadas pelos tokens Tailwind
+ * (primary, primary-dark, primary-fg) e actualiza o favicon + theme-color.
+ */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  private readonly store = inject(DataStore);
   private readonly doc = inject(DOCUMENT);
-  theme = computed(() => this.store.data().settings.theme);
-
-  constructor() {
-    effect(() => {
-      this.doc.documentElement.setAttribute('data-theme', this.theme());
-    });
-    this.init();
-  }
 
   init(): void {
-    const scheme = this.store.data().settings.colorScheme;
-    const hex = this.schemeToHex(scheme);
-    this.applyColor(hex);
-    this.updateFavicon(hex);
+    this.setColor(localStorage.getItem(KEY_COLOR) ?? DEFAULT_PRIMARY, false);
+    this.setMode((localStorage.getItem(KEY_MODE) as 'light' | 'dark') ?? 'light', false);
   }
 
-  set(theme: 'light' | 'dark'): void {
-    this.store.setTheme(theme);
-  }
-
-  setColorScheme(scheme: 'purple' | 'blue' | 'red' | 'gray'): void {
-    const hex = this.schemeToHex(scheme);
-    this.applyColor(hex);
-    this.updateFavicon(hex);
-  }
-
-  private schemeToHex(scheme: string): string {
-    const map: Record<string, string> = {
-      purple: '#6C5CE7',
-      blue: '#2563EB',
-      red: '#DC2626',
-      gray: '#4B5563',
-    };
-    return map[scheme] ?? DEFAULT_PRIMARY;
-  }
-
-  private applyColor(hex: string): void {
+  setColor(hex: string, persist = true): void {
     const rgb = hexToRgb(hex);
     const root = this.doc.documentElement.style;
     root.setProperty('--primary', rgb.join(' '));
     root.setProperty('--primary-dark', shade(rgb, 0.22).join(' '));
     root.setProperty('--primary-fg', luminance(rgb) > 0.6 ? '17 24 39' : '255 255 255');
-    root.setProperty('--foco-logo', hex);
+    root.setProperty('--foco-logo', hex); // para os .svg usados via <img>/inline
+    this.setFavicon(hex);
+    if (persist) localStorage.setItem(KEY_COLOR, hex);
   }
 
-  private updateFavicon(hex: string): void {
+  setMode(mode: 'light' | 'dark', persist = true): void {
+    this.doc.documentElement.classList.toggle('dark', mode === 'dark');
+    if (persist) localStorage.setItem(KEY_MODE, mode);
+  }
+
+  private setFavicon(hex: string): void {
     let link = this.doc.querySelector<HTMLLinkElement>('link[rel="icon"]');
     if (!link) {
       link = this.doc.createElement('link');

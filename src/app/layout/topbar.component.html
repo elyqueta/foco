@@ -16,7 +16,7 @@
 
   <!-- Pesquisa -->
   <div class="relative order-last w-full md:order-none md:w-[260px]">
-    <app-icon name="search" [size]="16" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+    <app-icon name="search" [size]="16" class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-ink-400" />
     <input
       id="search"
       #search
@@ -26,7 +26,7 @@
       (keydown.enter)="onSearchEnter()"
       placeholder="Pesquisar tarefa ou projeto"
       aria-label="Pesquisar"
-      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-9 pr-3 text-sm text-ink placeholder:text-ink-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+      class="h-10 w-full rounded-xl border border-surface-line bg-surface-card pl-8 pr-3 text-sm text-ink placeholder:text-ink-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
     />
     @if (searchQuery()) {
       <app-button variant="ghost" size="sm" icon="x" label="Limpar pesquisa" [iconOnly]="true" buttonClass="absolute right-1 top-1/2 -translate-y-1/2" (click)="clearSearch()"></app-button>

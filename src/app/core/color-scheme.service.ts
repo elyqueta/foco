@@ -22,6 +22,9 @@ const SCHEMES: Record<ColorScheme, SchemeColors> = {
   gray: { brand: '75 85 99', brand600: '55 65 81', brand400: '148 163 184', strong: '15 23 42', rgb: [75, 85, 99], logo: '#4B5563' },
 };
 
+const mixWithBrand = (base: [number, number, number], brand: [number, number, number], amount: number): string =>
+  base.map((channel, index) => Math.round(channel + (brand[index] - channel) * amount)).join(' ');
+
 @Injectable({ providedIn: 'root' })
 export class ColorSchemeService {
   private readonly store = inject(DataStore);
@@ -70,9 +73,21 @@ export class ColorSchemeService {
     root.style.setProperty('--c-brand-600', colors.brand600);
     root.style.setProperty('--c-brand-400', colors.brand400);
     root.style.setProperty('--c-brand-fg', foreground);
-    root.style.setProperty('--c-strong', theme === 'dark' ? '58 54 110' : colors.strong);
+    root.style.setProperty('--c-strong', theme === 'dark'
+      ? mixWithBrand([36, 35, 46], colors.rgb, 0.25)
+      : colors.strong);
     root.style.setProperty('--primary-fg', primaryForeground);
     root.style.setProperty('--foco-logo', colors.logo);
+
+    const darkSurfaceTokens = ['--c-page', '--c-app', '--c-card', '--c-line'];
+    if (theme === 'dark') {
+      root.style.setProperty('--c-page', mixWithBrand([10, 11, 16], colors.rgb, 0.08));
+      root.style.setProperty('--c-app', mixWithBrand([16, 17, 24], colors.rgb, 0.1));
+      root.style.setProperty('--c-card', mixWithBrand([23, 24, 33], colors.rgb, 0.11));
+      root.style.setProperty('--c-line', mixWithBrand([47, 47, 62], colors.rgb, 0.1));
+    } else {
+      darkSurfaceTokens.forEach((token) => root.style.removeProperty(token));
+    }
 
     let favicon = this.document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     if (!favicon) {

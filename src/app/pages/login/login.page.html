@@ -45,7 +45,7 @@
       <h1 class="text-center text-[26px] font-semibold tracking-tight text-ink">Bem-vindo de volta</h1>
       <p class="mt-1.5 text-center text-[13px] text-ink-500">Entra para ver o que tens de fazer hoje.</p>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="mx-auto mt-9 w-full max-w-[400px] space-y-5">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="mx-auto mt-9 flex w-full max-w-[400px] flex-col gap-6">
         @if (formError()) {
           <div role="alert" class="rounded-xl bg-danger-soft px-4 py-3 text-[12px] font-semibold text-danger">{{ formError() }}</div>
         }
@@ -77,7 +77,7 @@
           @if (passwordInvalid()) { <p class="mt-1.5 text-[11px] text-danger">{{ passwordError() }}</p> }
         </div>
 
-        <app-button type="submit" icon="log-in" [label]="loading() ? 'A entrar…' : 'Entrar'" [loading]="loading()" [disabled]="loading()" [iconOnlyBelow]="null" buttonClass="w-full !h-11 !text-[14px]"></app-button>
+        <app-button type="submit" icon="log-in" [label]="loading() ? 'A entrar…' : 'Entrar'" [loading]="loading()" [disabled]="loading()" [iconOnlyBelow]="null" buttonClass="block w-full !h-11 !text-[14px]"></app-button>
       </form>
 
       @if (mock) {

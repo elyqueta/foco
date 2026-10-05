@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { DataStore } from '../../core/data.store';
 import { TaskModalService } from '../../core/task-modal.service';
 import { ConfirmService } from '../../core/confirm.service';
-import { formatDate, toISODate, parseISODate, weekDaysMondayFirst, toDatePart } from '../../core/date.utils';
+import { formatDate, toISODate, parseISODate, weekDaysMondayFirst, toDatePart, todayISO } from '../../core/date.utils';
 import { Task } from '../../core/models';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 
@@ -21,6 +21,7 @@ export class CalendarPage {
   private confirm = inject(ConfirmService);
   currentMonth = signal(new Date());
   selectedDate = signal(toISODate(new Date()));
+  readonly today = todayISO();
 
   tasks(): Task[] {
     const d = parseISODate(this.selectedDate());

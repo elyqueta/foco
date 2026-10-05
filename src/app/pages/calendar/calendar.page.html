@@ -1,25 +1,34 @@
-<div class="mt-8 max-w-4xl">
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-3">
+<div class="mt-4 w-full min-w-0 sm:mt-8 sm:max-w-4xl">
+  <div class="mb-4 flex min-w-0 items-center justify-between gap-1.5 sm:mb-6 sm:gap-3">
+    <div class="flex min-w-0 items-center gap-1 sm:gap-3">
       <app-button variant="ghost" size="sm" icon="chevron-left" label="Mês anterior" [iconOnly]="true" (click)="prevMonth()"></app-button>
-      <span class="text-[18px] font-bold text-ink">{{ monthLabel() }}</span>
+      <span class="whitespace-nowrap text-sm font-bold text-ink sm:text-[18px]">{{ monthLabel() }}</span>
       <app-button variant="ghost" size="sm" icon="chevron-right" label="Mês seguinte" [iconOnly]="true" (click)="nextMonth()"></app-button>
     </div>
-    <app-button variant="secondary" size="sm" icon="calendar-days" label="Hoje" (click)="goToday()"></app-button>
+    <app-button variant="secondary" size="sm" icon="calendar-days" label="Hoje" iconOnlyBelow="sm" (click)="goToday()"></app-button>
   </div>
-  <div class="grid grid-cols-7 gap-2">
+  <div class="grid grid-cols-7 gap-1 sm:gap-2">
     @for (label of weekLabels(); track label) {
-      <div class="text-[11px] font-bold uppercase text-ink-400 text-center pb-2">{{ label }}</div>
+      <div class="pb-1 text-center text-[9px] font-bold uppercase text-ink-400 sm:pb-2 sm:text-[11px]">{{ label }}</div>
     }
   </div>
-  <div class="grid grid-cols-7 gap-2">
+  <div class="grid grid-cols-7 gap-1 sm:gap-2">
     @for (day of calendarDays(); track day.date.toISOString()) {
-      <button type="button" (click)="openDay(toISODate(day.date))" class="min-h-[96px] rounded-xl border p-2 text-left transition" [class.border-surface-line]="day.inMonth" [class.opacity-40]="!day.inMonth" [class.bg-surface-card]="day.inMonth" [class.border-brand/50]="toISODate(day.date) === selectedDate()" [class.bg-brand-50]="toISODate(day.date) === selectedDate()">
-        <span class="text-[12px] font-semibold text-ink">{{ day.date.getDate() }}</span>
-        <div class="mt-1 flex flex-col gap-1">
+      <button
+        type="button"
+        (click)="openDay(toISODate(day.date))"
+        [attr.aria-label]="formatDate(toISODate(day.date)) + (day.tasks.length ? ', ' + day.tasks.length + ' tarefas' : '')"
+        class="min-h-[56px] min-w-0 rounded-lg border border-surface-line bg-surface-card p-1.5 text-left transition hover:border-brand/40 sm:min-h-[96px] sm:rounded-xl sm:p-2"
+        [class.opacity-40]="!day.inMonth"
+        [class.border-brand]="toISODate(day.date) === selectedDate()"
+        [class.bg-brand-50]="toISODate(day.date) === selectedDate()"
+        [class.ring-2]="toISODate(day.date) === today"
+        [class.ring-brand]="toISODate(day.date) === today"
+      >
+        <span class="grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold text-ink sm:h-auto sm:w-auto sm:place-items-start sm:rounded-none sm:text-[12px]" [class.bg-brand]="toISODate(day.date) === selectedDate()" [class.text-primary-fg]="toISODate(day.date) === selectedDate()">{{ day.date.getDate() }}</span>
+        <div class="mt-1 hidden flex-col gap-1 sm:flex">
           @for (t of day.tasks.slice(0, 3); track t.id) {
-            <span class="block truncate rounded-md px-2 py-0.5 text-[10px] font-medium"
-                  [class]="t.status === 'done' ? 'bg-success-soft text-success line-through' : 'bg-brand-100 text-brand-fg'">
+            <span class="block truncate rounded-md px-2 py-0.5 text-[10px] font-medium" [class]="t.status === 'done' ? 'bg-success-soft text-success line-through' : 'bg-brand-100 text-brand-fg'">
               {{ t.title }}
             </span>
           }
@@ -27,6 +36,16 @@
             <span class="text-[10px] text-ink-400">+{{ day.tasks.length - 3 }}</span>
           }
         </div>
+        @if (day.tasks.length > 0) {
+          <div class="mt-1 flex items-center gap-0.5 sm:hidden" aria-hidden="true">
+            @for (task of day.tasks.slice(0, 3); track task.id) {
+              <span class="h-1.5 w-1.5 rounded-full" [class.bg-success]="task.status === 'done'" [class.bg-brand]="task.status !== 'done'"></span>
+            }
+            @if (day.tasks.length > 3) {
+              <span class="ml-0.5 text-[8px] font-semibold text-ink-500">+{{ day.tasks.length - 3 }}</span>
+            }
+          </div>
+        }
       </button>
     }
   </div>

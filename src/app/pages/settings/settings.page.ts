@@ -14,41 +14,41 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
   standalone: true,
   imports: [CommonModule, FormsModule, AppIconComponent, AppThemeToggleComponent, AppButtonComponent],
   template: `
-    <div class="mt-8 max-w-[720px]">
-      <h1 class="text-[28px] font-extrabold text-ink mb-6">Definições</h1>
+    <div class="mt-4 w-full min-w-0 sm:mt-8 sm:max-w-[720px]">
+      <h1 class="mb-5 text-[26px] font-extrabold text-ink sm:mb-6 sm:text-[28px]">Definições</h1>
 
-      <div class="rounded-card bg-surface-card p-5 shadow-card mb-5">
-        <h3 class="text-[16px] font-bold text-ink mb-4">Perfil</h3>
+      <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
+        <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Perfil</h3>
         <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">O teu nome</label>
         <input type="text" [(ngModel)]="userName" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="O teu nome" (ngModelChange)="onUserNameChange($event)" />
       </div>
 
-      <div class="rounded-card bg-surface-card p-5 shadow-card mb-5">
-        <h3 class="text-[16px] font-bold text-ink mb-4">Aparência</h3>
+      <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
+        <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Aparência</h3>
         <app-theme-toggle />
 
         <label class="mt-4 mb-1.5 block text-[12px] font-semibold text-ink-700">Cor principal</label>
-        <div class="grid grid-cols-4 gap-3" role="radiogroup" aria-label="Esquema de cores">
+        <div class="grid grid-cols-2 gap-2 min-[480px]:grid-cols-4 sm:gap-3" role="radiogroup" aria-label="Esquema de cores">
           @for (option of colorOptions; track option.key) {
             <button type="button" (click)="setColor(option.key)"
               role="radio" [attr.aria-checked]="colorScheme() === option.key" [attr.aria-label]="'Seleccionar esquema ' + option.label"
-              [class]="'flex flex-col items-center justify-center gap-2 rounded-2xl border p-3 transition ' + (colorScheme() === option.key ? 'border-brand bg-brand-50' : 'border-surface-line bg-surface-app hover:border-brand/50')">
-              <span class="h-8 w-8 rounded-full border border-black/5" [style]="'background: ' + option.cssColor"></span>
-              <span class="text-[12px] font-semibold text-ink">{{ option.label }}</span>
+              [class]="'relative flex min-h-12 min-w-0 items-center gap-2 rounded-2xl border p-2 pr-7 text-left transition min-[480px]:min-h-24 min-[480px]:flex-col min-[480px]:justify-center min-[480px]:gap-2 min-[480px]:p-3 ' + (colorScheme() === option.key ? 'border-brand bg-brand-50' : 'border-surface-line bg-surface-app hover:border-brand/50')">
+              <span class="h-7 w-7 shrink-0 rounded-full border border-black/5" [style]="'background: ' + option.cssColor"></span>
+              <span class="min-w-0 whitespace-nowrap text-[11px] font-semibold text-ink sm:text-[12px]">{{ option.label }}</span>
               @if (colorScheme() === option.key) {
-                <app-icon name="check" [size]="14" class="text-brand-fg" />
+                <app-icon name="check" [size]="14" class="absolute right-2 top-1/2 -translate-y-1/2 text-brand-fg min-[480px]:right-3 min-[480px]:top-auto min-[480px]:bottom-2 min-[480px]:translate-y-0" />
               }
             </button>
           }
         </div>
       </div>
 
-      <div class="rounded-card bg-surface-card p-5 shadow-card mb-5">
-        <h3 class="text-[16px] font-bold text-ink mb-4">Dados</h3>
+      <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
+        <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Dados</h3>
         <div class="flex flex-col gap-3">
-          <app-button variant="secondary" icon="download" label="Exportar JSON" buttonClass="w-full justify-start" (click)="exportJson()"></app-button>
-          <app-button variant="secondary" icon="rotate-ccw" label="Restaurar dados de exemplo" buttonClass="w-full justify-start" (click)="restoreSeed()"></app-button>
-          <app-button variant="danger" icon="trash-2" label="Apagar tudo" buttonClass="w-full justify-start" (click)="clearAll()"></app-button>
+          <app-button variant="secondary" size="sm" icon="download" label="Exportar JSON" [iconOnlyBelow]="null" buttonClass="w-full justify-start" (click)="exportJson()"></app-button>
+          <app-button variant="secondary" size="sm" icon="rotate-ccw" label="Restaurar dados de exemplo" [iconOnlyBelow]="null" buttonClass="min-h-10 h-auto w-full justify-start whitespace-normal py-2 text-left" (click)="restoreSeed()"></app-button>
+          <app-button variant="danger" size="sm" icon="trash-2" label="Apagar tudo" [iconOnlyBelow]="null" buttonClass="w-full justify-start" (click)="clearAll()"></app-button>
         </div>
       </div>
     </div>

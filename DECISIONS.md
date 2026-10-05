@@ -92,3 +92,8 @@
 - Em larguras abaixo de `lg`, o widget de foco usa uma barra compacta arrastável com tempo, pausa/retoma e paragem; a posição é limitada ao ecrã, mantida em `localStorage` e reajustada ao redimensionar. Sessões persistidas voltam a mostrar o widget.
 - Em ecrãs abaixo de 360px, os cartões de progresso por categoria passam a uma lista horizontalmente legível; os anéis reduzem de tamanho, limitam percentagens ao intervalo 0–100 e usam verde a partir de 60%.
 - O shell, topbar e modais reduzem espaçamentos para acomodar larguras a partir de 320px. A navegação inferior mantém cinco destinos frequentes e agrupa Importar/Definições num menu "Mais", preservando alvos de toque de 44px sem barra de scroll.
+- Em Definições, os esquemas de cor usam grelha 2×2 em ecrãs estreitos (4 colunas a partir de 480px) e os botões de gestão de dados mantêm ícone e texto visíveis, com tamanho compacto.
+
+## 16. Cor de tema no modo escuro
+- No modo escuro, `ColorSchemeService` mistura a cor do esquema escolhido em bases quase pretas para os tokens da página, app, cartões, bordas e botão escuro. Os níveis de mistura aumentam gradualmente entre superfícies para conservar a hierarquia visual sem clarear excessivamente os fundos.
+- Ao regressar ao modo claro, os overrides inline das superfícies escuras são removidos e os tokens claros existentes voltam a ser usados; os valores Tailwind de modo escuro servem como fallback para o esquema roxo antes da aplicação dos valores guardados.

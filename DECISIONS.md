@@ -204,3 +204,28 @@ Com os endpoints de tarefas adicionados à API v1, a gestão de tarefas deixa de
 - E2E contra a API real: criar tarefa pelo modal, listar (dados do servidor), detalhe com nota (aparece na timeline), concluir, reabrir, adiar, editar urgência por select e apagar com confirmação — todos os endpoints chamados corretamente, zero erros de consola.
 - Migração de 3 tarefas antigas (incluindo uma com prazo no passado e uma concluída) verificada: sobem para a API e a cache local fica vazia.
 
+## 20. Timer de tarefas via API
+
+Com os endpoints de timer adicionados à API v1, o temporizador passou a ser gerido pelo servidor (substituindo o pomodoro local apenas no modo API; o `FocusService` local continua como fallback do modo local):
+
+### Endpoints aplicados
+- `POST /v1/tasks/{id}/timer/start` — inicia (`todo`/`postponed` passam a `in_progress`); devolve `{ task, pausedTask? }` e aplica ambas à store, refletindo a pausa automática da tarefa que estava a correr.
+- `POST /v1/tasks/{id}/timer/pause` — pausa e acumula segundos; `422 TIMER_NOT_RUNNING` mostra toast.
+- `POST /v1/tasks/{id}/timer/resume` — retoma (única forma de uma `postponed` voltar a `in_progress`).
+- `GET /v1/timer/active` — chamado no carregamento remoto para recuperar o timer ativo ao abrir a app.
+
+### Estado e UI
+- `DataStore.activeTimerTask` devolve apenas a tarefa com timer **a correr** (alinhado com `/timer/active`); `activeTimerSeconds` soma `trackedSeconds` ao tempo decorrido desde `runningSince`, com reavaliação a cada segundo via tick do `FocusService`.
+- O widget de foco em modo API mostra a tarefa ativa e o tempo acumulado, com Pausar/Parar (ambos pausam — a API não tem "parar"); a retoma faz-se no detalhe da tarefa.
+- O detalhe da tarefa mostra "Começar/Pausar/Retomar temporizador" conforme o estado do timer, um indicador com o tempo acumulado e a atividade do timer na timeline (entradas `timer_started`/`timer_paused`/`timer_resumed`/`timer_stopped`).
+- `409 TIMER_ALREADY_RUNNING` mostra toast informativo em vez de erro.
+
+### Verificações
+- E2E contra a API real: iniciar pelo detalhe (estado passa a "Em curso" e o widget aparece a contar), pausar e retomar pelo widget, pausa automática ao iniciar outra tarefa, widget a seguir o novo timer, estado reposto após recarregar a página e retoma pelo detalhe; atividade do timer visível na timeline; zero erros de consola.
+
+## 21. Timeline de atividade paginada e timer em tempo real
+
+- **Paginação da timeline:** a lista de atividade no detalhe da tarefa mostra inicialmente as 5 entradas mais recentes, com botão "Ver mais N actividades" que acrescenta 5 de cada vez (some quando não há mais). Evita cartões/páginas demasiado longos em tarefas com muitas entradas. O limite é reiniciado ao navegar entre tarefas.
+- **Timer em tempo real:** o temp derivado (`activeTimerSeconds`) dependia do `FocusService.tick`, que devolve sempre o mesmo valor (0) sem sessão local — e nos signals do Angular um computado com valor inalterado corta a propagação, deixando o contador congelado. Passa a depender de `FocusService.tickCount` (contador que muda a cada segundo), pelo que o tempo avança em tempo real tanto no widget como no indicador do detalhe da tarefa.
+- Verificado por E2E: o valor sobe um segundo por segundo (00:02 → 00:07) e a paginação percorre 5 → 10 → 13 entradas até esgotar, sem erros de consola.
+

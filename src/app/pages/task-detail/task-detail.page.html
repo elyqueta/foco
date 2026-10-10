@@ -49,7 +49,13 @@
           <h1 class="w-full min-w-0 break-words text-[24px] font-extrabold leading-tight tracking-tight text-ink sm:flex-1 sm:text-[28px]">{{ task.title }}</h1>
           <div class="flex max-w-full flex-wrap gap-2 sm:shrink-0">
             @if (task.status !== 'done') {
-              <app-button variant="secondary" icon="play" label="Começar temporizador" (click)="startFocus()"></app-button>
+              @if (store.useApi && timerState() === 'running') {
+                <app-button variant="secondary" icon="pause" label="Pausar temporizador" (click)="toggleTimer()"></app-button>
+              } @else if (store.useApi && timerState() === 'paused') {
+                <app-button icon="play" label="Retomar temporizador" (click)="toggleTimer()"></app-button>
+              } @else {
+                <app-button variant="secondary" icon="play" label="Começar temporizador" (click)="toggleTimer()"></app-button>
+              }
             }
             @if (task.status === 'done') {
               <app-button variant="secondary" icon="rotate-ccw" label="Reabrir" (click)="reopenTask()"></app-button>
@@ -69,6 +75,12 @@
             }
           }
           <span [class]="statusClass(task.status)">{{ statusLabel(task.status) }}</span>
+          @if (task.timer && (task.timer.state === 'running' || task.timer.state === 'paused') && task.timer.trackedSeconds >= 0) {
+            <span class="inline-flex items-center gap-1 text-[12px] text-ink-500">
+              <app-icon name="timer" [size]="14" />
+              {{ formatDuration(trackedSeconds()) }}
+            </span>
+          }
           @if (task.dueDate) {
             <span class="inline-flex items-center gap-1 text-[12px] text-ink-500">
               <app-icon name="calendar" [size]="14" />
@@ -89,7 +101,7 @@
                   <p class="text-[12px] text-ink-400">Sem atividade ainda.</p>
                 } @else {
                   <ol>
-                    @for (e of sortedActivity(); track e.id) {
+                    @for (e of visibleActivity(); track e.id) {
                       <li class="relative pb-5 last:pb-0">
                         <span class="absolute -left-[31px] top-1 h-3 w-3 rounded-full border-2 border-surface-card bg-brand"></span>
                         <p class="text-[13px] font-medium text-ink">{{ e.message || labelOf(e.type) }}</p>
@@ -97,6 +109,17 @@
                       </li>
                     }
                   </ol>
+                  @if (hiddenActivityCount() > 0) {
+                    <app-button
+                      variant="secondary"
+                      size="sm"
+                      icon="chevron-down"
+                      [label]="'Ver mais ' + hiddenActivityCount() + (hiddenActivityCount() === 1 ? ' actividade' : ' actividades')"
+                      [iconOnlyBelow]="null"
+                      buttonClass="mt-1"
+                      (click)="showMoreActivities()"
+                    ></app-button>
+                  }
                 }
               </div>
               <div class="mt-4">

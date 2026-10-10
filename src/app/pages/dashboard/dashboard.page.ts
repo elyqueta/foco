@@ -112,6 +112,10 @@ export class DashboardPage {
   async startFocus(id: string): Promise<void> {
     const task = this.store.data().tasks.find((t) => t.id === id);
     if (!task) return;
+    if (this.store.useApi) {
+      await this.store.startTaskTimer(id);
+      return;
+    }
     await this.store.setTaskStatus(id, 'in_progress');
     this.focus.start(task);
   }

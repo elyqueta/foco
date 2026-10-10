@@ -27,10 +27,12 @@ import { Task, ActivityEntry, Project } from '../../core/models';
 export class TaskDetailPage {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private store = inject(DataStore);
+  readonly store = inject(DataStore);
   private focus = inject(FocusService);
   showPostponeModal = signal(false);
   detailLoading = signal(false);
+  /** Número de entradas de atividade visíveis (paginação). */
+  readonly activityLimit = signal(5);
 
   private readonly taskId = signal<string | null>(null);
 
@@ -57,6 +59,7 @@ export class TaskDetailPage {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       this.taskId.set(id);
+      this.activityLimit.set(5);
       if (!id) return;
       if (this.store.useApi) {
         this.detailLoading.set(true);
@@ -116,10 +119,45 @@ export class TaskDetailPage {
   async startFocus(): Promise<void> {
     const task = this.task();
     if (!task || task.status === 'done') return;
+    if (this.store.useApi) {
+      await this.store.startTaskTimer(task.id);
+      return;
+    }
     if (task.status !== 'in_progress') {
       await this.store.setTaskStatus(task.id, 'in_progress');
     }
     this.focus.start(task);
+  }
+
+  /** Estado do timer desta tarefa (modo API). */
+  timerState(): 'idle' | 'running' | 'paused' | 'stopped' | null {
+    return this.task()?.timer?.state ?? null;
+  }
+
+  /** Segundos acumulados a mostrar (do timer ativo quando é esta a tarefa). */
+  trackedSeconds(): number {
+    const task = this.task();
+    if (!task) return 0;
+    if (this.store.activeTimerTask()?.id === task.id) return this.store.activeTimerSeconds();
+    return task.timer?.trackedSeconds ?? 0;
+  }
+
+  /** Começa, pausa ou retoma o temporizador desta tarefa. */
+  async toggleTimer(): Promise<void> {
+    const task = this.task();
+    if (!task || task.status === 'done') return;
+    if (!this.store.useApi) {
+      await this.startFocus();
+      return;
+    }
+    const state = task.timer?.state;
+    if (state === 'running') {
+      await this.store.pauseTaskTimer(task.id);
+    } else if (state === 'paused') {
+      await this.store.resumeTaskTimer(task.id);
+    } else {
+      await this.store.startTaskTimer(task.id);
+    }
   }
 
   async deleteTask(): Promise<void> {
@@ -155,9 +193,31 @@ export class TaskDetailPage {
     return [...activity].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }
 
+  /** Entradas visíveis (mais recentes primeiro). */
+  visibleActivity(): ActivityEntry[] {
+    return this.sortedActivity().slice(0, this.activityLimit());
+  }
+
+  /** Quantas entradas ficam por mostrar. */
+  hiddenActivityCount(): number {
+    return Math.max(0, this.sortedActivity().length - this.activityLimit());
+  }
+
+  showMoreActivities(): void {
+    this.activityLimit.update((value) => value + 5);
+  }
+
   labelOf = activityLabel;
 
   format(iso: string): string {
     return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
+  }
+
+  formatDuration(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return hours > 0 ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
   }
 }

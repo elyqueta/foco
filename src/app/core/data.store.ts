@@ -4,6 +4,7 @@ import { DataRepository, LocalTasksRepository, emptyAppData, DEFAULT_CATEGORIES 
 import { seedData } from './seed';
 import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime, toDatePart } from './date.utils';
 import { ConfirmService } from './confirm.service';
+import { FocusService } from './focus.service';
 import { ApiService, ApiError } from './api.service';
 import { ApiCategory, ApiProject, ApiSettings, ApiTask, ApiTaskInput } from './api.models';
 import { environment } from '../../environments/environment';
@@ -74,6 +75,7 @@ export class DataStore {
   private repo = inject(DataRepository);
   private confirm = inject(ConfirmService);
   private api = inject(ApiService);
+  private focus = inject(FocusService);
   private _data = signal<AppData>(this.repo.load());
 
   /** Em modo API, projetos e categorias vêm do servidor. */
@@ -265,12 +267,22 @@ export class DataStore {
     this.loading.set(true);
     this.loadError.set(null);
     try {
-      await this.refreshCategoriesAndProjects();
-      const tasks = await this.api.listTasks({ includeDone: true, includeExpired: true });
-      this._data.update((d) => ({ ...d, tasks: tasks.map(mapTask) }));
+      const [categories, projects, tasks] = await Promise.all([
+        this.api.listCategories(),
+        this.api.listProjects(),
+        this.api.listTasks({ includeDone: true, includeExpired: true }),
+      ]);
+      this._data.update((d) => ({
+        ...d,
+        categories: categories.map((c) => c.name),
+        categoryDefaults: categories.filter((c) => c.isDefault).map((c) => c.name),
+        projects: projects.map(mapProject),
+        tasks: tasks.map(mapTask),
+      }));
       this.loading.set(false);
       void this.loadSettingsFromApi();
       void this.migrateLocalTasksToApi();
+      void this.loadActiveTimer();
     } catch (error: unknown) {
       this.loading.set(false);
       this.loadError.set(error instanceof ApiError ? error.message : 'Não foi possível carregar os dados do servidor.');
@@ -645,6 +657,84 @@ export class DataStore {
       ...d,
       tasks: d.tasks.some((t) => t.id === task.id) ? d.tasks.map((t) => (t.id === task.id ? task : t)) : [...d.tasks, task],
     }));
+  }
+
+  /** Aplica uma tarefa vinda da API à store (usado por respostas de timer). */
+  applyApiTask(task: Task): void {
+    this.applyTask(task);
+  }
+
+  /** Tarefa com o timer a correr (uma por utilizador; pausadas não aparecem). */
+  readonly activeTimerTask = computed(() => {
+    if (!this.useApi) return null;
+    return this._data().tasks.find((t) => t.timer?.state === 'running') ?? null;
+  });
+
+  /** Segundos acumulados do timer ativo (inclui a entrada a decorrer). */
+  activeTimerSeconds = computed(() => {
+    const task = this.activeTimerTask();
+    const timer = task?.timer;
+    if (!timer) return 0;
+    // Reavalia a cada segundo: o contador muda de valor (um computed que fique
+    // com o mesmo valor cortaria a propagação da reatividade).
+    this.focus.tickCount();
+    const tracked = timer.trackedSeconds;
+    if (timer.state !== 'running' || !timer.runningSince) return tracked;
+    const delta = Math.floor((Date.now() - new Date(timer.runningSince).getTime()) / 1000);
+    return tracked + Math.max(0, delta);
+  });
+
+  async startTaskTimer(id: string): Promise<boolean> {
+    if (!this.useApi) return false;
+    try {
+      const result = await this.api.startTaskTimer(id);
+      this.applyTask(mapTask(result.task));
+      if (result.pausedTask) this.applyTask(mapTask(result.pausedTask));
+      return true;
+    } catch (error: unknown) {
+      if (error instanceof ApiError && error.status === 409) {
+        this.showFlash('info', 'Este temporizador já está a correr.');
+        return false;
+      }
+      this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível iniciar o temporizador.');
+      return false;
+    }
+  }
+
+  async pauseTaskTimer(id: string): Promise<boolean> {
+    if (!this.useApi) return false;
+    try {
+      const result = await this.api.pauseTaskTimer(id);
+      this.applyTask(mapTask(result.task));
+      return true;
+    } catch (error: unknown) {
+      this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível pausar o temporizador.');
+      return false;
+    }
+  }
+
+  async resumeTaskTimer(id: string): Promise<boolean> {
+    if (!this.useApi) return false;
+    try {
+      const result = await this.api.resumeTaskTimer(id);
+      this.applyTask(mapTask(result.task));
+      if (result.pausedTask) this.applyTask(mapTask(result.pausedTask));
+      return true;
+    } catch (error: unknown) {
+      this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível retomar o temporizador.');
+      return false;
+    }
+  }
+
+  /** Recupera o timer ativo do servidor (chamado no carregamento inicial). */
+  private async loadActiveTimer(): Promise<void> {
+    if (!this.useApi) return;
+    try {
+      const task = await this.api.getActiveTimer();
+      if (task) this.applyTask(mapTask(task));
+    } catch {
+      // o timer ativo é best-effort
+    }
   }
 
   async addNote(entity: 'project' | 'task', id: string, text: string): Promise<boolean> {

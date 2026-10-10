@@ -15,6 +15,7 @@ import {
   ApiTaskActionResult,
   ApiTaskInput,
   ApiTaskListFilters,
+  ApiTimerActionResult,
 } from './api.models';
 
 export class ApiError extends Error {
@@ -226,5 +227,24 @@ export class ApiService {
 
   addTaskNote(id: string, text: string): Promise<ApiActivityEntry> {
     return this.post(`/tasks/${id}/notes`, { text });
+  }
+
+  // ---------- Timer ----------
+
+  startTaskTimer(id: string): Promise<ApiTimerActionResult> {
+    return this.post(`/tasks/${id}/timer/start`, {});
+  }
+
+  pauseTaskTimer(id: string): Promise<ApiTimerActionResult> {
+    return this.post(`/tasks/${id}/timer/pause`, {});
+  }
+
+  resumeTaskTimer(id: string): Promise<ApiTimerActionResult> {
+    return this.post(`/tasks/${id}/timer/resume`, {});
+  }
+
+  /** Tarefa com o timer a correr, ou `null` quando nenhuma está a correr (204). */
+  getActiveTimer(): Promise<ApiTask | null> {
+    return this.request(() => firstValueFrom(this.http.get<ApiTask | null>(`${this.base}/timer/active`)));
   }
 }

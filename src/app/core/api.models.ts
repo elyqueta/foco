@@ -119,6 +119,12 @@ export interface ApiTaskActionResult {
   suggestCompleteProject?: { id: string; name: string } | null;
 }
 
+/** Resposta de start/resume do timer: a tarefa e a que foi pausada automaticamente. */
+export interface ApiTimerActionResult {
+  task: ApiTask;
+  pausedTask?: ApiTask | null;
+}
+
 export interface ApiCategory {
   name: string;
   isDefault: boolean;

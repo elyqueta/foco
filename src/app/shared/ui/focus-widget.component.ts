@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FocusService } from '../../core/focus.service';
 import { DataStore } from '../../core/data.store';
+import { Task } from '../../core/models';
 import { AppIconComponent } from './icon.component';
 import { AppButtonComponent } from './button.component';
 
@@ -21,16 +22,22 @@ interface WidgetPosition {
 })
 export class FocusWidgetComponent implements OnInit {
   private readonly focus = inject(FocusService);
-  private readonly store = inject(DataStore);
-
-  readonly active = this.focus.widgetVisible;
-  readonly paused = this.focus.paused;
-  readonly tick = this.focus.tick;
+  readonly store = inject(DataStore);
 
   readonly position = signal<WidgetPosition>(this.readPosition());
 
   dragging = signal(false);
   offset = { x: 0, y: 0 };
+
+  /** Em modo API o widget segue o timer do servidor (apenas quando está a correr). */
+  readonly apiMode = computed(() => this.store.useApi);
+  readonly active = computed(() => (this.apiMode() ? this.store.activeTimerTask() !== null : this.focus.widgetVisible()));
+  readonly timerTask = computed<Task | null>(() => (this.apiMode() ? this.store.activeTimerTask() : null));
+  readonly paused = computed(() => {
+    if (this.apiMode()) return this.timerTask()?.timer?.state === 'paused';
+    return this.focus.paused();
+  });
+  readonly tick = computed(() => (this.apiMode() ? this.store.activeTimerSeconds() : this.focus.tick()));
 
   constructor() {
     afterNextRender(() => this.clampPosition());
@@ -52,18 +59,36 @@ export class FocusWidgetComponent implements OnInit {
   }
 
   taskTitle(): string | undefined {
+    const apiTask = this.timerTask();
+    if (apiTask) return apiTask.title;
     const session = this.focus.session();
     if (!session) return undefined;
     return this.store.data().tasks.find((t) => t.id === session.taskId)?.title;
   }
 
   taskId(): string | undefined {
-    return this.focus.session()?.taskId;
+    return this.timerTask()?.id ?? this.focus.session()?.taskId;
   }
 
-  pause(): void { this.focus.pause(); }
-  resume(): void { this.focus.resume(); }
-  stop(): void { this.focus.stop(); }
+  async pause(): Promise<void> {
+    const task = this.timerTask();
+    if (task) await this.store.pauseTaskTimer(task.id);
+    else this.focus.pause();
+  }
+
+  async resume(): Promise<void> {
+    const task = this.timerTask();
+    if (task) await this.store.resumeTaskTimer(task.id);
+    else this.focus.resume();
+  }
+
+  async stop(): Promise<void> {
+    // Em modo API não existe "parar": pausar fecha a contagem e o widget
+    // deixa de mostrar (a retoma é feita no detalhe da tarefa).
+    const task = this.timerTask();
+    if (task) await this.store.pauseTaskTimer(task.id);
+    else this.focus.stop();
+  }
 
   onPointerDown(event: PointerEvent): void {
     const target = event.target as HTMLElement;

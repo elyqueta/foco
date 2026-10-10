@@ -11,16 +11,18 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { FocoLogoComponent } from '../../shared/brand/foco-logo.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { FocusService } from '../../core/focus.service';
 import { Task, ActivityEntry } from '../../core/models';
 import { formatDate, todayISO, weekDaysMondayFirst, parseISODate, addDays, toISODate, toDatePart } from '../../core/date.utils';
+import { categoryLabel } from '../../core/category.utils';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, AppIconComponent, AppButtonComponent, FocoLogoComponent],
+  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, ProgressRingComponent, EmptyStateComponent, TaskRowComponent, AppIconComponent, AppButtonComponent, FocoLogoComponent, SkeletonComponent],
   templateUrl: './dashboard.page.html',
 })
 export class DashboardPage {
@@ -37,10 +39,17 @@ export class DashboardPage {
   statsByCategory = this.store.statsByCategory;
   completedThisWeek = this.store.completedThisWeek;
 
+  loading = this.store.loading;
+  loadError = this.store.loadError;
+
   userName = computed(() => this.auth.user()?.name ?? this.store.data().settings.userName);
 
   selectedDate = signal(todayISO());
   weekStart = signal(todayISO());
+
+  retry(): void {
+    this.store.retryLoad();
+  }
 
   focusTask(): Task | undefined {
     return this.urgentTasks()[0];
@@ -62,11 +71,11 @@ export class DashboardPage {
 
   categories() {
     const stats = this.statsByCategory();
-    return [
-      { key: 'professional', label: 'Profissional', value: stats['professional'] },
-      { key: 'personal', label: 'Pessoal', value: stats['personal'] },
-      { key: 'household', label: 'Doméstica', value: stats['household'] },
-    ];
+    return this.store.categories().map((key) => ({
+      key,
+      label: categoryLabel(key),
+      value: stats[key] ?? { total: 0, done: 0, percent: 0 },
+    }));
   }
 
   projectName(projectId: string | null): string {
@@ -80,11 +89,11 @@ export class DashboardPage {
     return 'Sem prazo';
   }
 
-  toggleTask(id: string): void {
+  async toggleTask(id: string): Promise<void> {
     const task = this.store.data().tasks.find((t) => t.id === id);
     if (!task) return;
     const next = task.status === 'done' ? 'todo' : 'done';
-    this.store.setTaskStatus(id, next);
+    await this.store.setTaskStatus(id, next);
   }
 
   goTask(id: string): void {
@@ -100,10 +109,10 @@ export class DashboardPage {
     this.modal.show();
   }
 
-  startFocus(id: string): void {
+  async startFocus(id: string): Promise<void> {
     const task = this.store.data().tasks.find((t) => t.id === id);
     if (!task) return;
-    this.store.setTaskStatus(id, 'in_progress');
+    await this.store.setTaskStatus(id, 'in_progress');
     this.focus.start(task);
   }
 

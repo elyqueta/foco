@@ -9,15 +9,17 @@ import { ProjectFormComponent } from '../../shared/ui/project-form.component';
 import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
 import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { Project, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
+import { categoryLabel } from '../../core/category.utils';
 import { SearchService } from '../../core/search.service';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule, RouterLink, EmptyStateComponent, ModalComponent, ProjectFormComponent, ProgressRingComponent, BadgeUrgencyComponent, BadgeCategoryComponent, AppButtonComponent],
+  imports: [CommonModule, RouterLink, EmptyStateComponent, ModalComponent, ProjectFormComponent, ProgressRingComponent, BadgeUrgencyComponent, BadgeCategoryComponent, AppButtonComponent, SkeletonComponent],
   templateUrl: './projects.page.html',
 })
 export class ProjectsPage {
@@ -26,12 +28,16 @@ export class ProjectsPage {
   showModal = signal(false);
   filter = signal<string>('all');
   searchQuery = this.search.query;
+  saving = signal(false);
+
+  loading = this.store.loading;
+  loadError = this.store.loadError;
 
   filters() {
     const cats = this.store.categories();
     return [
       { label: 'Todas', value: 'all' },
-      ...cats.map((c) => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c })),
+      ...cats.map((c) => ({ label: categoryLabel(c), value: c })),
     ];
   }
 
@@ -58,13 +64,14 @@ export class ProjectsPage {
     this.showModal.set(false);
   }
 
-  onSubmit(patch: Partial<Project>): void {
+  async onSubmit(patch: Partial<Project>): Promise<void> {
     const name = patch.name?.trim();
-    if (!name || name.length < 2) return;
-    this.store.addProject({
+    if (!name || name.length < 2 || this.saving()) return;
+    this.saving.set(true);
+    const created = await this.store.addProject({
       name,
       description: patch.description ?? '',
-      category: patch.category ?? 'professional',
+      category: patch.category ?? this.store.categories()[0] ?? 'professional',
       urgency: patch.urgency ?? 'medium',
       status: patch.status ?? 'active',
       canPostpone: patch.canPostpone ?? true,
@@ -72,25 +79,24 @@ export class ProjectsPage {
       nextStep: patch.nextStep ?? '',
       color: patch.color ?? '#6C5CE7',
     });
-    this.closeModal();
+    this.saving.set(false);
+    if (created) this.closeModal();
   }
 
   progress(projectId: string): number {
-    const tasks = this.store.data().tasks.filter((t) => t.projectId === projectId);
-    if (tasks.length === 0) return 0;
-    return Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100);
+    return this.store.projectStats().get(projectId)?.percent ?? 0;
   }
 
   doneCount(projectId: string): number {
-    return this.store.data().tasks.filter((t) => t.projectId === projectId && t.status === 'done').length;
+    return this.store.projectStats().get(projectId)?.done ?? 0;
   }
 
   totalCount(projectId: string): number {
-    return this.store.data().tasks.filter((t) => t.projectId === projectId).length;
+    return this.store.projectStats().get(projectId)?.total ?? 0;
   }
 
-  plural(n: number, singular: string, plural: string): string {
-    return n === 1 ? singular : plural;
+  retry(): void {
+    this.store.retryLoad();
   }
 
   formatDate = formatDate;

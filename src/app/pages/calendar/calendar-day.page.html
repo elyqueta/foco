@@ -9,7 +9,26 @@
       }
     </div>
 
-    @if (tasks().length === 0) {
+    @if (loading()) {
+      <div class="flex flex-col gap-2">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="flex items-center gap-4 rounded-2xl border border-surface-line bg-surface-card px-4 py-3">
+            <app-skeleton class="h-4 w-4 shrink-0" />
+            <div class="min-w-0 flex-1">
+              <app-skeleton class="h-3.5 w-2/5 mb-2" />
+              <app-skeleton class="h-2 w-1/4" />
+            </div>
+            <app-skeleton class="h-7 w-16 !rounded-xl" />
+            <app-skeleton class="h-7 w-20 !rounded-xl" />
+          </div>
+        }
+      </div>
+    } @else if (loadError()) {
+      <div class="flex flex-col items-start gap-3 rounded-2xl bg-danger-soft p-5">
+        <p class="text-[13px] font-semibold text-danger">{{ loadError() }}</p>
+        <app-button icon="rotate-ccw" label="Tentar novamente" variant="secondary" size="sm" (click)="retry()"></app-button>
+      </div>
+    } @else if (tasks().length === 0) {
       <app-empty-state
         icon="calendar-days"
         title="Sem tarefas neste dia"

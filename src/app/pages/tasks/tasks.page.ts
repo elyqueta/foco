@@ -10,15 +10,17 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { ModalComponent } from '../../shared/ui/modal.component';
 import { TaskFormComponent } from '../../shared/ui/task-form.component';
 import { AppIconComponent } from '../../shared/ui/icon.component';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { Task, Category } from '../../core/models';
 import { formatDate } from '../../core/date.utils';
+import { categoryLabel } from '../../core/category.utils';
 import { SearchService } from '../../core/search.service';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, AppIconComponent, AppButtonComponent],
+  imports: [CommonModule, RouterLink, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, AppIconComponent, AppButtonComponent, SkeletonComponent],
   templateUrl: './tasks.page.html',
 })
 export class TasksPage {
@@ -32,11 +34,18 @@ export class TasksPage {
   showExpired = signal(false);
   searchQuery = this.search.query;
 
+  loading = this.store.loading;
+  loadError = this.store.loadError;
+
+  retry(): void {
+    this.store.retryLoad();
+  }
+
   catFilters() {
     const cats = this.store.categories();
     return [
       { label: 'Todas', value: 'all' },
-      ...cats.map((c) => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c })),
+      ...cats.map((c) => ({ label: categoryLabel(c), value: c })),
     ];
   }
 
@@ -78,12 +87,11 @@ export class TasksPage {
     const tasks = this.filtered();
     const map = new Map<string, { key: string; label: string; tasks: Task[] }>();
     const order: Category[] = ['professional', 'personal', 'household'];
-    const labels: Record<Category, string> = { professional: 'Profissional', personal: 'Pessoal', household: 'Doméstica' };
     for (const cat of order) {
-      map.set(cat, { key: cat, label: labels[cat], tasks: [] });
+      map.set(cat, { key: cat, label: categoryLabel(cat), tasks: [] });
     }
     for (const t of tasks) {
-      if (!map.has(t.category)) map.set(t.category, { key: t.category, label: t.category, tasks: [] });
+      if (!map.has(t.category)) map.set(t.category, { key: t.category, label: categoryLabel(t.category), tasks: [] });
       const group = map.get(t.category)!;
       const urgencyPriority = { critical: 0, high: 1, medium: 2, low: 3 };
       const insertIndex = group.tasks.findIndex((x) => (urgencyPriority[x.urgency] ?? 3) > (urgencyPriority[t.urgency] ?? 3));
@@ -120,9 +128,9 @@ export class TasksPage {
     this.showModal.set(false);
   }
 
-  onSubmit(patch: Partial<Task>): void {
+  async onSubmit(patch: Partial<Task>): Promise<void> {
     if (!patch.title || patch.title.trim().length < 2) return;
-    this.store.addTask({
+    const created = await this.store.addTask({
       title: patch.title.trim(),
       description: patch.description ?? '',
       category: patch.category ?? 'professional',
@@ -135,7 +143,7 @@ export class TasksPage {
       tags: patch.tags ?? [],
       projectId: patch.projectId ?? null,
     });
-    this.closeModal();
+    if (created) this.closeModal();
   }
 
   goTask(id: string): void {

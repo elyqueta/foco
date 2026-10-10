@@ -1,10 +1,11 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataStore } from '../../core/data.store';
 import { emptyAppData } from '../../core/storage.repository';
 import { ConfirmService } from '../../core/confirm.service';
 import { ColorSchemeService, ColorScheme } from '../../core/color-scheme.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
@@ -21,6 +22,9 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
         <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Perfil</h3>
         <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">O teu nome</label>
         <input type="text" [(ngModel)]="userName" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="O teu nome" (ngModelChange)="onUserNameChange($event)" />
+        @if (nameError()) {
+          <p class="mt-1.5 text-[11px] text-danger">{{ nameError() }}</p>
+        }
       </div>
 
       <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
@@ -45,21 +49,40 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
 
       <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
         <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Dados</h3>
+        @if (hasLegacyBackup()) {
+          <div class="mb-4 rounded-xl border border-warn/40 bg-warn-soft p-4">
+            <p class="text-[12px] font-semibold text-warn">Encontrámos dados guardados localmente antes da sincronização com o servidor (projetos e categorias antigos).</p>
+            <p class="mt-1 text-[11px] leading-relaxed text-ink-500">Esses projetos não são enviados automaticamente para o servidor. Exporta o backup para os recuperares e, se quiseres, importá-los de novo.</p>
+            <app-button variant="secondary" size="sm" icon="download" label="Exportar backup antigo" [iconOnlyBelow]="null" buttonClass="mt-3" (click)="exportLegacyBackup()"></app-button>
+          </div>
+        }
         <div class="flex flex-col gap-3">
           <app-button variant="secondary" size="sm" icon="download" label="Exportar JSON" [iconOnlyBelow]="null" buttonClass="w-full justify-start" (click)="exportJson()"></app-button>
-          <app-button variant="secondary" size="sm" icon="rotate-ccw" label="Restaurar dados de exemplo" [iconOnlyBelow]="null" buttonClass="min-h-10 h-auto w-full justify-start whitespace-normal py-2 text-left" (click)="restoreSeed()"></app-button>
-          <app-button variant="danger" size="sm" icon="trash-2" label="Apagar tudo" [iconOnlyBelow]="null" buttonClass="w-full justify-start" (click)="clearAll()"></app-button>
+          @if (!useApi) {
+            <app-button variant="secondary" size="sm" icon="rotate-ccw" label="Restaurar dados de exemplo" [iconOnlyBelow]="null" buttonClass="min-h-10 h-auto w-full justify-start whitespace-normal py-2 text-left" (click)="restoreSeed()"></app-button>
+          }
+          <app-button variant="danger" size="sm" icon="trash-2" [label]="useApi ? 'Apagar dados locais' : 'Apagar tudo'" [iconOnlyBelow]="null" buttonClass="w-full justify-start" (click)="clearAll()"></app-button>
+          @if (useApi) {
+            <p class="text-[11px] leading-relaxed text-ink-400">Projetos, categorias e tarefas estão sincronizados com o servidor. Apenas as preferências de aparência são guardadas neste dispositivo.</p>
+          }
         </div>
       </div>
     </div>
   `,
 })
-export class SettingsPage {
+export class SettingsPage implements OnInit {
   private store = inject(DataStore);
   private confirm = inject(ConfirmService);
   private colorService = inject(ColorSchemeService);
+  private auth = inject(AuthService);
   colorScheme = this.colorService.scheme;
   userName = signal(this.store.data().settings.userName);
+  useApi = this.store.useApi;
+  nameError = signal('');
+  private nameTimer: ReturnType<typeof setTimeout> | null = null;
+  private legacyKey = 'foco:data:v1';
+
+  readonly hasLegacyBackup = signal(false);
 
   colorOptions: { key: ColorScheme; label: string; cssColor: string }[] = [
     { key: 'purple', label: 'Roxo', cssColor: 'rgb(108 92 231)' },
@@ -74,21 +97,65 @@ export class SettingsPage {
     });
   }
 
+  ngOnInit(): void {
+    if (this.useApi) {
+      this.hasLegacyBackup.set(this.readLegacyBackup() !== null);
+    }
+  }
+
+  private readLegacyBackup(): unknown {
+    try {
+      const raw = localStorage.getItem(this.legacyKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  exportLegacyBackup(): void {
+    const legacy = this.readLegacyBackup();
+    if (!legacy) return;
+    this.download(JSON.stringify(legacy, null, 2), 'foco-backup-antigo.json');
+  }
+
   setColor(value: ColorScheme): void {
     this.colorService.set(value);
   }
 
   onUserNameChange(name: string): void {
-    this.store.setUserName(name);
+    const trimmed = name.trim();
+    if (this.nameTimer) clearTimeout(this.nameTimer);
+    if (trimmed.length === 0) {
+      this.nameError.set('');
+      return;
+    }
+    if (trimmed.length < 2) {
+      this.nameError.set('Dá um nome com pelo menos 2 caracteres.');
+      return;
+    }
+    this.nameError.set('');
+    if (this.store.data().settings.userName === trimmed) return;
+    this.store.setUserName(trimmed);
+    if (this.useApi) {
+      // O nome visível na topbar/saudação vem da conta: sincroniza com debounce.
+      this.nameTimer = setTimeout(() => {
+        void this.auth.updateProfile({ name: trimmed }).catch(() => {
+          this.nameError.set('Não foi possível atualizar o nome no servidor.');
+        });
+      }, 600);
+    }
   }
 
   exportJson(): void {
-    const json = this.store.exportJson();
+    this.download(this.store.exportJson(), 'foco-backup.json');
+  }
+
+  private download(json: string, filename: string): void {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'foco-backup.json';
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   }

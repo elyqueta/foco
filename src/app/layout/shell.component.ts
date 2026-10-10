@@ -6,6 +6,7 @@ import { ModalComponent } from '../shared/ui/modal.component';
 import { TaskFormComponent } from '../shared/ui/task-form.component';
 import { ConfirmDialogComponent } from '../shared/ui/confirm-dialog.component';
 import { FocusWidgetComponent } from '../shared/ui/focus-widget.component';
+import { ToastComponent } from '../shared/ui/toast.component';
 import { TaskModalService } from '../core/task-modal.service';
 import { ConfirmService } from '../core/confirm.service';
 import { DataStore } from '../core/data.store';
@@ -14,7 +15,7 @@ import { Task } from '../core/models';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent, ModalComponent, TaskFormComponent, ConfirmDialogComponent, FocusWidgetComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent, ModalComponent, TaskFormComponent, ConfirmDialogComponent, FocusWidgetComponent, ToastComponent],
   templateUrl: './shell.component.html',
 })
 export class ShellComponent {
@@ -27,9 +28,10 @@ export class ShellComponent {
     this.modal.hide();
   }
 
-  onTaskSubmit(patch: Partial<Task>): void {
-    this.store.addTask({
-      title: patch.title ?? '',
+  async onTaskSubmit(patch: Partial<Task>): Promise<void> {
+    if (!patch.title || patch.title.trim().length < 2) return;
+    const created = await this.store.addTask({
+      title: patch.title.trim(),
       description: patch.description ?? '',
       category: patch.category ?? 'professional',
       urgency: patch.urgency ?? 'medium',
@@ -41,6 +43,7 @@ export class ShellComponent {
       tags: patch.tags ?? [],
       projectId: patch.projectId ?? null,
     });
+    if (!created) return;
     this.modal.dueDate.set(null);
     this.closeModal();
   }

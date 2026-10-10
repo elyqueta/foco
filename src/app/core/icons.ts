@@ -44,6 +44,7 @@ import {
   Upload,
   Download,
   Sun,
+  UserPlus,
   UserRound,
   X,
 } from 'lucide-angular';
@@ -94,6 +95,7 @@ export const APP_ICONS = {
   Upload,
   Download,
   Sun,
+  UserPlus,
   UserRound,
   X,
 };
@@ -144,6 +146,7 @@ export const APP_ICON_NAMES = [
   'upload',
   'download',
   'sun',
+  'user-plus',
   'user-round',
   'x',
 ] as const;

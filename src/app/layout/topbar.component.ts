@@ -110,6 +110,11 @@ export class TopbarComponent implements OnInit {
     await this.auth.logout();
   }
 
+  async logoutAll(): Promise<void> {
+    this.menuOpen.set(false);
+    await this.auth.logoutAll();
+  }
+
   openNewTask(): void {
     this.modal.show();
   }

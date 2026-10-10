@@ -1,28 +1,140 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { AppData, Project, Task, ActivityEntry, Urgency, Status, ColorScheme } from './models';
-import { DataRepository, emptyAppData } from './storage.repository';
+import { DataRepository, LocalTasksRepository, emptyAppData, DEFAULT_CATEGORIES } from './storage.repository';
 import { seedData } from './seed';
 import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime, toDatePart } from './date.utils';
 import { ConfirmService } from './confirm.service';
+import { ApiService, ApiError } from './api.service';
+import { ApiCategory, ApiProject, ApiSettings, ApiTask, ApiTaskInput } from './api.models';
+import { environment } from '../../environments/environment';
+
+export interface StoreFlash {
+  id: number;
+  kind: 'error' | 'success' | 'info';
+  text: string;
+}
+
+const DEFAULT_PROJECT_COLOR = '#6C5CE7';
+
+function mapActivity(entry: { id: string; at: string; type: ActivityEntry['type']; message: string }): ActivityEntry {
+  return { id: entry.id, at: entry.at, type: entry.type, message: entry.message };
+}
+
+function mapTask(task: ApiTask): Task {
+  const mapped: Task = {
+    id: task.id,
+    projectId: task.projectId ?? null,
+    title: task.title,
+    description: task.description ?? '',
+    category: task.category,
+    urgency: task.urgency,
+    status: task.status,
+    canPostpone: task.canPostpone,
+    dueDate: task.dueDate ?? null,
+    nextStep: task.nextStep ?? '',
+    estimateMinutes: task.estimateMinutes ?? null,
+    tags: Array.isArray(task.tags) ? task.tags : [],
+    activity: (task.activity ?? []).map(mapActivity),
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+    completedAt: task.completedAt ?? null,
+    isOverdue: task.isOverdue ?? false,
+    postponedCount: task.postponedCount ?? 0,
+  };
+  if (task.timer) {
+    mapped.timer = { ...task.timer };
+  }
+  return mapped;
+}
+
+function mapProject(project: ApiProject): Project {
+  const mapped: Project = {
+    id: project.id,
+    name: project.name,
+    description: project.description ?? '',
+    category: project.category,
+    urgency: project.urgency,
+    status: project.status,
+    canPostpone: project.canPostpone,
+    dueDate: project.dueDate ?? null,
+    nextStep: project.nextStep ?? '',
+    color: project.color || DEFAULT_PROJECT_COLOR,
+    activity: (project.activity ?? []).map(mapActivity),
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  };
+  if (project.progress) {
+    mapped.progress = { total: project.progress.total, done: project.progress.done, percent: project.progress.percent };
+  }
+  return mapped;
+}
 
 @Injectable({ providedIn: 'root' })
 export class DataStore {
   private repo = inject(DataRepository);
   private confirm = inject(ConfirmService);
+  private api = inject(ApiService);
   private _data = signal<AppData>(this.repo.load());
+
+  /** Em modo API, projetos e categorias vêm do servidor. */
+  readonly useApi = environment.useApi;
+  readonly loading = signal(this.useApi);
+  readonly loadError = signal<string | null>(null);
+  readonly flash = signal<StoreFlash | null>(null);
+  private flashSeq = 0;
+  private initialized = false;
+  private inFlight: Promise<void> | null = null;
 
   constructor() {
     try {
       const loaded = this._data();
-      if (loaded.projects.length === 0 && loaded.tasks.length === 0) {
+      if (loaded.projects.length === 0 && loaded.tasks.length === 0 && !this.useApi) {
         this._data.set(seedData());
       } else if (!loaded.categories || loaded.categories.length === 0) {
-        this._data.update((d) => ({ ...d, categories: ['professional', 'personal', 'household'] }));
+        this._data.update((d) => ({
+          ...d,
+          categories: [...DEFAULT_CATEGORIES],
+          ...(this.useApi ? {} : { categoryDefaults: [...DEFAULT_CATEGORIES] }),
+        }));
       }
     } catch {
       this._data.set(emptyAppData());
     }
-    this.expireOverdueTasks();
+    // Em modo API a expiração é preguiçosa no servidor (ao listar tarefas).
+    if (!this.useApi) {
+      this.expireOverdueTasks();
+    }
+  }
+
+  /**
+   * Arranca o carregamento remoto (modo API). Chamado depois de a sessão ser
+   * validada, para não fazer pedidos antes da autenticação.
+   */
+  init(): void {
+    if (this.initialized || !this.useApi) return;
+    this.initialized = true;
+    void this.loadFromApi();
+  }
+
+  /** Força um novo carregamento remoto (ex.: após login de outro utilizador). */
+  reload(): void {
+    if (!this.useApi) return;
+    void this.loadFromApi();
+  }
+
+  /**
+   * Associa os dados locais (tarefas) à conta autenticada, isolando contas
+   * diferentes no mesmo dispositivo. Chamada no login/registo/validação;
+   * com `null` (sessão terminada) limpa os dados locais da store.
+   */
+  setSessionScope(userId: string | number | null | undefined): void {
+    if (!this.useApi) return;
+    const repo = this.repo;
+    if (!(repo instanceof LocalTasksRepository)) return;
+    repo.setScope(userId);
+    const signedIn = userId !== null && userId !== undefined;
+    const loaded = signedIn ? repo.load() : emptyAppData();
+    this._data.update((d) => ({ ...d, tasks: loaded.tasks, settings: loaded.settings }));
   }
 
   private readonly _persistEffect = effect(() => {
@@ -32,7 +144,32 @@ export class DataStore {
 
   data = this._data.asReadonly();
 
-  categories = computed(() => this._data().categories ?? ['professional', 'personal', 'household']);
+  categories = computed(() => this._data().categories ?? [...DEFAULT_CATEGORIES]);
+
+  /** Total/concluídas/percentagem por projeto. Em modo API usa o progresso do servidor. */
+  projectStats = computed(() => {
+    const data = this._data();
+    const byId = new Map<string, { total: number; done: number; percent: number }>();
+    if (this.useApi) {
+      for (const p of data.projects) {
+        if (p.progress) {
+          byId.set(p.id, { total: p.progress.total, done: p.progress.done, percent: p.progress.percent });
+        }
+      }
+      return byId;
+    }
+    for (const t of data.tasks) {
+      if (!t.projectId) continue;
+      const entry = byId.get(t.projectId) ?? { total: 0, done: 0, percent: 0 };
+      entry.total++;
+      if (t.status === 'done') entry.done++;
+      byId.set(t.projectId, entry);
+    }
+    for (const entry of byId.values()) {
+      entry.percent = entry.total === 0 ? 0 : Math.round((entry.done / entry.total) * 100);
+    }
+    return byId;
+  });
 
   todayTasks = computed(() => {
     const t = todayISO();
@@ -100,9 +237,143 @@ export class DataStore {
     return toDatePart(dueDate) < todayISO();
   }
 
-  addProject(input: Omit<Project, 'id' | 'activity' | 'createdAt' | 'updatedAt'>): void {
+  isProtectedCategory(name: string): boolean {
+    const defaults = this._data().categoryDefaults;
+    if (defaults) return defaults.includes(name);
+    if (this.useApi) return false;
+    return DEFAULT_CATEGORIES.includes(name);
+  }
+
+  showFlash(kind: StoreFlash['kind'], text: string): void {
+    this.flash.set({ id: ++this.flashSeq, kind, text });
+  }
+
+  dismissFlash(id: number): void {
+    if (this.flash()?.id === id) this.flash.set(null);
+  }
+
+  // ---------- Carregamento inicial (modo API) ----------
+
+  private async loadFromApi(): Promise<void> {
+    this.inFlight = this.inFlight ?? this.fetchRemoteData().finally(() => {
+      this.inFlight = null;
+    });
+    return this.inFlight;
+  }
+
+  private async fetchRemoteData(): Promise<void> {
+    this.loading.set(true);
+    this.loadError.set(null);
+    try {
+      await this.refreshCategoriesAndProjects();
+      const tasks = await this.api.listTasks({ includeDone: true, includeExpired: true });
+      this._data.update((d) => ({ ...d, tasks: tasks.map(mapTask) }));
+      this.loading.set(false);
+      void this.loadSettingsFromApi();
+      void this.migrateLocalTasksToApi();
+    } catch (error: unknown) {
+      this.loading.set(false);
+      this.loadError.set(error instanceof ApiError ? error.message : 'Não foi possível carregar os dados do servidor.');
+    }
+  }
+
+  /**
+   * Migra tarefas guardadas localmente em versões anteriores (antes de a API
+   * ter tarefas) para o servidor, uma única vez: a cache local fica vazia no
+   * fim, pelo que não volta a correr.
+   */
+  private async migrateLocalTasksToApi(): Promise<void> {
+    const repo = this.repo;
+    if (!(repo instanceof LocalTasksRepository) || !repo.pendingTasks) return;
+    const pending = repo.pendingTasks();
+    if (pending.length === 0) return;
+
+    const projectIds = new Set(this._data().projects.map((p) => p.id));
+    const created: Task[] = [];
+    let failed = 0;
+    for (const task of pending) {
+      const projectId = task.projectId && projectIds.has(task.projectId) ? task.projectId : null;
+      const base = {
+        title: task.title,
+        description: task.description,
+        category: task.category,
+        urgency: task.urgency,
+        canPostpone: task.canPostpone,
+        nextStep: task.nextStep,
+        estimateMinutes: task.estimateMinutes,
+        tags: task.tags,
+        projectId,
+      };
+      const result =
+        (await this.api.createTask({ ...base, status: task.status === 'done' ? 'done' : 'todo', dueDate: task.dueDate }).catch(() => null)) ??
+        (await this.api.createTask({ ...base, status: 'todo', dueDate: null }).catch(() => null));
+      if (result) {
+        created.push(mapTask(result));
+      } else {
+        failed++;
+      }
+    }
+    repo.clearTasks();
+    if (created.length > 0) {
+      this._data.update((d) => ({ ...d, tasks: [...d.tasks, ...created] }));
+    }
+    if (failed > 0) {
+      this.showFlash('info', `${created.length} tarefas migradas para o servidor; ${failed} não puderam ser migradas.`);
+    }
+  }
+
+  private async refreshCategoriesAndProjects(): Promise<void> {
+    const [categories, projects] = await Promise.all([this.api.listCategories(), this.api.listProjects()]);
+    this._data.update((d) => ({
+      ...d,
+      categories: categories.map((c) => c.name),
+      categoryDefaults: categories.filter((c) => c.isDefault).map((c) => c.name),
+      projects: projects.map(mapProject),
+    }));
+  }
+
+  private async loadSettingsFromApi(): Promise<void> {
+    try {
+      const settings = await this.api.getSettings();
+      this.applyApiSettings(settings);
+    } catch {
+      // definições são best-effort: a app continua com as preferências locais
+    }
+  }
+
+  private applyApiSettings(settings: ApiSettings): void {
+    const name = settings.userName?.trim() || settings.name?.trim();
+    this._data.update((d) => ({
+      ...d,
+      settings: {
+        ...d.settings,
+        userName: name ? name : d.settings.userName,
+        theme: settings.theme === 'dark' ? 'dark' : 'light',
+      },
+    }));
+  }
+
+  retryLoad(): void {
+    if (!this.useApi) return;
+    void this.loadFromApi();
+  }
+
+  // ---------- Projetos ----------
+
+  async addProject(input: Omit<Project, 'id' | 'activity' | 'createdAt' | 'updatedAt' | 'progress'>): Promise<Project | null> {
     const name = input.name?.trim();
-    if (!name || name.length < 2) return;
+    if (!name || name.length < 2) return null;
+    if (this.useApi) {
+      try {
+        const created = await this.api.createProject({ ...input, name });
+        const project = mapProject(created);
+        this._data.update((d) => ({ ...d, projects: [...d.projects, project] }));
+        return project;
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível criar o projeto.');
+        return null;
+      }
+    }
     const now = new Date().toISOString();
     const project: Project = {
       ...input,
@@ -113,9 +384,31 @@ export class DataStore {
       updatedAt: now,
     };
     this._data.update((d) => ({ ...d, projects: [...d.projects, project] }));
+    return project;
   }
 
-  updateProject(id: string, patch: Partial<Project>): void {
+  /** Devolve `false` quando o servidor não detetou alterações (422 NO_CHANGES). */
+  async updateProject(id: string, patch: Partial<Project>): Promise<boolean> {
+    if (this.useApi) {
+      const body: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(patch)) {
+        if (key === 'id' || key === 'activity' || key === 'createdAt' || key === 'updatedAt' || key === 'progress') continue;
+        if (value !== undefined) body[key] = value;
+      }
+      try {
+        const updated = await this.api.updateProject(id, body);
+        const project = mapProject(updated);
+        this._data.update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? project : p)) }));
+        return true;
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.isNoChanges) {
+          this.showFlash('info', error.message);
+          return false;
+        }
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível atualizar o projeto.');
+        return false;
+      }
+    }
     const now = new Date().toISOString();
     const entries: ActivityEntry[] = [];
     if (patch.nextStep) {
@@ -125,6 +418,7 @@ export class DataStore {
       ...d,
       projects: d.projects.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: now, activity: [...p.activity, ...entries] } : p)),
     }));
+    return true;
   }
 
   async deleteProject(id: string): Promise<void> {
@@ -135,7 +429,14 @@ export class DataStore {
       confirmLabel: 'Apagar',
     });
     if (!ok) return;
-    const now = new Date().toISOString();
+    if (this.useApi) {
+      try {
+        await this.api.deleteProject(id);
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível remover o projeto.');
+        return;
+      }
+    }
     this._data.update((d) => ({
       ...d,
       projects: d.projects.filter((p) => p.id !== id),
@@ -143,9 +444,41 @@ export class DataStore {
     }));
   }
 
-  addTask(input: Omit<Task, 'id' | 'activity' | 'createdAt' | 'updatedAt' | 'completedAt'>): void {
+  /** Busca o detalhe (com atividade) de um projeto no modo API. */
+  async fetchProjectDetail(id: string): Promise<Project | null> {
+    if (!this.useApi) {
+      return this._data().projects.find((p) => p.id === id) ?? null;
+    }
+    try {
+      const detail = await this.api.getProject(id);
+      const project = mapProject(detail);
+      this._data.update((d) => ({
+        ...d,
+        projects: d.projects.some((p) => p.id === id) ? d.projects.map((p) => (p.id === id ? project : p)) : [...d.projects, project],
+      }));
+      return project;
+    } catch (error: unknown) {
+      this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível carregar o projeto.');
+      return null;
+    }
+  }
+
+  // ---------- Tarefas ----------
+
+  async addTask(input: Omit<Task, 'id' | 'activity' | 'createdAt' | 'updatedAt' | 'completedAt'>): Promise<Task | null> {
     const title = input.title?.trim();
-    if (!title || title.length < 2) return;
+    if (!title || title.length < 2) return null;
+    if (this.useApi) {
+      try {
+        const created = await this.api.createTask(this.toApiTaskInput(input, title));
+        const task = mapTask(created);
+        this._data.update((d) => ({ ...d, tasks: [...d.tasks, task] }));
+        return task;
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível criar a tarefa.');
+        return null;
+      }
+    }
     const now = new Date().toISOString();
     const status = input.status ?? 'todo';
     const finalStatus = input.dueDate && toDatePart(input.dueDate) < todayISO() ? 'expired' : status;
@@ -160,9 +493,46 @@ export class DataStore {
       completedAt: finalStatus === 'done' ? now : null,
     };
     this._data.update((d) => ({ ...d, tasks: [...d.tasks, task] }));
+    return task;
   }
 
-  updateTask(id: string, patch: Partial<Task>): void {
+  private toApiTaskInput(input: Partial<Task>, title: string): ApiTaskInput {
+    const body: ApiTaskInput = { title };
+    if (input.description !== undefined) body.description = input.description;
+    if (input.category !== undefined) body.category = input.category;
+    if (input.urgency !== undefined) body.urgency = input.urgency;
+    if (input.status !== undefined) body.status = input.status;
+    if (input.canPostpone !== undefined) body.canPostpone = input.canPostpone;
+    if (input.dueDate !== undefined) body.dueDate = input.dueDate;
+    if (input.nextStep !== undefined) body.nextStep = input.nextStep;
+    if (input.estimateMinutes !== undefined) body.estimateMinutes = input.estimateMinutes;
+    if (input.tags !== undefined) body.tags = input.tags;
+    if (input.projectId !== undefined) body.projectId = input.projectId;
+    return body;
+  }
+
+  /** Devolve `false` quando o servidor não detetou alterações (422 NO_CHANGES). */
+  async updateTask(id: string, patch: Partial<Task>): Promise<boolean> {
+    if (this.useApi) {
+      const skip = ['id', 'activity', 'createdAt', 'updatedAt', 'completedAt', 'isOverdue', 'postponedCount', 'timer'];
+      const body: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(patch)) {
+        if (skip.includes(key)) continue;
+        if (value !== undefined) body[key] = value;
+      }
+      try {
+        const updated = await this.api.updateTask(id, body);
+        this.applyTask(mapTask(updated));
+        return true;
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.isNoChanges) {
+          this.showFlash('info', error.message);
+          return false;
+        }
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível atualizar a tarefa.');
+        return false;
+      }
+    }
     const now = new Date().toISOString();
     const entries: ActivityEntry[] = [];
     if (patch.status) {
@@ -175,6 +545,7 @@ export class DataStore {
       ...d,
       tasks: d.tasks.map((t) => (t.id === id ? { ...t, ...patch, updatedAt: now, activity: [...t.activity, ...entries] } : t)),
     }));
+    return true;
   }
 
   async deleteTask(id: string): Promise<void> {
@@ -185,16 +556,40 @@ export class DataStore {
       confirmLabel: 'Apagar',
     });
     if (!ok) return;
+    if (this.useApi) {
+      try {
+        await this.api.deleteTask(id);
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível remover a tarefa.');
+        return;
+      }
+    }
     this._data.update((d) => ({
       ...d,
       tasks: d.tasks.filter((t) => t.id !== id),
     }));
   }
 
-  setTaskStatus(id: string, status: Status): void {
-    const now = new Date().toISOString();
+  async setTaskStatus(id: string, status: Status): Promise<void> {
     const task = this._data().tasks.find((t) => t.id === id);
-    if (!task) return;
+    if (!task || task.status === status) return;
+    if (this.useApi) {
+      try {
+        if (status === 'done') {
+          const result = await this.api.completeTask(id);
+          this.applyTask(mapTask(result.task));
+        } else if (status === 'todo' && (task.status === 'done' || task.status === 'expired')) {
+          const result = await this.api.reopenTask(id);
+          this.applyTask(mapTask(result.task));
+        } else {
+          await this.updateTask(id, { status });
+        }
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível alterar o estado da tarefa.');
+      }
+      return;
+    }
+    const now = new Date().toISOString();
     const patch: Partial<Task> = { status, updatedAt: now };
     if (status === 'done') {
       patch.completedAt = now;
@@ -202,7 +597,16 @@ export class DataStore {
     this.updateTask(id, patch);
   }
 
-  postponeTask(id: string, newDate: string): void {
+  async postponeTask(id: string, newDate: string): Promise<void> {
+    if (this.useApi) {
+      try {
+        const result = await this.api.postponeTask(id, newDate);
+        this.applyTask(mapTask(result.task));
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível adiar a tarefa.');
+      }
+      return;
+    }
     const now = new Date().toISOString();
     this._data.update((d) => ({
       ...d,
@@ -220,9 +624,55 @@ export class DataStore {
     }));
   }
 
-  addNote(entity: 'project' | 'task', id: string, text: string): void {
+  /** Busca o detalhe (com atividade) de uma tarefa no modo API. */
+  async fetchTaskDetail(id: string): Promise<Task | null> {
+    if (!this.useApi) {
+      return this._data().tasks.find((t) => t.id === id) ?? null;
+    }
+    try {
+      const detail = await this.api.getTask(id);
+      const task = mapTask(detail);
+      this.applyTask(task);
+      return task;
+    } catch (error: unknown) {
+      this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível carregar a tarefa.');
+      return null;
+    }
+  }
+
+  private applyTask(task: Task): void {
+    this._data.update((d) => ({
+      ...d,
+      tasks: d.tasks.some((t) => t.id === task.id) ? d.tasks.map((t) => (t.id === task.id ? task : t)) : [...d.tasks, task],
+    }));
+  }
+
+  async addNote(entity: 'project' | 'task', id: string, text: string): Promise<boolean> {
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+    if (this.useApi) {
+      try {
+        if (entity === 'project') {
+          const entry = mapActivity(await this.api.addProjectNote(id, trimmed));
+          this._data.update((d) => ({
+            ...d,
+            projects: d.projects.map((p) => (p.id === id ? { ...p, activity: [...p.activity, entry], updatedAt: entry.at } : p)),
+          }));
+        } else {
+          const entry = mapActivity(await this.api.addTaskNote(id, trimmed));
+          this._data.update((d) => ({
+            ...d,
+            tasks: d.tasks.map((t) => (t.id === id ? { ...t, activity: [...t.activity, entry], updatedAt: entry.at } : t)),
+          }));
+        }
+        return true;
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível adicionar a nota.');
+        return false;
+      }
+    }
     const now = new Date().toISOString();
-    const entry: ActivityEntry = { id: crypto.randomUUID(), at: now, type: 'note', message: text };
+    const entry: ActivityEntry = { id: crypto.randomUUID(), at: now, type: 'note', message: trimmed };
     if (entity === 'project') {
       this._data.update((d) => ({
         ...d,
@@ -234,9 +684,66 @@ export class DataStore {
         tasks: d.tasks.map((t) => (t.id === id ? { ...t, activity: [...t.activity, entry], updatedAt: now } : t)),
       }));
     }
+    return true;
   }
 
+  // ---------- Categorias ----------
+
+  async addCategory(name: string): Promise<boolean> {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed.length < 2) {
+      this.showFlash('error', 'Dá um nome com pelo menos 2 caracteres.');
+      return false;
+    }
+    if (this.categories().includes(trimmed)) {
+      this.showFlash('error', 'Já existe uma categoria com esse nome.');
+      return false;
+    }
+    if (this.useApi) {
+      try {
+        const created: ApiCategory = await this.api.createCategory(trimmed);
+        this._data.update((d) => ({ ...d, categories: [...d.categories, created.name] }));
+        return true;
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível criar a categoria.');
+        return false;
+      }
+    }
+    this._data.update((d) => ({ ...d, categories: [...d.categories, trimmed] }));
+    return true;
+  }
+
+  async removeCategory(name: string): Promise<boolean> {
+    if (this.isProtectedCategory(name)) {
+      this.showFlash('error', 'As categorias padrão não podem ser removidas.');
+      return false;
+    }
+    if (this.useApi) {
+      try {
+        await this.api.deleteCategory(name);
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível remover a categoria.');
+        return false;
+      }
+      await this.refreshCategoriesAndProjects();
+    } else {
+      this._data.update((d) => ({ ...d, categories: d.categories.filter((c) => c !== name) }));
+    }
+    this._data.update((d) => ({
+      ...d,
+      tasks: d.tasks.map((t) => (t.category === name ? { ...t, category: 'professional' } : t)),
+      projects: d.projects.map((p) => (p.category === name ? { ...p, category: 'professional' } : p)),
+    }));
+    return true;
+  }
+
+  // ---------- Dados agregados ----------
+
   replaceAll(data: AppData): void {
+    if (this.useApi) {
+      this._data.update((d) => ({ ...d, tasks: data.tasks, settings: data.settings }));
+      return;
+    }
     this._data.set(data);
   }
 
@@ -246,6 +753,7 @@ export class DataStore {
 
   setTheme(theme: 'light' | 'dark'): void {
     this._data.update((d) => ({ ...d, settings: { ...d.settings, theme } }));
+    if (this.useApi) void this.pushSettings({ theme });
   }
 
   setColorScheme(colorScheme: ColorScheme): void {
@@ -254,9 +762,33 @@ export class DataStore {
 
   setUserName(name: string): void {
     this._data.update((d) => ({ ...d, settings: { ...d.settings, userName: name } }));
+    if (this.useApi) void this.pushSettings({ userName: name });
   }
 
-  clearAll(): void {
+  private async pushSettings(patch: { theme?: 'light' | 'dark'; userName?: string }): Promise<void> {
+    try {
+      await this.api.updateSettings(patch);
+    } catch (error: unknown) {
+      if (error instanceof ApiError && error.isNoChanges) return;
+      // sincronização best-effort: o valor local já foi aplicado
+    }
+  }
+
+  async clearAll(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: this.useApi ? 'Apagar dados locais?' : 'Apagar tudo?',
+      message: this.useApi
+        ? 'Isto apaga os dados guardados apenas neste dispositivo. Os projetos, categorias e tarefas no servidor não são afetados. Continuar?'
+        : 'Isto apaga todos os dados. Continuar?',
+      confirmLabel: 'Apagar',
+    });
+    if (!ok) return;
+    if (this.useApi) {
+      this.repo.clearTasks?.();
+      this.showFlash('info', 'Dados locais apagados. Os dados no servidor não foram afetados.');
+      return;
+    }
     this._data.set(emptyAppData());
   }
 
@@ -280,24 +812,6 @@ export class DataStore {
         }
         return t;
       }),
-    }));
-  }
-
-  addCategory(name: string): void {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    const cats = this._data().categories ?? [];
-    if (cats.includes(trimmed)) return;
-    this._data.update((d) => ({ ...d, categories: [...cats, trimmed] }));
-  }
-
-  removeCategory(name: string): void {
-    if (name === 'professional' || name === 'personal' || name === 'household') return;
-    this._data.update((d) => ({
-      ...d,
-      categories: d.categories?.filter((c) => c !== name) ?? [],
-      tasks: d.tasks.map((t) => (t.category === name ? { ...t, category: 'professional' } : t)),
-      projects: d.projects.map((p) => (p.category === name ? { ...p, category: 'professional' } : p)),
     }));
   }
 }

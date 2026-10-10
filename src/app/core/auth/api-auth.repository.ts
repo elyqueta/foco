@@ -1,78 +1,99 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { AuthRepository } from './auth.repository';
+import { Injectable, inject } from '@angular/core';
+import { AuthRepository, ProfilePayload, RegisterPayload } from './auth.repository';
 import { AuthSession, AuthUser, LoginPayload, AuthError, LoginField } from './auth.models';
+import { ApiError, ApiService } from '../api.service';
 
-const toErrors = (payload: unknown): Partial<Record<LoginField, string[]>> => {
-  if (!payload || typeof payload !== 'object' || !('errors' in payload)) return {};
-  const errors = (payload as { errors?: Record<string, string[]> }).errors;
+const AUTH_FIELDS: LoginField[] = ['email', 'password', 'name', 'passwordConfirmation', 'currentPassword'];
+
+const toFieldErrors = (error: ApiError): Partial<Record<LoginField, string[]>> => {
+  if (error.status !== 422) return {};
+  const errors = (error as unknown as { errors?: Record<string, unknown> }).errors;
   if (!errors || typeof errors !== 'object') return {};
   const out: Partial<Record<LoginField, string[]>> = {};
   for (const key of Object.keys(errors)) {
-    const field = key as LoginField;
-    if (field === 'email' || field === 'password') {
-      out[field] = Array.isArray(errors[field]) ? errors[field] : [String(errors[field])];
-    }
+    if (!AUTH_FIELDS.includes(key as LoginField)) continue;
+    const value = (errors as Record<string, unknown>)[key];
+    out[key as LoginField] = Array.isArray(value) ? (value as string[]) : [String(value)];
   }
   return out;
 };
 
+const toAuthError = (error: unknown, fallback: string): AuthError => {
+  if (error instanceof ApiError) {
+    const fieldErrors = toFieldErrors(error);
+    const firstMessage = Object.values(fieldErrors).flat().at(0);
+    return new AuthError(firstMessage ?? error.message, error.status, fieldErrors);
+  }
+  return new AuthError(fallback, 0);
+};
+
 @Injectable({ providedIn: 'root' })
 export class ApiAuthRepository extends AuthRepository {
-  constructor(private readonly http: HttpClient) {
-    super();
-  }
-
-  private readonly base = environment.apiBaseUrl;
+  private readonly api = inject(ApiService);
 
   async login(payload: LoginPayload): Promise<AuthSession> {
     try {
-      const response = await firstValueFrom(
-        this.http.post<{ token: string; user: AuthUser; expires_at: string | null }>(
-          `${this.base}/auth/login`,
-          payload,
-          { headers: new HttpHeaders({ Accept: 'application/json' }) },
-        ),
-      );
+      const response = await this.api.login(payload.email, payload.password);
       return {
         token: response.token,
         user: response.user,
         expiresAt: response.expires_at,
       };
     } catch (error: unknown) {
-      const status = error && typeof error === 'object' && 'status' in error ? (error as { status: number }).status : 0;
-      if (status === 422) {
-        const fieldErrors = toErrors((error as { error?: unknown }).error);
-        const message = Object.values(fieldErrors).flat().at(0) ?? 'Verifica os campos.';
-        throw new AuthError(message, 422, fieldErrors);
-      }
-      if (status === 401) {
-        throw new AuthError('Email ou palavra-passe incorretos.', 401);
-      }
-      if (status === 429) {
-        throw new AuthError('Demasiadas tentativas. Tenta novamente dentro de instantes.', 429);
-      }
-      if (status === 0) {
-        throw new AuthError('Não foi possível contactar o servidor.', 0);
-      }
-      throw new AuthError('Ocorreu um erro. Tenta novamente.', status);
+      throw toAuthError(error, 'Email ou palavra-passe incorretos.');
     }
   }
 
-  async logout(_session: AuthSession): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${this.base}/auth/logout`, {}, { headers: new HttpHeaders({ Accept: 'application/json' }), responseType: 'text' }),
-    ).catch(() => {});
+  async register(payload: RegisterPayload): Promise<AuthSession> {
+    try {
+      const response = await this.api.register(payload);
+      return {
+        token: response.token,
+        user: response.user,
+        expiresAt: response.expires_at,
+      };
+    } catch (error: unknown) {
+      throw toAuthError(error, 'Não foi possível criar a conta.');
+    }
+  }
+
+  async logout(session: AuthSession): Promise<void> {
+    try {
+      await this.api.logout();
+    } catch {
+      //token may already be invalid; local session is cleared anyway
+    }
+  }
+
+  async logoutAll(_session: AuthSession): Promise<void> {
+    await this.api.logoutAll();
   }
 
   async me(session: AuthSession): Promise<AuthUser> {
-    const response = await firstValueFrom(
-      this.http.get<AuthUser>(`${this.base}/auth/me`, {
-        headers: new HttpHeaders({ Accept: 'application/json', Authorization: `Bearer ${session.token}` }),
-      }),
-    );
-    return response;
+    try {
+      return await this.api.me();
+    } catch (error: unknown) {
+      // Qualquer resposta não-2xx invalida a sessão (fail closed).
+      if (error instanceof ApiError && error.status >= 400) {
+        throw new AuthError(error.message, error.status);
+      }
+      throw error instanceof ApiError ? new AuthError(error.message, error.status) : new AuthError('Não foi possível validar a sessão.', 0);
+    }
+  }
+
+  async changePassword(_session: AuthSession, currentPassword: string, password: string, passwordConfirmation: string): Promise<void> {
+    try {
+      await this.api.changePassword(currentPassword, password, passwordConfirmation);
+    } catch (error: unknown) {
+      throw toAuthError(error, 'Não foi possível alterar a palavra-passe.');
+    }
+  }
+
+  async updateProfile(_session: AuthSession, payload: ProfilePayload): Promise<void> {
+    try {
+      await this.api.updateProfile(payload);
+    } catch (error: unknown) {
+      throw toAuthError(error, 'Não foi possível atualizar o perfil.');
+    }
   }
 }

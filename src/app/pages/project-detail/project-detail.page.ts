@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
@@ -7,21 +7,22 @@ import { DataStore } from '../../core/data.store';
 import { CardComponent } from '../../shared/ui/card.component';
 import { BadgeUrgencyComponent } from '../../shared/ui/badge-urgency.component';
 import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component';
-import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { ModalComponent } from '../../shared/ui/modal.component';
 import { TaskFormComponent } from '../../shared/ui/task-form.component';
 import { ProjectFormComponent } from '../../shared/ui/project-form.component';
 import { TaskRowComponent } from '../../shared/ui/task-row.component';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 import { formatDate } from '../../core/date.utils';
+import { activityLabel } from '../../core/activity.utils';
 import { Task, Project, ActivityEntry } from '../../core/models';
 
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, ProjectFormComponent, TaskRowComponent, AppIconComponent, AppButtonComponent],
+  imports: [CommonModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, ModalComponent, TaskFormComponent, ProjectFormComponent, TaskRowComponent, AppIconComponent, AppButtonComponent, SkeletonComponent],
   templateUrl: './project-detail.page.html',
 })
 export class ProjectDetailPage {
@@ -32,23 +33,35 @@ export class ProjectDetailPage {
   showEditProject = signal(false);
   projectForm = signal<Partial<Project>>({});
 
-  project = signal<Project | null>(null);
-  projectTasks = signal<Task[]>([]);
-  progress = signal(0);
+  private readonly projectId = signal<string | null>(null);
+  detailLoading = signal(false);
+
+  /** Derivado da store: notas e edições refletem-se sem recarregar a página. */
+  project = computed(() => {
+    const id = this.projectId();
+    if (!id) return null;
+    return this.store.data().projects.find((p) => p.id === id) ?? null;
+  });
+
+  projectTasks = computed(() => {
+    const p = this.project();
+    if (!p) return [];
+    return this.store.data().tasks.filter((t) => t.projectId === p.id);
+  });
+
+  progress = computed(() => this.store.projectStats().get(this.project()?.id ?? '')?.percent ?? 0);
 
   constructor() {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
-      if (id) {
-        const p = this.store.data().projects.find((x) => x.id === id);
-        if (p) {
-          this.project.set(p);
-          const tasks = this.store.data().tasks.filter((t) => t.projectId === id);
-          this.projectTasks.set(tasks);
-          this.progress.set(tasks.length === 0 ? 0 : Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100));
-        } else {
-          this.project.set(null);
-        }
+      this.projectId.set(id);
+      if (!id) return;
+      if (this.store.useApi) {
+        this.detailLoading.set(true);
+        void this.store.fetchProjectDetail(id).then(() => {
+          // Ignora respostas de pedidos antigos (navegação rápida entre projetos).
+          if (this.projectId() === id) this.detailLoading.set(false);
+        });
       }
     });
   }
@@ -77,14 +90,14 @@ export class ProjectDetailPage {
     this.showTaskModal.set(false);
   }
 
-  onTaskSubmit(patch: Partial<Task>): void {
+  async onTaskSubmit(patch: Partial<Task>): Promise<void> {
     const p = this.project()?.id;
     if (!p) return;
     if (!patch.title || patch.title.trim().length < 2) return;
-    this.store.addTask({
+    const created = await this.store.addTask({
       title: patch.title.trim(),
       description: patch.description ?? '',
-      category: patch.category ?? 'professional',
+      category: patch.category ?? this.store.categories()[0] ?? 'professional',
       urgency: patch.urgency ?? 'medium',
       status: patch.status ?? 'todo',
       canPostpone: patch.canPostpone ?? true,
@@ -94,13 +107,13 @@ export class ProjectDetailPage {
       tags: patch.tags ?? [],
       projectId: p,
     });
-    this.closeTaskModal();
+    if (created) this.closeTaskModal();
   }
 
-  toggleTask(id: string): void {
+  async toggleTask(id: string): Promise<void> {
     const task = this.store.data().tasks.find((t) => t.id === id);
     if (!task) return;
-    this.store.setTaskStatus(id, task.status === 'done' ? 'todo' : 'done');
+    await this.store.setTaskStatus(id, task.status === 'done' ? 'todo' : 'done');
   }
 
   goTask(id: string): void {
@@ -110,7 +123,7 @@ export class ProjectDetailPage {
   addNote(text: string): void {
     const p = this.project()?.id;
     if (!p || !text.trim()) return;
-    this.store.addNote('project', p, text.trim());
+    void this.store.addNote('project', p, text.trim());
   }
 
   async deleteProject(): Promise<void> {
@@ -132,11 +145,11 @@ export class ProjectDetailPage {
     this.showEditProject.set(false);
   }
 
-  onProjectSubmit(patch: Partial<Project>): void {
+  async onProjectSubmit(patch: Partial<Project>): Promise<void> {
     const p = this.project()?.id;
     if (!p) return;
-    this.store.updateProject(p, patch);
-    this.closeEditProject();
+    const changed = await this.store.updateProject(p, patch);
+    if (changed) this.closeEditProject();
   }
 
   sortedActivity(): ActivityEntry[] {
@@ -144,18 +157,7 @@ export class ProjectDetailPage {
     return [...activity].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }
 
-  labelOf(type: ActivityEntry['type']): string {
-    const map: Record<ActivityEntry['type'], string> = {
-      created: 'Criado',
-      status_changed: 'Estado alterado',
-      note: 'Nota',
-      postponed: 'Adiado',
-      edited: 'Editado',
-      next_step_changed: 'Próximo passo atualizado',
-      expired: 'Expirada',
-    };
-    return map[type] ?? type;
-  }
+  labelOf = activityLabel;
 
   format(iso: string): string {
     return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));

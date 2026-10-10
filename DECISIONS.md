@@ -97,3 +97,110 @@
 ## 16. Cor de tema no modo escuro
 - No modo escuro, `ColorSchemeService` mistura a cor do esquema escolhido em bases quase pretas para os tokens da página, app, cartões, bordas e botão escuro. Os níveis de mistura aumentam gradualmente entre superfícies para conservar a hierarquia visual sem clarear excessivamente os fundos.
 - Ao regressar ao modo claro, os overrides inline das superfícies escuras são removidos e os tokens claros existentes voltam a ser usados; os valores Tailwind de modo escuro servem como fallback para o esquema roxo antes da aplicação dos valores guardados.
+
+## 17. Integração com a API v1 (Foco API)
+
+### Ambientes
+- `src/environments/environment.ts` (produção): `production: true`, `useApi: true`, `apiBaseUrl: '/api/v1'` (relativo, mesma origem em produção).
+- `src/environments/environment.development.ts` (desenvolvimento): `production: false`, `useApi: true`, `apiBaseUrl: 'http://localhost:8000/api/v1'`.
+- `angular.json` passa a usar `fileReplacements` na configuração `development` do build, substituindo `environment.ts` por `environment.development.ts` (verificado nos bundles: produz `/api/v1` e `http://localhost:8000/api/v1`).
+- A flag `useMockAuth` foi substituída por `useApi`: quando true, `App` usa `ApiAuthRepository` + `LocalTasksRepository`; caso contrário, mock + storage local completo.
+
+### Camada de API
+- `core/api.service.ts` (`ApiService`) centraliza os endpoints existentes em `/api/v1`: auth (login, register, logout, logout-all, me, password, profile), settings (GET/PATCH), categories (list/create/delete), projects (list com filtros, get, create, update, delete, notes) e health.
+- `core/api.models.ts` define os DTOs da API; `ApiError` normaliza erros (`status`, `code`) e expõe `isNoChanges` para o contrato `422 NO_CHANGES`.
+- Todos os pedidos passam pelo `authInterceptor` (Bearer + `Accept: application/json`); respostas validadas contra a API real em desenvolvimento.
+
+### Endpoints aplicados vs. o que fica local
+- **Remotos (API):** categorias, projetos (CRUD + notas), definições (userName/tema), autenticação completa.
+- **Locais (localStorage, `foco:tasks:v1`):** tarefas, notas de tarefas, atividade de tarefas, esquema de cor, modo foco, notificações — a API v1 ainda não tem estes endpoints. Nada foi desabilitado.
+- `LocalTasksRepository` persiste apenas `tasks` + `settings` em modo API e miga uma única vez os dados de `foco:data:v1`; em modo local o `LocalStorageRepository` mantém o comportamento anterior.
+- O progresso dos projetos é calculado a partir das tarefas locais; quando não há tarefas locais, usa-se o `progress` devolvido pela API como fallback.
+
+### Carregamento, erros e skeletons
+- O carregamento remoto (`DataStore.init()`) arranca só depois de a sessão ser validada (`AuthService.validateSession()` → `GET /auth/me`), evitando pedidos antes da autenticação; `reload()` é chamado após login/registo.
+- `DataStore` expõe `loading`, `loadError`, `retryLoad()` e `flash` (toast). Skeletons (`app-skeleton`, `animate-pulse` com tokens existentes) em dashboard, projetos, tarefas, detalhe de projeto, categorias e calendários; estados de erro com ação "Tentar novamente".
+- Erros de escrita (criar/atualizar/remover) e `422 NO_CHANGES` ("Nenhuma alteração detetada.") são comunicados por toast (`ToastComponent` no shell).
+
+### Ajustes de conformidade com a API real
+- `GET /settings` devolve `userName` (não `name`) — o modelo aceita ambos.
+- As 3 categorias provisionadas no registo vêm com `isDefault: false` (são removíveis): a proteção passa a depender exclusivamente do `isDefault` do servidor em modo API; em modo local mantém-se a lista das três padrão.
+- Categorias personalizadas (ex.: "Estudos") são suportadas em filtros, badges (`app-badge-category` com rótulo/fallback), dashboard e importação.
+
+### Correções de lacunas pré-existentes expostas pela integração
+- `ProjectFormComponent` não carregava o `@Input() project`: o modal de edição abria vazio e o submit ficava desabilitado. Passa a inicializar o formulário em `ngOnInit`.
+- A página de detalhe de projeto não tinha botões para `openEditProject`/`deleteProject` (código existente sem UI): adicionados "Editar" e "Apagar" no cabeçalho.
+- O detalhe do projeto passa a derivar o projeto da store (computed), refletindo notas e edições sem recarregar a página.
+
+### Verificações
+- `ng build` (development e production) sem erros.
+- E2E headless contra a API real em `localhost:8000`: login pelo formulário, dashboard, projetos (listar/criar/editar com e sem alterações), notas, categorias (criar/remover), definições (nome+tema sincronizados), tarefas locais com persistência, skeletons confirmados com API atrasada, zero erros de consola.
+- Não relacionado: `ng test` já falhava antes destas alterações (incompatibilidade `module`/`moduleResolution` em `tsconfig`) e o `app.spec.ts` espera um título que não existe; não foi alterado.
+
+## 18. Correções da revisão de código e ecrã de cadastro
+
+### Isolamento de dados locais por conta (CRITICAL)
+- `LocalTasksRepository` passou a ter escopo de sessão: chave `foco:tasks:v1:<userId>`; `DataStore.setSessionScope(userId)` é chamada no login, no registo, na validação da sessão (caminho de reload da página) e a `null` no logout/401 (`AuthService.clearLocal`). Sem sessão, a store usa dados vazios.
+- A migração a partir de `foco:data:v1` é única e só corrida no primeiro login com conta associada (a flag `foco:tasks:v1:migrated` só é escrita quando há scope), evitando que o bootstrap sem sessão a consuma antes do primeiro utilizador.
+
+### Sessão mais robusta
+- `ApiAuthRepository.me()` passa a falhar fechado: qualquer resposta >= 400 do `/auth/me` invalida a sessão.
+- `AuthService.validateSession()` só limpa a sessão em `401`; erros de rede/5xx mantêm a sessão e a app continua a renderizar (sem skeleton infinito).
+- `ensureValidated()` memoiza a validação e é usada pelo `authGuard`/`guestGuard` (aguardam a validação antes de decidir) e pelo arranque da app, com uma única chamada a `/auth/me` por arranque. Os guards capturam `inject(Router)` antes do `await` (sem `inject` fora do contexto de injeção).
+- `app.ts` usa `ensureValidated()` antes de `store.init()`.
+
+### Regressões e bugs corrigidos
+- `removeCategory` voltou a remapear também os `projects` para `professional` (a reescrita tinha perdido esse remapeamento no modo local).
+- Importação passa a mapear o `id` original do ficheiro JSON para o id final do projeto (API e local), restaurando a ligação tarefa→projeto que estava desaparecida.
+- `fetchProjectDetail` ignora respostas obsoletas (guarda pelo id atual da rota), evitando skeleton escondido cedo/dados antigos em navegação rápida.
+- `loadFromApi` passa a ter de-duplicação em voo (`inFlight`), evitando lotes duplicados e escritas fora de ordem; o bloco de refresh foi extraído para `refreshCategoriesAndProjects()`.
+
+### Migração sem perda silenciosa
+- Nas Definições (modo API), quando existe `foco:data:v1` aparece um cartão de aviso com ação "Exportar backup antigo", para que os projetos/categorias locais anteriores não fiquem inacessíveis sem aviso.
+
+### Nome do perfil
+- Alterar "O teu nome" nas Definições passa a sincronizar com `PATCH /auth/profile` (com debounce), atualizando também o utilizador da sessão — saudação e topbar refletem a mudança.
+
+### Ecrã de cadastro
+- Nova rota `/cadastro` (`RegisterPage`) com o design system do login (painel gradiente, passos, campos com validação PT, mostrar/ocultar palavra-passe, confirmação com validação de coincidência, link "Já tens conta? Entrar").
+- A página de login ganhou o link "Cadastra-te" → `/cadastro`.
+- O registo entra diretamente na app: `AuthService.register()` grava a sessão, associa o scope das tarefas locais e carrega os dados remotos; o utilizador segue para o dashboard sem login manual.
+- `LoginField` e o mapeamento de erros da API passam a cobrir `name` e `passwordConfirmation`, mostrando os erros de validação no campo certo.
+
+### Duplicação e código morto
+- Rótulos de atividade extraídos para `core/activity.utils.ts` (`activityLabel`), usados no detalhe de projeto e de tarefa.
+- Estatísticas de projeto centralizadas em `DataStore.projectStats()` (tarefas locais com fallback para o `progress` da API), usadas nas páginas de projetos e detalhe.
+- Removidos: `ApiService.health()`, `DataStore.mergeTasks()`, `DataStore.categoryLabel()` (todos sem callers).
+- O ramo mock/local (`MockAuthRepository`/`LocalStorageRepository`, bloco de demonstração no login) mantém-se como fallback offline explícito, ativável por `useApi: false` nos ambientes; está documentado porque nenhum ambiente o seleciona atualmente.
+
+### Deploy
+- Produção continua a usar `apiBaseUrl: '/api/v1'` (same-origin). O deploy precisa de expor `/api/v1` na mesma origem (reverse proxy/rewrite) ou alterar o URL de produção; fica registado como requisito de infraestrutura.
+
+### Verificações adicionais
+- Registo automático (sem login manual) verificado por E2E, incluindo migração de dados legacy, isolamento entre duas contas no mesmo dispositivo (chaves separadas, sem visibilidade cruzada), persistência de tarefas por conta e regressão completa de projetos/notas/categorias/definições sem erros de consola.
+
+## 19. Tarefas passam a ser geridas pela API
+
+Com os endpoints de tarefas adicionados à API v1, a gestão de tarefas deixa de ser local:
+
+### Endpoints aplicados
+- `GET /v1/tasks` — carregamento inicial com `includeDone=true&includeExpired=true` (a UI continua a filtrar/ordenar no cliente, preservando filtros, pesquisa e toggles existentes).
+- `POST /v1/tasks` — criação (módulo do topbar, página de tarefas, detalhe de projeto, console API e importação).
+- `GET /v1/tasks/{id}` — detalhe com atividade (página de detalhe carrega via API e deriva o resto da store).
+- `PATCH /v1/tasks/{id}` — edição parcial de campos; respeita a máquina de estados do servidor (`INVALID_TRANSITION`, `POSTPONE_REQUIRES_DATE`, `PAST_DUE_DATE`, `NO_CHANGES`); a opção `expired` foi removida do seletor de estado (é definida pelo sistema).
+- `POST /v1/tasks/{id}/complete` e `/reopen` — usados pelas transições concluir/reabrir em vez de PATCH.
+- `POST /v1/tasks/{id}/postpone` — adiamento com data e hora (`YYYY-MM-DDTHH:mm`, formato já emitido pelo modal).
+- `POST /v1/tasks/{id}/notes` — notas de tarefa.
+- `DELETE /v1/tasks/{id}` — remoção com confirmação.
+
+### Consequências na arquitetura
+- `LocalTasksRepository` deixa de espelhar tarefas: guarda apenas preferências locais. `pendingTasks()`/`clearTasks()` existem só para a migração única de tarefas de armazenamentos antigos (`foco:data:v1` → chave com escopo → upload via `POST /tasks` → limpeza da cache). Tarefas com prazo no passado são recriadas sem prazo; as que falham são reportadas por toast.
+- `projectStats` passa a usar o `progress` devolvido pelo servidor em modo API.
+- A expiração preguiçosa (`expireOverdueTasks`) passou a correr só em modo local — o servidor expira ao listar.
+- O botão "Apagar dados locais" (Definições) limpa apenas a cache local; os dados do servidor não são afetados.
+- O cartão de backup legado e o aviso nas Definições foram atualizados para refletir que projetos, categorias e tarefas estão no servidor.
+
+### Verificações
+- E2E contra a API real: criar tarefa pelo modal, listar (dados do servidor), detalhe com nota (aparece na timeline), concluir, reabrir, adiar, editar urgência por select e apagar com confirmação — todos os endpoints chamados corretamente, zero erros de consola.
+- Migração de 3 tarefas antigas (incluindo uma com prazo no passado e uma concluída) verificada: sobem para a API e a cache local fica vazia.
+

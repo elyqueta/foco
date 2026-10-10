@@ -15,6 +15,7 @@ import { NotificationsPage } from './pages/notifications/notifications.page';
 
 export const routes: Routes = [
   { path: 'login', canActivate: [guestGuard], loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage) },
+  { path: 'cadastro', canActivate: [guestGuard], loadComponent: () => import('./pages/register/register.page').then(m => m.RegisterPage) },
   {
     path: '',
     component: ShellComponent,

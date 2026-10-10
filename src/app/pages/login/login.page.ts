@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
@@ -13,7 +13,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AppIconComponent, AppThemeToggleComponent, AppButtonComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AppIconComponent, AppThemeToggleComponent, AppButtonComponent],
   templateUrl: './login.page.html',
 })
 export class LoginPage {
@@ -29,7 +29,7 @@ export class LoginPage {
   readonly loading = signal(false);
   readonly formError = signal<string | null>(null);
   readonly showPassword = signal(false);
-  readonly mock = environment.useMockAuth;
+  readonly mock = !environment.useApi;
   readonly hint = MOCK_LOGIN_HINT;
 
   submitted = false;

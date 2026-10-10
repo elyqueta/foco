@@ -56,14 +56,23 @@ export class DashboardPage {
   }
 
   focusSessionTask(): Task | undefined {
+    if (this.store.useApi) {
+      return this.store.activeTimerTask() ?? undefined;
+    }
     const session = this.focus.session();
     if (!session) return undefined;
     return this.store.data().tasks.find((t) => t.id === session.taskId) ?? undefined;
   }
 
-  focusTick = this.focus.tick;
-  focusActive = this.focus.active;
-  focusPaused = this.focus.paused;
+  readonly focusTick = computed(() => (this.store.useApi ? this.store.activeTimerSeconds() : this.focus.tick()));
+  readonly focusActive = computed(() => (this.store.useApi ? this.store.activeTimerTask() !== null : this.focus.active()));
+  readonly focusPaused = computed(() => (this.store.useApi ? false : this.focus.paused()));
+
+  /** A tarefa em destaque tem o timer iniciado e pausado (mostrar "Retomar"). */
+  focusTaskTimerPaused(): boolean {
+    const task = this.focusTask();
+    return !!task && this.store.useApi && task.timer?.state === 'paused';
+  }
 
   constructor() {
     this.focus.tick;
@@ -120,22 +129,46 @@ export class DashboardPage {
     this.focus.start(task);
   }
 
-  stopFocus(): void {
-    this.focus.stop();
-  }
-
-  pauseFocus(): void {
-    this.focus.pause();
-  }
-
-  resumeFocus(): void {
+  async resumeFocusTask(id: string): Promise<void> {
+    if (this.store.useApi) {
+      await this.store.resumeTaskTimer(id);
+      return;
+    }
     this.focus.resume();
   }
 
+  async pauseFocus(): Promise<void> {
+    if (this.store.useApi) {
+      const task = this.store.activeTimerTask();
+      if (task) await this.store.pauseTaskTimer(task.id);
+      return;
+    }
+    this.focus.pause();
+  }
+
+  async resumeFocus(): Promise<void> {
+    const task = this.focusSessionTask();
+    if (!task) return;
+    if (this.store.useApi) {
+      await this.store.resumeTaskTimer(task.id);
+      return;
+    }
+    this.focus.resume();
+  }
+
+  async stopFocus(): Promise<void> {
+    if (this.store.useApi) {
+      const task = this.store.activeTimerTask();
+      if (task) await this.store.pauseTaskTimer(task.id);
+      return;
+    }
+    this.focus.stop();
+  }
+
   viewFocusTask(): void {
-    const task = this.focus.session()?.taskId;
+    const task = this.focusSessionTask();
     if (task) {
-      this.router.navigate(['/tarefas', task]);
+      this.router.navigate(['/tarefas', task.id]);
     }
   }
 

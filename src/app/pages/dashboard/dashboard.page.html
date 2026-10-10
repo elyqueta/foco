@@ -277,7 +277,11 @@
               <p class="text-xs uppercase tracking-wide opacity-70">Tarefa actual</p>
               <p class="mt-1 text-xl font-semibold leading-snug">{{ focusTask()!.title }}</p>
             </div>
-            <app-button variant="secondary" icon="play" label="Começar" [iconOnlyBelow]="null" buttonClass="w-full" (click)="startFocus(focusTask()!.id)"></app-button>
+            @if (focusTaskTimerPaused()) {
+              <app-button variant="secondary" icon="play" label="Retomar" [iconOnlyBelow]="null" buttonClass="w-full" (click)="resumeFocusTask(focusTask()!.id)"></app-button>
+            } @else {
+              <app-button variant="secondary" icon="play" label="Começar" [iconOnlyBelow]="null" buttonClass="w-full" (click)="startFocus(focusTask()!.id)"></app-button>
+            }
           } @else {
             <div class="my-6">
               <app-icon name="sparkles" [size]="32" class="opacity-80" />

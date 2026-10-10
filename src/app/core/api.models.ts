@@ -125,6 +125,20 @@ export interface ApiTimerActionResult {
   pausedTask?: ApiTask | null;
 }
 
+/** Resposta paginada da API (`items` + metadados). */
+export interface ApiPaginated<T> {
+  items: T[];
+  page: number;
+  perPage: number;
+  total: number;
+  totalPages: number;
+  counts?: Record<string, number>;
+}
+
+export interface ApiProjectList extends ApiPaginated<ApiProject> {}
+
+export interface ApiTaskList extends ApiPaginated<ApiTask> {}
+
 export interface ApiCategory {
   name: string;
   isDefault: boolean;

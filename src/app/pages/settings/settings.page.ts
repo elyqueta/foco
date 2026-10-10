@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataStore } from '../../core/data.store';
@@ -6,6 +6,7 @@ import { emptyAppData } from '../../core/storage.repository';
 import { ConfirmService } from '../../core/confirm.service';
 import { ColorSchemeService, ColorScheme } from '../../core/color-scheme.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { AuthError } from '../../core/auth/auth.models';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
@@ -20,11 +21,68 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
 
       <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
         <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Perfil</h3>
-        <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">O teu nome</label>
-        <input type="text" [(ngModel)]="userName" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="O teu nome" (ngModelChange)="onUserNameChange($event)" />
+        <label for="userName" class="mb-1.5 block text-[12px] font-semibold text-ink-700">O teu nome</label>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input id="userName" type="text" [ngModel]="userName()" (ngModelChange)="onUserNameInput($event)" name="userName"
+            class="min-w-0 flex-1 rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="O teu nome" />
+          <app-button
+            icon="save"
+            [label]="savingName() ? 'A guardar…' : 'Salvar'"
+            [loading]="savingName()"
+            [disabled]="!canSaveName()"
+            buttonClass="shrink-0 justify-center"
+            (click)="saveName()"
+          ></app-button>
+        </div>
         @if (nameError()) {
           <p class="mt-1.5 text-[11px] text-danger">{{ nameError() }}</p>
         }
+        @if (nameDirty()) {
+          <p class="mt-1.5 text-[11px] text-ink-400">Tens alterações por guardar.</p>
+        }
+      </div>
+
+      <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
+        <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Palavra-passe</h3>
+        <div class="flex flex-col gap-3">
+          <div>
+            <label for="currentPassword" class="mb-1.5 block text-[12px] font-semibold text-ink-700">Palavra-passe atual</label>
+            <div class="relative">
+              <input id="currentPassword" [type]="showCurrentPassword() ? 'text' : 'password'" [ngModel]="currentPassword()" (ngModelChange)="setCurrentPassword($event)" name="currentPassword" autocomplete="current-password"
+                class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 pr-11 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="••••••••" />
+              <app-button variant="ghost" size="sm" [icon]="showCurrentPassword() ? 'eye-off' : 'eye'" [label]="showCurrentPassword() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'" [iconOnly]="true" buttonClass="absolute right-3 top-1/2 -translate-y-1/2" (click)="showCurrentPassword.set(!showCurrentPassword())"></app-button>
+            </div>
+          </div>
+          <div>
+            <label for="newPassword" class="mb-1.5 block text-[12px] font-semibold text-ink-700">Nova palavra-passe</label>
+            <div class="relative">
+              <input id="newPassword" [type]="showNewPassword() ? 'text' : 'password'" [ngModel]="newPassword()" (ngModelChange)="setNewPassword($event)" name="newPassword" autocomplete="new-password"
+                class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 pr-11 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="••••••••" />
+              <app-button variant="ghost" size="sm" [icon]="showNewPassword() ? 'eye-off' : 'eye'" [label]="showNewPassword() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'" [iconOnly]="true" buttonClass="absolute right-3 top-1/2 -translate-y-1/2" (click)="showNewPassword.set(!showNewPassword())"></app-button>
+            </div>
+          </div>
+          <div>
+            <label for="passwordConfirmation" class="mb-1.5 block text-[12px] font-semibold text-ink-700">Confirmar nova palavra-passe</label>
+            <div class="relative">
+              <input id="passwordConfirmation" [type]="showPasswordConfirmation() ? 'text' : 'password'" [ngModel]="passwordConfirmation()" (ngModelChange)="setPasswordConfirmation($event)" name="passwordConfirmation" autocomplete="new-password"
+                class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 pr-11 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="••••••••" />
+              <app-button variant="ghost" size="sm" [icon]="showPasswordConfirmation() ? 'eye-off' : 'eye'" [label]="showPasswordConfirmation() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'" [iconOnly]="true" buttonClass="absolute right-3 top-1/2 -translate-y-1/2" (click)="showPasswordConfirmation.set(!showPasswordConfirmation())"></app-button>
+            </div>
+          </div>
+          @if (passwordError()) {
+            <p class="text-[11px] text-danger">{{ passwordError() }}</p>
+          }
+          <div class="flex justify-end">
+            <app-button
+              icon="pencil"
+              [label]="savingPassword() ? 'A alterar…' : 'Alterar palavra-passe'"
+              [loading]="savingPassword()"
+              [disabled]="!canSavePassword()"
+              (click)="savePassword()"
+            ></app-button>
+          </div>
+          <p class="text-[11px] leading-relaxed text-ink-400">Ao alterares a palavra-passe, as outras sessões deste utilizador são terminadas.</p>
+        </div>
       </div>
 
       <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
@@ -79,10 +137,21 @@ export class SettingsPage implements OnInit {
   userName = signal(this.store.data().settings.userName);
   useApi = this.store.useApi;
   nameError = signal('');
-  private nameTimer: ReturnType<typeof setTimeout> | null = null;
+  savingName = signal(false);
+  /** O nome só é sincronizado a partir da store enquanto o utilizador não escrever. */
+  private nameTouched = false;
   private legacyKey = 'foco:data:v1';
 
   readonly hasLegacyBackup = signal(false);
+
+  currentPassword = signal('');
+  newPassword = signal('');
+  passwordConfirmation = signal('');
+  showCurrentPassword = signal(false);
+  showNewPassword = signal(false);
+  showPasswordConfirmation = signal(false);
+  passwordError = signal('');
+  savingPassword = signal(false);
 
   colorOptions: { key: ColorScheme; label: string; cssColor: string }[] = [
     { key: 'purple', label: 'Roxo', cssColor: 'rgb(108 92 231)' },
@@ -91,9 +160,26 @@ export class SettingsPage implements OnInit {
     { key: 'gray', label: 'Cinza', cssColor: 'rgb(75 85 99)' },
   ];
 
+  readonly nameDirty = computed(() => this.userName().trim() !== this.store.data().settings.userName);
+
+  readonly canSaveName = computed(() => {
+    const name = this.userName().trim();
+    return name.length >= 2 && this.nameDirty() && !this.savingName();
+  });
+
+  readonly canSavePassword = computed(() => {
+    const current = this.currentPassword();
+    const next = this.newPassword();
+    const confirmation = this.passwordConfirmation();
+    return current.length > 0 && next.length >= 8 && next === confirmation && next !== current && !this.savingPassword();
+  });
+
   constructor() {
     effect(() => {
-      this.userName.set(this.store.data().settings.userName);
+      // Reflete mudanças externas (carregamento das definições do servidor).
+      if (!this.nameTouched) {
+        this.userName.set(this.store.data().settings.userName);
+      }
     });
   }
 
@@ -122,27 +208,71 @@ export class SettingsPage implements OnInit {
     this.colorService.set(value);
   }
 
-  onUserNameChange(name: string): void {
-    const trimmed = name.trim();
-    if (this.nameTimer) clearTimeout(this.nameTimer);
-    if (trimmed.length === 0) {
-      this.nameError.set('');
-      return;
-    }
-    if (trimmed.length < 2) {
+  /** Guarda o nome explicitamente (botão Salvar): local sempre, API quando aplicável. */
+  onUserNameInput(value: string): void {
+    this.nameTouched = true;
+    this.userName.set(value);
+    if (this.nameError()) this.nameError.set('');
+  }
+
+  async saveName(): Promise<void> {
+    if (!this.canSaveName()) return;
+    const name = this.userName().trim();
+    if (name.length < 2) {
       this.nameError.set('Dá um nome com pelo menos 2 caracteres.');
       return;
     }
     this.nameError.set('');
-    if (this.store.data().settings.userName === trimmed) return;
-    this.store.setUserName(trimmed);
-    if (this.useApi) {
-      // O nome visível na topbar/saudação vem da conta: sincroniza com debounce.
-      this.nameTimer = setTimeout(() => {
-        void this.auth.updateProfile({ name: trimmed }).catch(() => {
-          this.nameError.set('Não foi possível atualizar o nome no servidor.');
-        });
-      }, 600);
+    this.savingName.set(true);
+    try {
+      if (this.useApi) {
+        // O nome visível na topbar/saudação vem da conta.
+        await this.auth.updateProfile({ name });
+      }
+      this.store.setUserName(name);
+      this.store.showFlash('success', 'Nome atualizado.');
+    } catch (error: unknown) {
+      const message = error instanceof AuthError ? error.message : 'Não foi possível atualizar o nome. Tenta novamente.';
+      this.nameError.set(message);
+    } finally {
+      this.savingName.set(false);
+    }
+  }
+
+  setCurrentPassword(value: string): void {
+    this.currentPassword.set(value);
+    this.clearPasswordError();
+  }
+
+  setNewPassword(value: string): void {
+    this.newPassword.set(value);
+    this.clearPasswordError();
+  }
+
+  setPasswordConfirmation(value: string): void {
+    this.passwordConfirmation.set(value);
+    this.clearPasswordError();
+  }
+
+  private clearPasswordError(): void {
+    if (this.passwordError()) this.passwordError.set('');
+  }
+
+  async savePassword(): Promise<void> {
+    if (!this.canSavePassword()) return;
+    this.passwordError.set('');
+    this.savingPassword.set(true);
+    try {
+      await this.auth.changePassword(this.currentPassword(), this.newPassword(), this.passwordConfirmation());
+      this.currentPassword.set('');
+      this.newPassword.set('');
+      this.passwordConfirmation.set('');
+      this.store.showFlash('success', 'Palavra-passe alterada.');
+    } catch (error: unknown) {
+      const message = error instanceof AuthError ? error.message : 'Não foi possível alterar a palavra-passe. Tenta novamente.';
+      this.passwordError.set(message);
+    } finally {
+      this.savingPassword.set(false);
     }
   }
 
@@ -174,8 +304,10 @@ export class SettingsPage implements OnInit {
   async clearAll(): Promise<void> {
     const ok = await this.confirm.confirm({
       type: 'danger',
-      title: 'Apagar tudo?',
-      message: 'Isto apaga todos os dados. Continuar?',
+      title: this.useApi ? 'Apagar dados locais?' : 'Apagar tudo?',
+      message: this.useApi
+        ? 'Isto apaga os dados guardados apenas neste dispositivo. Os projetos, categorias e tarefas no servidor não são afetados. Continuar?'
+        : 'Isto apaga todos os dados. Continuar?',
       confirmLabel: 'Apagar',
     });
     if (!ok) return;

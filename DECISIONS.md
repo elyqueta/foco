@@ -229,3 +229,21 @@ Com os endpoints de timer adicionados à API v1, o temporizador passou a ser ger
 - **Timer em tempo real:** o temp derivado (`activeTimerSeconds`) dependia do `FocusService.tick`, que devolve sempre o mesmo valor (0) sem sessão local — e nos signals do Angular um computado com valor inalterado corta a propagação, deixando o contador congelado. Passa a depender de `FocusService.tickCount` (contador que muda a cada segundo), pelo que o tempo avança em tempo real tanto no widget como no indicador do detalhe da tarefa.
 - Verificado por E2E: o valor sobe um segundo por segundo (00:02 → 00:07) e a paginação percorre 5 → 10 → 13 entradas até esgotar, sem erros de consola.
 
+## 22. Paginação horizontal da timeline e botão do card de foco
+
+- **Paginação horizontal:** a timeline de atividade passou a ser paginada por páginas (5 entradas por página) com controlos horizontais no fim da lista — "Página anterior", números de página e "Página seguinte" — em vez de um botão vertical "Ver mais". Mantém as entradas uma por linha e evita que o card (e o input de nota abaixo) fiquem demasiado longos. A página reinicia ao trocar de tarefa e volta à primeira quando uma nota é adicionada (a nota nova é a entrada mais recente).
+- **Card "Modo foco" da dashboard:** em modo API passa a reflecting o timer do servidor — mostra a tarefa com o timer a correr e o tempo em tempo real, e o botão da vista de repouso é **"Retomar"** (em vez de "Começar") quando a tarefa em destaque tem o timer pausado, evitando o `422 TIMER_WRONG_STATE` da API ao tentar iniciar uma tarefa já pausada.
+
+## 23. Contrato paginado da API e preservação de detalhe
+
+- A API passou a devolver **respostas paginadas** em `GET /v1/projects` e `GET /v1/tasks` (`{ items, page, perPage, total, totalPages, counts }`), enquanto a documentação local ainda descreve arrays — a API é a fonte da verdade. `ApiService` passou a ler `items` (tolerante a arrays simples, para compatibilidade) e a percorrer todas as páginas (`perPage=100`) antes de devolver a lista, para não truncar dados de utilizadores com muitos itens.
+- `GET /v1/timer/active` passou a devolver `{ task, message }` em vez de `204`/task direta — o serviço extrai `task` e devolve `null` quando não há timer a correr.
+- Foi corrigida a perda de atividade quando respostas sem `activity` (lista paginada, ações de timer, estado) substituíam uma tarefa cujo detalhe já tinha sido carregado: `preserveDetail()` nas listas e preservação no `applyTask()`.
+- Verificado por E2E: dashboard carrega sem erro (projetos, tarefas, categorias, definições e timer ativo), timeline mantém as entradas após iniciar/pausar/retomar o timer e paginação navega entre páginas sem erros de consola.
+
+## 24. Definições: nome com botão Salvar e alteração de palavra-passe
+
+- **Nome com gravação explícita:** o campo "O teu nome" deixou de sincronizar automaticamente com a API a cada tecla. Passa a ter um botão **Salvar** (desabilitado quando não há alterações ou o nome é inválido), um aviso "Tens alterações por guardar" e feedback por toast. Ao guardar faz `PATCH /auth/profile` (fonte do nome visível na topbar/saudação) e atualiza o nome local; erros da API (ex.: 422) são mostrados no campo sem aplicar o valor. Enquanto o utilizador não escreve, o campo segue o nome carregado do servidor.
+- **Alteração de palavra-passe:** novo cartão "Palavra-passe" nas Definições que usa `PATCH /auth/password` (`currentPassword`, `password`, `passwordConfirmation`) — válido no modo API e no mock. Inclui mostrar/ocultar em cada campo, validações (nova ≥ 8, confirmação igual, diferente da atual), erros da API mostrados no cartão (ex.: "A palavra-passe atual está incorreta."), limpeza dos campos e toast de sucesso. A nota informa que as outras sessões do utilizador são terminadas.
+- Verificado por E2E: nenhuma chamada à API enquanto se escreve o nome, `PATCH` apenas no Salvar com toast, e ciclo completo da palavra-passe (erro com password incorreta → sucesso com campos limpos), sem erros de consola.
+

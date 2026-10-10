@@ -59,6 +59,19 @@ function toApiError(error: unknown): ApiError {
   return new ApiError(message, status, code);
 }
 
+/** Lê a lista de itens de uma resposta paginada (`{ items }`) ou de um array simples. */
+function readItems<T>(response: unknown): T[] {
+  if (Array.isArray(response)) return response as T[];
+  const items = (response as { items?: unknown } | null | undefined)?.items;
+  return Array.isArray(items) ? (items as T[]) : [];
+}
+
+/** Lê o número total de páginas de uma resposta paginada (1 quando não existe). */
+function readTotalPages(response: unknown): number {
+  const value = (response as { totalPages?: unknown } | null | undefined)?.totalPages;
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 1;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
@@ -70,6 +83,22 @@ export class ApiService {
     } catch (error: unknown) {
       throw toApiError(error);
     }
+  }
+
+  /**
+   * Percorre todas as páginas de um endpoint paginado e devolve os itens
+   * acumulados (tolerante a respostas que ainda sejam arrays simples).
+   */
+  private async fetchAllPages<T>(path: string, params: Record<string, string>): Promise<T[]> {
+    const perPage = 100;
+    const first = await this.get<unknown>(path, { ...params, perPage: String(perPage) });
+    const totalPages = readTotalPages(first);
+    const items = readItems<T>(first);
+    for (let page = 2; page <= totalPages; page++) {
+      const next = await this.get<unknown>(path, { ...params, perPage: String(perPage), page: String(page) });
+      items.push(...readItems<T>(next));
+    }
+    return items;
   }
 
   private get<T>(path: string, params?: Record<string, string>): Promise<T> {
@@ -139,7 +168,7 @@ export class ApiService {
   // ---------- Categories ----------
 
   listCategories(): Promise<ApiCategory[]> {
-    return this.get('/categories');
+    return this.request(async () => readItems<ApiCategory>(await firstValueFrom(this.http.get<unknown>(`${this.base}/categories`))));
   }
 
   createCategory(name: string): Promise<ApiCategory> {
@@ -159,7 +188,7 @@ export class ApiService {
         params[key] = value;
       }
     }
-    return this.get('/projects', params);
+    return this.fetchAllPages<ApiProject>('/projects', params);
   }
 
   getProject(id: string): Promise<ApiProject> {
@@ -194,7 +223,7 @@ export class ApiService {
         params[key] = String(value);
       }
     }
-    return this.get('/tasks', params);
+    return this.fetchAllPages<ApiTask>('/tasks', params);
   }
 
   getTask(id: string): Promise<ApiTask> {
@@ -243,8 +272,15 @@ export class ApiService {
     return this.post(`/tasks/${id}/timer/resume`, {});
   }
 
-  /** Tarefa com o timer a correr, ou `null` quando nenhuma está a correr (204). */
+  /** Tarefa com o timer a correr, ou `null` quando nenhuma está a correr. */
   getActiveTimer(): Promise<ApiTask | null> {
-    return this.request(() => firstValueFrom(this.http.get<ApiTask | null>(`${this.base}/timer/active`)));
+    return this.request(async () => {
+      const response = await firstValueFrom(this.http.get<{ task?: ApiTask | null } | ApiTask | null>(`${this.base}/timer/active`));
+      if (!response) return null;
+      if (typeof response === 'object' && 'task' in response) {
+        return (response as { task?: ApiTask | null }).task ?? null;
+      }
+      return response as ApiTask;
+    });
   }
 }

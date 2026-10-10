@@ -31,8 +31,9 @@ export class TaskDetailPage {
   private focus = inject(FocusService);
   showPostponeModal = signal(false);
   detailLoading = signal(false);
-  /** Número de entradas de atividade visíveis (paginação). */
-  readonly activityLimit = signal(5);
+  /** Paginação horizontal da timeline de atividade. */
+  readonly activityPage = signal(0);
+  private readonly activityPageSize = 5;
 
   private readonly taskId = signal<string | null>(null);
 
@@ -59,7 +60,7 @@ export class TaskDetailPage {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       this.taskId.set(id);
-      this.activityLimit.set(5);
+      this.activityPage.set(0);
       if (!id) return;
       if (this.store.useApi) {
         this.detailLoading.set(true);
@@ -170,7 +171,9 @@ export class TaskDetailPage {
   async addNote(text: string): Promise<void> {
     const id = this.task()?.id;
     if (!id || !text.trim()) return;
-    await this.store.addNote('task', id, text.trim());
+    const ok = await this.store.addNote('task', id, text.trim());
+    // A nota nova é a entrada mais recente: volta à primeira página.
+    if (ok) this.activityPage.set(0);
   }
 
   postpone(): void {
@@ -193,18 +196,23 @@ export class TaskDetailPage {
     return [...activity].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }
 
-  /** Entradas visíveis (mais recentes primeiro). */
-  visibleActivity(): ActivityEntry[] {
-    return this.sortedActivity().slice(0, this.activityLimit());
+  /** Entradas da página atual (mais recentes primeiro). */
+  pagedActivity(): ActivityEntry[] {
+    const all = this.sortedActivity();
+    const start = this.activityPage() * this.activityPageSize;
+    return all.slice(start, start + this.activityPageSize);
   }
 
-  /** Quantas entradas ficam por mostrar. */
-  hiddenActivityCount(): number {
-    return Math.max(0, this.sortedActivity().length - this.activityLimit());
+  activityPageCount(): number {
+    return Math.max(1, Math.ceil(this.sortedActivity().length / this.activityPageSize));
   }
 
-  showMoreActivities(): void {
-    this.activityLimit.update((value) => value + 5);
+  activityPages(): number[] {
+    return Array.from({ length: this.activityPageCount() }, (_, index) => index);
+  }
+
+  goToActivityPage(page: number): void {
+    this.activityPage.set(Math.min(Math.max(page, 0), this.activityPageCount() - 1));
   }
 
   labelOf = activityLabel;

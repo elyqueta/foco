@@ -48,6 +48,18 @@ function mapTask(task: ApiTask): Task {
   return mapped;
 }
 
+/**
+ * Junta a resposta da lista (sem `activity`) ao que já está na store,
+ * preservando a atividade dos itens cujo detalhe já foi carregado.
+ */
+function preserveDetail<T extends { id: string; activity: ActivityEntry[]; updatedAt: string }>(incoming: T[], current: T[]): T[] {
+  const detailById = new Map(current.filter((item) => item.activity.length > 0).map((item) => [item.id, item]));
+  return incoming.map((item) => {
+    const detail = detailById.get(item.id);
+    return detail ? { ...item, activity: detail.activity, updatedAt: detail.updatedAt } : item;
+  });
+}
+
 function mapProject(project: ApiProject): Project {
   const mapped: Project = {
     id: project.id,
@@ -272,12 +284,14 @@ export class DataStore {
         this.api.listProjects(),
         this.api.listTasks({ includeDone: true, includeExpired: true }),
       ]);
+      const mappedProjects = projects.map(mapProject);
+      const mappedTasks = tasks.map(mapTask);
       this._data.update((d) => ({
         ...d,
         categories: categories.map((c) => c.name),
         categoryDefaults: categories.filter((c) => c.isDefault).map((c) => c.name),
-        projects: projects.map(mapProject),
-        tasks: tasks.map(mapTask),
+        projects: preserveDetail(mappedProjects, d.projects),
+        tasks: preserveDetail(mappedTasks, d.tasks),
       }));
       this.loading.set(false);
       void this.loadSettingsFromApi();
@@ -336,11 +350,12 @@ export class DataStore {
 
   private async refreshCategoriesAndProjects(): Promise<void> {
     const [categories, projects] = await Promise.all([this.api.listCategories(), this.api.listProjects()]);
+    const mapped = projects.map(mapProject);
     this._data.update((d) => ({
       ...d,
       categories: categories.map((c) => c.name),
       categoryDefaults: categories.filter((c) => c.isDefault).map((c) => c.name),
-      projects: projects.map(mapProject),
+      projects: preserveDetail(mapped, d.projects),
     }));
   }
 
@@ -653,10 +668,19 @@ export class DataStore {
   }
 
   private applyTask(task: Task): void {
-    this._data.update((d) => ({
-      ...d,
-      tasks: d.tasks.some((t) => t.id === task.id) ? d.tasks.map((t) => (t.id === task.id ? task : t)) : [...d.tasks, task],
-    }));
+    this._data.update((d) => {
+      const exists = d.tasks.some((t) => t.id === task.id);
+      const current = d.tasks.find((t) => t.id === task.id);
+      // Respostas de ação (timer, estado) não trazem atividade: preserva a do detalhe.
+      const merged =
+        current && current.activity.length > 0 && task.activity.length === 0
+          ? { ...task, activity: current.activity, updatedAt: current.updatedAt }
+          : task;
+      return {
+        ...d,
+        tasks: exists ? d.tasks.map((t) => (t.id === task.id ? merged : t)) : [...d.tasks, merged],
+      };
+    });
   }
 
   /** Aplica uma tarefa vinda da API à store (usado por respostas de timer). */

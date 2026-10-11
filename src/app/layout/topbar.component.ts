@@ -9,6 +9,7 @@ import { TaskModalService } from '../core/task-modal.service';
 import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
 import { NotificationService } from '../core/notification.service';
 import { ExportDialogComponent } from '../shared/ui/export-dialog.component';
+import { LogoutDialogComponent } from '../shared/ui/logout-dialog.component';
 import { AppIconComponent } from '../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../shared/ui/theme-toggle.component';
 import { AppButtonComponent } from '../shared/ui/button.component';
@@ -17,7 +18,7 @@ import { toISODate } from '../core/date.utils';
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, AppIconComponent, AppThemeToggleComponent, AppButtonComponent, SearchDropdownComponent, ExportDialogComponent],
+  imports: [RouterLink, RouterLinkActive, AppIconComponent, AppThemeToggleComponent, AppButtonComponent, SearchDropdownComponent, ExportDialogComponent, LogoutDialogComponent],
   templateUrl: './topbar.component.html',
 })
 export class TopbarComponent implements OnInit {
@@ -37,6 +38,7 @@ export class TopbarComponent implements OnInit {
 
   menuOpen = signal(false);
   showExportDialog = signal(false);
+  showLogoutDialog = signal(false);
   readonly unreadNotifications = this.notifications.unreadCount;
 
   constructor() {}
@@ -49,6 +51,7 @@ export class TopbarComponent implements OnInit {
           (target as HTMLInputElement).blur();
           this.menuOpen.set(false);
           this.showExportDialog.set(false);
+          this.showLogoutDialog.set(false);
         }
         return;
       }
@@ -105,13 +108,22 @@ export class TopbarComponent implements OnInit {
     }
   }
 
-  async logout(): Promise<void> {
+  openLogoutDialog(): void {
     this.menuOpen.set(false);
+    this.showLogoutDialog.set(true);
+  }
+
+  closeLogoutDialog(): void {
+    this.showLogoutDialog.set(false);
+  }
+
+  async logout(): Promise<void> {
+    this.showLogoutDialog.set(false);
     await this.auth.logout();
   }
 
   async logoutAll(): Promise<void> {
-    this.menuOpen.set(false);
+    this.showLogoutDialog.set(false);
     await this.auth.logoutAll();
   }
 

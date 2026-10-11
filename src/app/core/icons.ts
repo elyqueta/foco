@@ -48,7 +48,9 @@ import {
   UserPlus,
   Timer,
   UserRound,
+  Users,
   X,
+  Smartphone,
 } from 'lucide-angular';
 
 export const APP_ICONS = {
@@ -101,7 +103,9 @@ export const APP_ICONS = {
   UserPlus,
   Timer,
   UserRound,
+  Users,
   X,
+  Smartphone,
 };
 
 export const APP_ICON_NAMES = [
@@ -154,5 +158,7 @@ export const APP_ICON_NAMES = [
   'user-plus',
   'timer',
   'user-round',
+  'users',
   'x',
+  'smartphone',
 ] as const;

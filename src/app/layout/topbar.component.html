@@ -73,10 +73,7 @@
           <a routerLink="/definicoes" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-surface-app text-ink">
             <app-icon name="settings" [size]="16" /> Definições
           </a>
-          @if (store.useApi) {
-            <app-button variant="ghost" size="sm" icon="log-out" label="Sair de todos os dispositivos" [iconOnlyBelow]="null" buttonClass="w-full justify-start" (click)="logoutAll()"></app-button>
-          }
-          <app-button variant="ghost" size="sm" icon="log-out" label="Terminar sessão" [iconOnlyBelow]="null" buttonClass="w-full justify-start !text-danger hover:!bg-danger-soft" (click)="logout()"></app-button>
+          <app-button variant="ghost" size="sm" icon="log-out" label="Terminar sessão" [iconOnlyBelow]="null" buttonClass="w-full justify-start !text-danger hover:!bg-danger-soft" (click)="openLogoutDialog()"></app-button>
         </div>
       }
     </div>
@@ -85,4 +82,12 @@
 
 @if (showExportDialog()) {
   <app-export-dialog (close)="showExportDialog.set(false)" />
+}
+
+@if (showLogoutDialog()) {
+  <app-logout-dialog
+    (logoutThisDevice)="logout()"
+    (logoutAllDevices)="logoutAll()"
+    (cancel)="closeLogoutDialog()"
+  />
 }

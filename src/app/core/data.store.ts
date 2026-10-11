@@ -17,6 +17,14 @@ export interface StoreFlash {
 
 const DEFAULT_PROJECT_COLOR = '#6C5CE7';
 
+const STATUS_SUCCESS_MESSAGES: Record<Status, string> = {
+  todo: 'Tarefa reaberta.',
+  in_progress: 'Tarefa em curso.',
+  done: 'Tarefa concluída.',
+  postponed: 'Tarefa adiada.',
+  expired: 'Tarefa expirada.',
+};
+
 function mapActivity(entry: { id: string; at: string; type: ActivityEntry['type']; message: string }): ActivityEntry {
   return { id: entry.id, at: entry.at, type: entry.type, message: entry.message };
 }
@@ -395,6 +403,7 @@ export class DataStore {
         const created = await this.api.createProject({ ...input, name });
         const project = mapProject(created);
         this._data.update((d) => ({ ...d, projects: [...d.projects, project] }));
+        this.showFlash('success', 'Projeto criado.');
         return project;
       } catch (error: unknown) {
         this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível criar o projeto.');
@@ -411,6 +420,7 @@ export class DataStore {
       updatedAt: now,
     };
     this._data.update((d) => ({ ...d, projects: [...d.projects, project] }));
+    this.showFlash('success', 'Projeto criado.');
     return project;
   }
 
@@ -426,6 +436,7 @@ export class DataStore {
         const updated = await this.api.updateProject(id, body);
         const project = mapProject(updated);
         this._data.update((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? project : p)) }));
+        this.showFlash('success', 'Projeto atualizado.');
         return true;
       } catch (error: unknown) {
         if (error instanceof ApiError && error.isNoChanges) {
@@ -445,6 +456,7 @@ export class DataStore {
       ...d,
       projects: d.projects.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: now, activity: [...p.activity, ...entries] } : p)),
     }));
+    this.showFlash('success', 'Projeto atualizado.');
     return true;
   }
 
@@ -469,6 +481,7 @@ export class DataStore {
       projects: d.projects.filter((p) => p.id !== id),
       tasks: d.tasks.filter((t) => t.projectId !== id),
     }));
+    this.showFlash('success', 'Projeto apagado.');
   }
 
   /** Busca o detalhe (com atividade) de um projeto no modo API. */
@@ -500,6 +513,7 @@ export class DataStore {
         const created = await this.api.createTask(this.toApiTaskInput(input, title));
         const task = mapTask(created);
         this._data.update((d) => ({ ...d, tasks: [...d.tasks, task] }));
+        this.showFlash('success', 'Tarefa criada.');
         return task;
       } catch (error: unknown) {
         this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível criar a tarefa.');
@@ -520,6 +534,7 @@ export class DataStore {
       completedAt: finalStatus === 'done' ? now : null,
     };
     this._data.update((d) => ({ ...d, tasks: [...d.tasks, task] }));
+    this.showFlash('success', 'Tarefa criada.');
     return task;
   }
 
@@ -539,7 +554,7 @@ export class DataStore {
   }
 
   /** Devolve `false` quando o servidor não detetou alterações (422 NO_CHANGES). */
-  async updateTask(id: string, patch: Partial<Task>): Promise<boolean> {
+  async updateTask(id: string, patch: Partial<Task>, options: { silent?: boolean } = {}): Promise<boolean> {
     if (this.useApi) {
       const skip = ['id', 'activity', 'createdAt', 'updatedAt', 'completedAt', 'isOverdue', 'postponedCount', 'timer'];
       const body: Record<string, unknown> = {};
@@ -550,6 +565,7 @@ export class DataStore {
       try {
         const updated = await this.api.updateTask(id, body);
         this.applyTask(mapTask(updated));
+        if (!options.silent) this.showFlash('success', 'Tarefa atualizada.');
         return true;
       } catch (error: unknown) {
         if (error instanceof ApiError && error.isNoChanges) {
@@ -572,6 +588,7 @@ export class DataStore {
       ...d,
       tasks: d.tasks.map((t) => (t.id === id ? { ...t, ...patch, updatedAt: now, activity: [...t.activity, ...entries] } : t)),
     }));
+    if (!options.silent) this.showFlash('success', 'Tarefa atualizada.');
     return true;
   }
 
@@ -595,6 +612,7 @@ export class DataStore {
       ...d,
       tasks: d.tasks.filter((t) => t.id !== id),
     }));
+    this.showFlash('success', 'Tarefa apagada.');
   }
 
   async setTaskStatus(id: string, status: Status): Promise<void> {
@@ -609,8 +627,9 @@ export class DataStore {
           const result = await this.api.reopenTask(id);
           this.applyTask(mapTask(result.task));
         } else {
-          await this.updateTask(id, { status });
+          await this.updateTask(id, { status }, { silent: true });
         }
+        this.showFlash('success', STATUS_SUCCESS_MESSAGES[status]);
       } catch (error: unknown) {
         this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível alterar o estado da tarefa.');
       }
@@ -621,7 +640,8 @@ export class DataStore {
     if (status === 'done') {
       patch.completedAt = now;
     }
-    this.updateTask(id, patch);
+    await this.updateTask(id, patch, { silent: true });
+    this.showFlash('success', STATUS_SUCCESS_MESSAGES[status]);
   }
 
   async postponeTask(id: string, newDate: string): Promise<void> {
@@ -629,6 +649,7 @@ export class DataStore {
       try {
         const result = await this.api.postponeTask(id, newDate);
         this.applyTask(mapTask(result.task));
+        this.showFlash('success', 'Tarefa adiada.');
       } catch (error: unknown) {
         this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível adiar a tarefa.');
       }
@@ -649,6 +670,7 @@ export class DataStore {
           : t
       ),
     }));
+    this.showFlash('success', 'Tarefa adiada.');
   }
 
   /** Busca o detalhe (com atividade) de uma tarefa no modo API. */
@@ -779,6 +801,7 @@ export class DataStore {
             tasks: d.tasks.map((t) => (t.id === id ? { ...t, activity: [...t.activity, entry], updatedAt: entry.at } : t)),
           }));
         }
+        this.showFlash('success', 'Nota adicionada.');
         return true;
       } catch (error: unknown) {
         this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível adicionar a nota.');
@@ -798,6 +821,7 @@ export class DataStore {
         tasks: d.tasks.map((t) => (t.id === id ? { ...t, activity: [...t.activity, entry], updatedAt: now } : t)),
       }));
     }
+    this.showFlash('success', 'Nota adicionada.');
     return true;
   }
 
@@ -817,6 +841,7 @@ export class DataStore {
       try {
         const created: ApiCategory = await this.api.createCategory(trimmed);
         this._data.update((d) => ({ ...d, categories: [...d.categories, created.name] }));
+        this.showFlash('success', 'Categoria criada.');
         return true;
       } catch (error: unknown) {
         this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível criar a categoria.');
@@ -824,6 +849,7 @@ export class DataStore {
       }
     }
     this._data.update((d) => ({ ...d, categories: [...d.categories, trimmed] }));
+    this.showFlash('success', 'Categoria criada.');
     return true;
   }
 
@@ -848,6 +874,7 @@ export class DataStore {
       tasks: d.tasks.map((t) => (t.category === name ? { ...t, category: 'professional' } : t)),
       projects: d.projects.map((p) => (p.category === name ? { ...p, category: 'professional' } : p)),
     }));
+    this.showFlash('success', 'Categoria removida.');
     return true;
   }
 

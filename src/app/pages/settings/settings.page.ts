@@ -69,6 +69,9 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
               <app-button variant="ghost" size="sm" [icon]="showPasswordConfirmation() ? 'eye-off' : 'eye'" [label]="showPasswordConfirmation() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'" [iconOnly]="true" buttonClass="absolute right-3 top-1/2 -translate-y-1/2" (click)="showPasswordConfirmation.set(!showPasswordConfirmation())"></app-button>
             </div>
           </div>
+          @if (passwordValidation()) {
+            <p class="text-[11px] text-danger">{{ passwordValidation() }}</p>
+          }
           @if (passwordError()) {
             <p class="text-[11px] text-danger">{{ passwordError() }}</p>
           }
@@ -172,6 +175,20 @@ export class SettingsPage implements OnInit {
     const next = this.newPassword();
     const confirmation = this.passwordConfirmation();
     return current.length > 0 && next.length >= 8 && next === confirmation && next !== current && !this.savingPassword();
+  });
+
+  /** Erros de validação visíveis ao utilizador enquanto escreve (não só no botão desativado). */
+  readonly passwordValidation = computed(() => {
+    const current = this.currentPassword();
+    const next = this.newPassword();
+    const confirmation = this.passwordConfirmation();
+    if (!current && !next && !confirmation) return '';
+    if (!current) return 'Indica a palavra-passe atual.';
+    if (next.length < 8) return 'A nova palavra-passe precisa de pelo menos 8 caracteres.';
+    if (next === current) return 'A nova palavra-passe tem de ser diferente da atual.';
+    if (!confirmation) return 'Confirma a nova palavra-passe.';
+    if (next !== confirmation) return 'As palavras-passe não coincidem.';
+    return '';
   });
 
   constructor() {

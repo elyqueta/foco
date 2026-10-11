@@ -10,6 +10,27 @@ export function toISODateTime(d: Date): string {
   return `${toISODate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * Hora por omissão de um prazo: a próxima meia hora quando o dia é hoje,
+ * 09:00 nos restantes dias.
+ */
+export function defaultDueTime(dateISO: string): string {
+  if (dateISO === todayISO()) {
+    const now = new Date();
+    if (now.getHours() >= 23 && now.getMinutes() >= 30) return '23:59';
+    now.setMinutes(now.getMinutes() < 30 ? 30 : 60, 0, 0);
+    return toISODateTime(now).split('T')[1];
+  }
+  return '09:00';
+}
+
+/** Garante que um prazo tenha data e hora (aceita apenas data no dia). */
+export function withDefaultDueTime(due: string | null): string | null {
+  if (!due) return null;
+  if (due.includes('T')) return due;
+  return `${due}T${defaultDueTime(due)}`;
+}
+
 export function todayISO(): string {
   return toISODate(new Date());
 }

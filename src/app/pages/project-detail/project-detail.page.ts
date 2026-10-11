@@ -51,6 +51,12 @@ export class ProjectDetailPage {
 
   progress = computed(() => this.store.projectStats().get(this.project()?.id ?? '')?.percent ?? 0);
 
+  /** Contexto passado ao formulário de tarefas: projeto e categoria já preenchidos. */
+  taskProjectContext = computed(() => {
+    const p = this.project();
+    return p ? { id: p.id, category: p.category } : null;
+  });
+
   constructor() {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');

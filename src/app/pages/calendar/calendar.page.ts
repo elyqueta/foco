@@ -117,6 +117,8 @@ export class CalendarPage {
   }
 
   addTaskForDate(): void {
-    this.modal.show(this.selectedDate());
+    // Dias passados não podem receber prazo: abre já preenchido com hoje.
+    const selected = this.selectedDate();
+    this.modal.show(selected < this.today ? this.today : selected);
   }
 }

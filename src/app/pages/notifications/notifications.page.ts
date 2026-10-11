@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../core/notification.service';
 import { notificationAppearance, notificationTypeLabel } from '../../core/notification.utils';
+import { dateGroupLabel } from '../../core/date.utils';
 import { AppNotification } from '../../core/models';
 import { ConfirmService } from '../../core/confirm.service';
 import { AppIconComponent } from '../../shared/ui/icon.component';
@@ -32,6 +33,24 @@ export class NotificationsPage {
 
   /** Erro visível apenas quando não há lista para mostrar. */
   readonly showError = computed(() => !!this.error() && this.items().length === 0);
+
+  /**
+   * Notificações agrupadas por data (a API devolve as mais recentes primeiro):
+   * Hoje, Ontem, Esta semana, Semana passada e, mais atrás, a data completa.
+   */
+  readonly groups = computed(() => {
+    const groups: { label: string; items: AppNotification[] }[] = [];
+    for (const item of this.items()) {
+      const label = dateGroupLabel(item.createdAt);
+      const last = groups.at(-1);
+      if (last && last.label === label) {
+        last.items.push(item);
+      } else {
+        groups.push({ label, items: [item] });
+      }
+    }
+    return groups;
+  });
 
   /** Abre o assunto da notificação (tarefa ou projeto) e marca como lida. */
   async open(item: AppNotification): Promise<void> {

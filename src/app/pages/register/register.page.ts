@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AppIconComponent } from '../../shared/ui/icon.component';
-import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthError } from '../../core/auth/auth.models';
@@ -11,7 +10,7 @@ import { AuthError } from '../../core/auth/auth.models';
 @Component({
   selector: 'app-register-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, AppIconComponent, AppThemeToggleComponent, AppButtonComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AppIconComponent, AppButtonComponent],
   templateUrl: './register.page.html',
 })
 export class RegisterPage {

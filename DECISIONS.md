@@ -274,3 +274,10 @@ Com os endpoints de notificações adicionados à API v1, as notificações deix
 ### Verificações
 - `ng build` (development) sem erros. E2E contra a API real pendente (backend `localhost:8000` não estava a correr durante a integração).
 
+## 26. Ajustes de UI: filtros com scroll, login/cadastro sem alternador de tema e notificações agrupadas por data
+
+- **Filtros de projetos com scroll horizontal:** a linha de filtros por categoria em `/projetos` passa a `overflow-x-auto` (só faz scroll quando o conteúdo passa a largura, no mobile ou com muitas categorias), com `shrink-0` e `whitespace-nowrap` nos botões para não encolherem/quebrarem e `py-1` para o anel de foco não ficar cortado.
+- **Login e cadastro sem alternador de tema:** o `<app-theme-toggle>` e o posicionamento absoluto foram removidos das duas páginas (o `relative` do contentor também, já que só existia para o toggle); os imports de `AppThemeToggleComponent` saíram dos componentes. O tema continua a ser aplicado a partir da preferência guardada e o toggle continua disponível na topbar e nas Definições.
+- **Notificações agrupadas por data:** `dateGroupLabel()` em `core/date.utils.ts` devolve "Hoje", "Ontem", "Esta semana", "Semana passada" (semanas começam na segunda) ou a data ("12 de outubro", com o ano quando antigo). A página `/notificacoes` agrupa os cartões por essas etiquetas com separador, mantendo a ordem mais-recente-primeiro da API; os skeletons, erro, "Carregar mais" e o estado vazio ficam fora dos grupos.
+- Verificado: `ng build` sem erros e validação da aritmética dos grupos (0/1/2-6/7-13/14+ dias atrás → Hoje/Ontem/Esta semana/Semana passada/data).
+

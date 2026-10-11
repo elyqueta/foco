@@ -87,6 +87,36 @@ export function isOverdue(dateStr: string | null): boolean {
   return datePart < todayISO();
 }
 
+/**
+ * Rótulo do grupo temporal de uma data, para históricos:
+ * "Hoje", "Ontem", "Esta semana", "Semana passada" ou a data
+ * ("12 de outubro"; com o ano quando for de outro ano).
+ * As semanas começam na segunda-feira.
+ */
+export function dateGroupLabel(iso: string): string {
+  const date = parseISODate(toDatePart(iso));
+  if (isNaN(date.getTime())) return '';
+  const today = parseISODate(todayISO());
+  const dayMs = 24 * 60 * 60 * 1000;
+  const diffDays = Math.round((today.getTime() - date.getTime()) / dayMs);
+  if (diffDays <= 0) return 'Hoje';
+  if (diffDays === 1) return 'Ontem';
+
+  // Início da semana (segunda-feira) como timestamp.
+  const startOfWeek = (d: Date): number => {
+    const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return copy.setDate(copy.getDate() - ((copy.getDay() + 6) % 7));
+  };
+  const thisWeek = startOfWeek(today);
+  const lastWeek = thisWeek - 7 * dayMs;
+  const time = date.getTime();
+  if (time >= thisWeek) return 'Esta semana';
+  if (time >= lastWeek) return 'Semana passada';
+
+  const sameYear = date.getFullYear() === today.getFullYear();
+  return new Intl.DateTimeFormat('pt-PT', { day: 'numeric', month: 'long', year: sameYear ? undefined : 'numeric' }).format(date);
+}
+
 export function urgencyOrder(u: string): number {
   const map: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   return map[u] ?? 3;

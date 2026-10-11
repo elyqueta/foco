@@ -4,9 +4,9 @@
         <app-button variant="dark" icon="folder-plus" label="Novo projeto" (click)="openModal()"></app-button>
       </div>
 
-      <div class="flex items-center gap-3 mb-6">
+      <div class="mb-6 flex items-center gap-3 overflow-x-auto py-1">
         @for (f of filters(); track f.value) {
-          <button (click)="setFilter(f.value)" class="h-9 rounded-full px-4 text-[12px] font-semibold transition" [class.bg-brand]="filter() === f.value" [class.text-white]="filter() === f.value" [class.border]="filter() !== f.value" [class.border-surface-line]="filter() !== f.value" [class.text-ink-500]="filter() !== f.value">{{ f.label }}</button>
+          <button (click)="setFilter(f.value)" class="h-9 shrink-0 whitespace-nowrap rounded-full px-4 text-[12px] font-semibold transition" [class.bg-brand]="filter() === f.value" [class.text-white]="filter() === f.value" [class.border]="filter() !== f.value" [class.border-surface-line]="filter() !== f.value" [class.text-ink-500]="filter() !== f.value">{{ f.label }}</button>
         }
       </div>
 

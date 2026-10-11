@@ -247,3 +247,30 @@ Com os endpoints de timer adicionados à API v1, o temporizador passou a ser ger
 - **Alteração de palavra-passe:** novo cartão "Palavra-passe" nas Definições que usa `PATCH /auth/password` (`currentPassword`, `password`, `passwordConfirmation`) — válido no modo API e no mock. Inclui mostrar/ocultar em cada campo, validações (nova ≥ 8, confirmação igual, diferente da atual), erros da API mostrados no cartão (ex.: "A palavra-passe atual está incorreta."), limpeza dos campos e toast de sucesso. A nota informa que as outras sessões do utilizador são terminadas.
 - Verificado por E2E: nenhuma chamada à API enquanto se escreve o nome, `PATCH` apenas no Salvar com toast, e ciclo completo da palavra-passe (erro com password incorreta → sucesso com campos limpos), sem erros de consola.
 
+## 25. Notificações via API
+
+Com os endpoints de notificações adicionados à API v1, as notificações deixam de ser apenas locais:
+
+### Endpoints aplicados
+- `GET /v1/notifications` — lista (mais recentes primeiro) com `unread`, `limit` (1…100, 50 por omissão) e `before` (cursor UUID para paginar para trás). O serviço pede a primeira página no arranque e acrescenta páginas com "Carregar mais" (`hasMore` = página cheia).
+- `GET /v1/notifications/unread-count` — `{ count }` para o badge da topbar.
+- `POST /v1/notifications/{id}/read` — marca uma como lida (otimista, idempotente).
+- `POST /v1/notifications/read-all` — marca todas como lidas.
+- `DELETE /v1/notifications/{id}` — remove uma (com botão no cartão).
+- `DELETE /v1/notifications` — limpa todas (com confirmação do `ConfirmService`).
+
+### Modelo e UI
+- `ApiNotification`/`ApiNotificationFilters` em `api.models.ts`; `notification.utils.ts` mapeia `body`→`message`, `readAt`→`read` e `data.taskId`/`data.projectId` para o assunto, além da aparência por tipo (tom + ícone) e do rótulo legível dos 11 tipos do servidor.
+- A página `/notificacoes` (agora com `templateUrl`, substituindo o template inline e o ficheiro `.html` morto) mostra skeletons no primeiro carregamento, estado de erro com "Tentar novamente", contador de novas, "Marcar tudo como lido", "Limpar tudo" (com confirmação) e "Carregar mais".
+- Clicar numa notificação marca-a como lida e navega para o assunto: `/tarefas/{taskId}` ou `/projetos/{projectId}`.
+- O badge da topbar usa `bell-ring` quando há não lidas e o contador vem do servidor.
+
+### Reatividade e ciclo de vida
+- `NotificationService.bootstrap()` corre no carregamento remoto (`DataStore.fetchRemoteData`) e mantém o badge atualizado com polling de 60 s e refresh ao voltar ao separador (`visibilitychange`).
+- Concluir/reabrir uma tarefa dispara `notifications.refresh()` porque `task_completed` é criado pelo servidor nesse evento.
+- `AuthService.clearLocal()` chama `notifications.reset()` (limpa itens, contador e para o polling) no logout e em 401.
+- Em modo local (mock) mantém-se o comportamento anterior: seed + `localStorage` (`foco:notifications:v1`).
+
+### Verificações
+- `ng build` (development) sem erros. E2E contra a API real pendente (backend `localhost:8000` não estava a correr durante a integração).
+

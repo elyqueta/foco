@@ -8,6 +8,7 @@ import { FocusService } from './focus.service';
 import { ApiService, ApiError } from './api.service';
 import { ApiCategory, ApiProject, ApiSettings, ApiTask, ApiTaskInput } from './api.models';
 import { environment } from '../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface StoreFlash {
   id: number;
@@ -96,6 +97,7 @@ export class DataStore {
   private confirm = inject(ConfirmService);
   private api = inject(ApiService);
   private focus = inject(FocusService);
+  private notifications = inject(NotificationService);
   private _data = signal<AppData>(this.repo.load());
 
   /** Em modo API, projetos e categorias vêm do servidor. */
@@ -305,6 +307,7 @@ export class DataStore {
       void this.loadSettingsFromApi();
       void this.migrateLocalTasksToApi();
       void this.loadActiveTimer();
+      void this.notifications.bootstrap();
     } catch (error: unknown) {
       this.loading.set(false);
       this.loadError.set(error instanceof ApiError ? error.message : 'Não foi possível carregar os dados do servidor.');
@@ -630,6 +633,8 @@ export class DataStore {
           await this.updateTask(id, { status }, { silent: true });
         }
         this.showFlash('success', STATUS_SUCCESS_MESSAGES[status]);
+        // Concluir/reabrir podem gerar notificações no servidor.
+        void this.notifications.refresh();
       } catch (error: unknown) {
         this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível alterar o estado da tarefa.');
       }
@@ -642,6 +647,7 @@ export class DataStore {
     }
     await this.updateTask(id, patch, { silent: true });
     this.showFlash('success', STATUS_SUCCESS_MESSAGES[status]);
+    void this.notifications.refresh();
   }
 
   async postponeTask(id: string, newDate: string): Promise<void> {

@@ -1,3 +1,5 @@
+import type { ApiNotificationType } from './api.models';
+
 export type Category = string;
 export type Urgency = 'critical' | 'high' | 'medium' | 'low';
 export type Status = 'todo' | 'in_progress' | 'done' | 'postponed' | 'expired';
@@ -95,8 +97,16 @@ export interface Notification {
   type: NotificationType;
 }
 
-export interface AppNotification extends Notification {
+export interface AppNotification {
   id: string;
+  title: string;
+  /** Corpo da notificação (`body` na API). */
+  message: string;
+  /** Tipo do evento da API; no modo local, os tipos de exemplo. */
+  type: ApiNotificationType | NotificationType;
   read: boolean;
   createdAt: string;
+  /** Assunto da notificação, quando existe. */
+  taskId?: string | null;
+  projectId?: string | null;
 }

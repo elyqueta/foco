@@ -2,6 +2,43 @@ export type ApiUrgency = 'critical' | 'high' | 'medium' | 'low';
 export type ApiProjectStatus = 'active' | 'paused' | 'done';
 export type ApiTaskStatus = 'todo' | 'in_progress' | 'done' | 'postponed' | 'expired';
 
+/** Tipos de notificação criados pelo servidor (eventos + scheduler). */
+export type ApiNotificationType =
+  | 'task_due_soon'
+  | 'task_due_imminent'
+  | 'task_expired'
+  | 'task_completed'
+  | 'task_estimate_exceeded'
+  | 'timer_running_long'
+  | 'project_due_soon'
+  | 'project_overdue'
+  | 'project_ready_to_complete'
+  | 'task_overdue_postponed'
+  | 'daily_digest';
+
+export interface ApiNotification {
+  id: string;
+  type: ApiNotificationType;
+  title: string;
+  body: string;
+  /** Assunto da notificação, quando existe. */
+  data?: {
+    taskId?: string;
+    projectId?: string;
+  };
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface ApiNotificationFilters {
+  /** Só as não lidas. */
+  unread?: boolean;
+  /** Máximo de notificações devolvidas (1…100, 50 por omissão). */
+  limit?: number;
+  /** UUID da última notificação da página anterior (paginação para trás). */
+  before?: string;
+}
+
 export type ApiActivityType =
   | 'created'
   | 'status_changed'

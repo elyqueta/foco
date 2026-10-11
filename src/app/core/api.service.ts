@@ -6,6 +6,8 @@ import {
   ApiActivityEntry,
   ApiAuthUser,
   ApiCategory,
+  ApiNotification,
+  ApiNotificationFilters,
   ApiProject,
   ApiProjectFilters,
   ApiProjectInput,
@@ -256,6 +258,37 @@ export class ApiService {
 
   addTaskNote(id: string, text: string): Promise<ApiActivityEntry> {
     return this.post(`/tasks/${id}/notes`, { text });
+  }
+
+  // ---------- Notifications ----------
+
+  listNotifications(filters: ApiNotificationFilters = {}): Promise<ApiNotification[]> {
+    const params: Record<string, string> = {};
+    if (filters['unread']) params['unread'] = 'true';
+    if (filters['limit']) params['limit'] = String(filters['limit']);
+    if (filters['before']) params['before'] = filters['before'] as string;
+    return this.get<ApiNotification[]>('/notifications', params);
+  }
+
+  /** Número de notificações não lidas (badge da app). */
+  unreadNotificationCount(): Promise<number> {
+    return this.get<{ count?: number }>('/notifications/unread-count').then((response) => response?.count ?? 0);
+  }
+
+  markNotificationRead(id: string): Promise<void> {
+    return this.post(`/notifications/${id}/read`, {}).then(() => undefined);
+  }
+
+  markAllNotificationsRead(): Promise<void> {
+    return this.post('/notifications/read-all', {}).then(() => undefined);
+  }
+
+  deleteNotification(id: string): Promise<void> {
+    return this.delete(`/notifications/${id}`).then(() => undefined);
+  }
+
+  clearNotifications(): Promise<void> {
+    return this.delete('/notifications').then(() => undefined);
   }
 
   // ---------- Timer ----------

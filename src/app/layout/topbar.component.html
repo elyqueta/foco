@@ -44,7 +44,7 @@
 
     <a [routerLink]="['/notificacoes']" aria-label="Notificações" title="Notificações"
       class="relative grid h-10 w-10 place-items-center rounded-xl text-ink-500 transition hover:bg-surface-app focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
-      <app-icon name="bell" [size]="20" />
+      <app-icon [name]="unreadNotifications() > 0 ? 'bell-ring' : 'bell'" [size]="20" />
       @if (unreadNotifications() > 0) {
         <span class="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">{{ unreadNotifications() }}</span>
       }

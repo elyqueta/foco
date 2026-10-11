@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthRepository, ProfilePayload, RegisterPayload } from './auth.repository';
 import { AuthSession, AuthUser, AuthError } from './auth.models';
 import { DataStore } from '../data.store';
+import { NotificationService } from '../notification.service';
 import { environment } from '../../../environments/environment';
 
 const STORAGE_KEY = 'foco:auth:v1';
@@ -24,6 +25,7 @@ export class AuthService {
   private readonly repo = inject(AuthRepository);
   private readonly router = inject(Router);
   private readonly store = inject(DataStore);
+  private readonly notifications = inject(NotificationService);
 
   private readonly _session = signal<AuthSession | null>(readSession());
   private readonly _validated = signal(false);
@@ -154,6 +156,7 @@ export class AuthService {
     } catch {
       // ignore
     }
+    this.notifications.reset();
     this._session.set(null);
     this._validated.set(false);
     this._validation = null;

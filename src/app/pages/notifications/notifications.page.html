@@ -1,35 +1,82 @@
 <div class="mt-8 max-w-[720px]">
-  <div class="flex items-center justify-between">
-    <h1 class="text-[28px] font-extrabold text-ink">Notificações</h1>
-    @if (unreadCount() > 0) {
-      <app-button variant="ghost" icon="check" label="Marcar tudo como lido" (click)="markAllRead()"></app-button>
-    }
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <h1 class="text-[28px] font-extrabold text-ink">Notificações</h1>
+      @if (unreadCount() > 0) {
+        <span class="rounded-full bg-brand px-2 py-0.5 text-[11px] font-bold text-white">{{ unreadCount() }} novas</span>
+      }
+    </div>
+    <div class="flex items-center gap-2">
+      @if (unreadCount() > 0) {
+        <app-button variant="ghost" size="sm" icon="check" label="Marcar tudo como lido" [iconOnlyBelow]="null" (click)="markAllRead()"></app-button>
+      }
+      @if (items().length > 0) {
+        <app-button variant="ghost" size="sm" icon="trash-2" label="Limpar tudo" [iconOnlyBelow]="null" buttonClass="!text-danger hover:!bg-danger-soft" (click)="clearAll()"></app-button>
+      }
+    </div>
   </div>
 
-  <div class="mt-6 flex flex-col gap-3">
-    @for (item of notifications(); track item.id) {
-      <div [class]="'rounded-2xl border p-4 transition ' + (item.read ? 'border-surface-line bg-surface-card' : 'border-brand/30 bg-brand-50 shadow-card')">
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <p class="text-[13px] font-semibold text-ink">{{ item.title }}</p>
-            <p class="mt-1 text-[12px] text-ink-500">{{ item.message }}</p>
-            <p class="mt-2 text-[10px] text-ink-400">{{ formatDate(item.createdAt) }}</p>
-          </div>
-          <div class="shrink-0">
-            @if (item.type === 'focus') {
-              <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand text-white"><app-icon name="target" /></span>
-            } @else if (item.type === 'success') {
-              <span class="grid h-8 w-8 place-items-center rounded-xl bg-success text-white"><app-icon name="check" /></span>
-            } @else if (item.type === 'warning') {
-              <span class="grid h-8 w-8 place-items-center rounded-xl bg-warn text-white"><app-icon name="triangle-alert" /></span>
-            } @else {
-              <span class="grid h-8 w-8 place-items-center rounded-xl bg-surface-app text-ink-500"><app-icon name="info" /></span>
-            }
+  @if (loading() && items().length === 0) {
+    <div class="mt-6 flex flex-col gap-3">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="flex items-start gap-3 rounded-2xl border border-surface-line bg-surface-card p-4">
+          <app-skeleton class="h-8 w-8 shrink-0 !rounded-xl" />
+          <div class="min-w-0 flex-1">
+            <app-skeleton class="h-3.5 w-2/5 mb-2" />
+            <app-skeleton class="h-3 w-4/5 mb-2" />
+            <app-skeleton class="h-2 w-16" />
           </div>
         </div>
-      </div>
-    } @empty {
-      <p class="text-[13px] text-ink-500">Sem notificações.</p>
-    }
-  </div>
+      }
+    </div>
+  } @else if (showError()) {
+    <div class="mt-6 flex flex-col items-start gap-3 rounded-2xl bg-danger-soft p-5">
+      <p class="text-[13px] font-semibold text-danger">{{ error() }}</p>
+      <app-button icon="rotate-ccw" label="Tentar novamente" variant="secondary" size="sm" (click)="retry()"></app-button>
+    </div>
+  } @else {
+    <div class="mt-6 flex flex-col gap-7">
+      @for (group of groups(); track group.label) {
+        <section>
+          <div class="mb-3 flex items-center gap-3">
+            <h2 class="text-[12px] font-bold uppercase tracking-wide text-ink-400">{{ group.label }}</h2>
+            <span class="h-px flex-1 bg-surface-line"></span>
+          </div>
+          <div class="flex flex-col gap-3">
+            @for (item of group.items; track item.id) {
+              <div [class]="'rounded-2xl border p-4 transition ' + (item.read ? 'border-surface-line bg-surface-card' : 'border-brand/30 bg-brand-50 shadow-card')">
+                <div class="flex items-start gap-3">
+                  <button type="button" class="flex min-w-0 flex-1 items-start gap-3 text-left" (click)="open(item)">
+                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white" [class]="appearance(item.type).toneClass">
+                      <app-icon [name]="appearance(item.type).icon" [size]="16" />
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-[13px] font-semibold text-ink">{{ item.title }}</span>
+                      <span class="mt-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-400">{{ label(item.type) }}</span>
+                      <span class="mt-1 block text-[12px] text-ink-500">{{ item.message }}</span>
+                      <span class="mt-2 block text-[10px] text-ink-400">{{ formatDate(item.createdAt) }}</span>
+                    </span>
+                  </button>
+                  <app-button
+                    variant="ghost"
+                    size="sm"
+                    icon="trash-2"
+                    label="Remover notificação"
+                    [iconOnly]="true"
+                    buttonClass="!text-ink-400 hover:!text-danger"
+                    (click)="remove(item.id)"
+                  ></app-button>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      } @empty {
+        <p class="text-[13px] text-ink-500">Sem notificações.</p>
+      }
+      @if (hasMore()) {
+        <app-button variant="secondary" size="sm" icon="chevron-down" label="Carregar mais" [loading]="loadingMore()" [iconOnlyBelow]="null" buttonClass="self-center" (click)="loadMore()"></app-button>
+      }
+    </div>
+  }
 </div>

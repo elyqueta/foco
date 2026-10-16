@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import { Category } from '../../core/models';
+import { categoryLabel } from '../../core/category.utils';
 
 @Component({
   selector: 'app-badge-category',
@@ -10,16 +11,15 @@ export class BadgeCategoryComponent {
   category = input.required<Category>();
 
   label(): string {
-    const map: Record<Category, string> = { professional: 'Profissional', personal: 'Pessoal', household: 'Doméstica' };
-    return map[this.category()];
+    return categoryLabel(this.category());
   }
 
   categoryClass(): string {
-    const map: Record<Category, string> = {
+    const map: Record<string, string> = {
       professional: 'bg-brand',
       personal: 'bg-teal-tag',
       household: 'bg-warn',
     };
-    return map[this.category()];
+    return map[this.category()] ?? 'bg-ink-500';
   }
 }

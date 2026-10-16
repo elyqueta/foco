@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
@@ -11,24 +11,38 @@ import { BadgeCategoryComponent } from '../../shared/ui/badge-category.component
 import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { PostponeModalComponent } from '../../shared/ui/postpone-modal.component';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 import { formatDate } from '../../core/date.utils';
+import { activityLabel } from '../../core/activity.utils';
 import { Task, ActivityEntry, Project } from '../../core/models';
 
 @Component({
   selector: 'app-task-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, PostponeModalComponent, AppIconComponent, AppButtonComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CardComponent, BadgeUrgencyComponent, BadgeCategoryComponent, EmptyStateComponent, PostponeModalComponent, AppIconComponent, AppButtonComponent, SkeletonComponent],
   templateUrl: './task-detail.page.html',
 })
 export class TaskDetailPage {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private store = inject(DataStore);
+  readonly store = inject(DataStore);
   private focus = inject(FocusService);
-  task = signal<Task | null>(null);
   showPostponeModal = signal(false);
+  detailLoading = signal(false);
+  /** Paginação horizontal da timeline de atividade. */
+  readonly activityPage = signal(0);
+  private readonly activityPageSize = 5;
+
+  private readonly taskId = signal<string | null>(null);
+
+  /** Derivado da store: notas e edições refletem-se sem recarregar a página. */
+  task = computed(() => {
+    const id = this.taskId();
+    if (!id) return null;
+    return this.store.data().tasks.find((t) => t.id === id) ?? null;
+  });
 
   formatDate = formatDate;
 
@@ -45,9 +59,14 @@ export class TaskDetailPage {
   constructor() {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
-      if (id) {
-        const t = this.store.data().tasks.find((x) => x.id === id);
-        this.task.set(t ?? null);
+      this.taskId.set(id);
+      this.activityPage.set(0);
+      if (!id) return;
+      if (this.store.useApi) {
+        this.detailLoading.set(true);
+        void this.store.fetchTaskDetail(id).then(() => {
+          if (this.taskId() === id) this.detailLoading.set(false);
+        });
       }
     });
   }
@@ -74,38 +93,72 @@ export class TaskDetailPage {
     return Number.isNaN(n) ? null : n;
   }
 
-  updateField(field: string, value: unknown): void {
+  async updateField(field: string, value: unknown): Promise<void> {
     const id = this.task()?.id;
     if (!id) return;
-    this.store.updateTask(id, { [field]: value } as Partial<Task>);
+    await this.store.updateTask(id, { [field]: value } as Partial<Task>);
   }
 
-  setCanPostpone(value: boolean): void {
+  async setCanPostpone(value: boolean): Promise<void> {
     const id = this.task()?.id;
     if (!id) return;
-    this.store.updateTask(id, { canPostpone: value });
+    await this.store.updateTask(id, { canPostpone: value });
   }
 
-  completeTask(): void {
+  async completeTask(): Promise<void> {
     const id = this.task()?.id;
     if (!id) return;
-    this.store.setTaskStatus(id, 'done');
+    await this.store.setTaskStatus(id, 'done');
   }
 
-  reopenTask(): void {
+  async reopenTask(): Promise<void> {
     const id = this.task()?.id;
     if (!id) return;
-    this.store.setTaskStatus(id, 'todo');
+    await this.store.setTaskStatus(id, 'todo');
   }
 
-  startFocus(): void {
+  async startFocus(): Promise<void> {
     const task = this.task();
     if (!task || task.status === 'done') return;
+    if (this.store.useApi) {
+      await this.store.startTaskTimer(task.id);
+      return;
+    }
     if (task.status !== 'in_progress') {
-      this.store.setTaskStatus(task.id, 'in_progress');
+      await this.store.setTaskStatus(task.id, 'in_progress');
     }
     this.focus.start(task);
-    this.task.set(this.store.data().tasks.find((item) => item.id === task.id) ?? task);
+  }
+
+  /** Estado do timer desta tarefa (modo API). */
+  timerState(): 'idle' | 'running' | 'paused' | 'stopped' | null {
+    return this.task()?.timer?.state ?? null;
+  }
+
+  /** Segundos acumulados a mostrar (do timer ativo quando é esta a tarefa). */
+  trackedSeconds(): number {
+    const task = this.task();
+    if (!task) return 0;
+    if (this.store.activeTimerTask()?.id === task.id) return this.store.activeTimerSeconds();
+    return task.timer?.trackedSeconds ?? 0;
+  }
+
+  /** Começa, pausa ou retoma o temporizador desta tarefa. */
+  async toggleTimer(): Promise<void> {
+    const task = this.task();
+    if (!task || task.status === 'done') return;
+    if (!this.store.useApi) {
+      await this.startFocus();
+      return;
+    }
+    const state = task.timer?.state;
+    if (state === 'running') {
+      await this.store.pauseTaskTimer(task.id);
+    } else if (state === 'paused') {
+      await this.store.resumeTaskTimer(task.id);
+    } else {
+      await this.store.startTaskTimer(task.id);
+    }
   }
 
   async deleteTask(): Promise<void> {
@@ -115,21 +168,23 @@ export class TaskDetailPage {
     this.router.navigate(['/tarefas']);
   }
 
-  addNote(text: string): void {
+  async addNote(text: string): Promise<void> {
     const id = this.task()?.id;
     if (!id || !text.trim()) return;
-    this.store.addNote('task', id, text.trim());
+    const ok = await this.store.addNote('task', id, text.trim());
+    // A nota nova é a entrada mais recente: volta à primeira página.
+    if (ok) this.activityPage.set(0);
   }
 
   postpone(): void {
     this.showPostponeModal.set(true);
   }
 
-  onPostponeConfirm(date: string): void {
+  async onPostponeConfirm(date: string): Promise<void> {
     const id = this.task()?.id;
-    if (!id) return;
-    this.store.postponeTask(id, date);
     this.showPostponeModal.set(false);
+    if (!id) return;
+    await this.store.postponeTask(id, date);
   }
 
   onPostponeCancel(): void {
@@ -141,20 +196,36 @@ export class TaskDetailPage {
     return [...activity].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }
 
-  labelOf(type: ActivityEntry['type']): string {
-    const map: Record<ActivityEntry['type'], string> = {
-      created: 'Criado',
-      status_changed: 'Estado alterado',
-      note: 'Nota',
-      postponed: 'Adiado',
-      edited: 'Editado',
-      next_step_changed: 'Próximo passo atualizado',
-      expired: 'Expirada',
-    };
-    return map[type] ?? type;
+  /** Entradas da página atual (mais recentes primeiro). */
+  pagedActivity(): ActivityEntry[] {
+    const all = this.sortedActivity();
+    const start = this.activityPage() * this.activityPageSize;
+    return all.slice(start, start + this.activityPageSize);
   }
+
+  activityPageCount(): number {
+    return Math.max(1, Math.ceil(this.sortedActivity().length / this.activityPageSize));
+  }
+
+  activityPages(): number[] {
+    return Array.from({ length: this.activityPageCount() }, (_, index) => index);
+  }
+
+  goToActivityPage(page: number): void {
+    this.activityPage.set(Math.min(Math.max(page, 0), this.activityPageCount() - 1));
+  }
+
+  labelOf = activityLabel;
 
   format(iso: string): string {
     return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
+  }
+
+  formatDuration(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return hours > 0 ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
   }
 }

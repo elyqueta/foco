@@ -6,6 +6,7 @@ import {
   Calendar,
   CalendarDays,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
@@ -44,8 +45,12 @@ import {
   Upload,
   Download,
   Sun,
+  UserPlus,
+  Timer,
   UserRound,
+  Users,
   X,
+  Smartphone,
 } from 'lucide-angular';
 
 export const APP_ICONS = {
@@ -56,6 +61,7 @@ export const APP_ICONS = {
   Calendar,
   CalendarDays,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
@@ -94,8 +100,12 @@ export const APP_ICONS = {
   Upload,
   Download,
   Sun,
+  UserPlus,
+  Timer,
   UserRound,
+  Users,
   X,
+  Smartphone,
 };
 
 export const APP_ICON_NAMES = [
@@ -106,6 +116,7 @@ export const APP_ICON_NAMES = [
   'calendar',
   'calendar-days',
   'check',
+  'chevron-down',
   'chevron-left',
   'chevron-right',
   'circle-check',
@@ -144,6 +155,10 @@ export const APP_ICON_NAMES = [
   'upload',
   'download',
   'sun',
+  'user-plus',
+  'timer',
   'user-round',
+  'users',
   'x',
+  'smartphone',
 ] as const;

@@ -5,6 +5,7 @@ import { DataStore } from '../../core/data.store';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 import { TaskModalService } from '../../core/task-modal.service';
 import { ConfirmService } from '../../core/confirm.service';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { toISODate, parseISODate, toDatePart, todayISO } from '../../core/date.utils';
 import { Task } from '../../core/models';
 import { AppButtonComponent } from '../../shared/ui/button.component';
@@ -12,7 +13,7 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
 @Component({
   selector: 'app-calendar-day-page',
   standalone: true,
-  imports: [CommonModule, EmptyStateComponent, AppButtonComponent],
+  imports: [CommonModule, EmptyStateComponent, AppButtonComponent, SkeletonComponent],
   templateUrl: './calendar-day.page.html',
 })
 export class CalendarDayPage {
@@ -23,6 +24,12 @@ export class CalendarDayPage {
   private confirm = inject(ConfirmService);
 
   date = signal(toISODate(new Date()));
+  loading = this.store.loading;
+  loadError = this.store.loadError;
+
+  retry(): void {
+    this.store.retryLoad();
+  }
 
   constructor() {
     this.route.paramMap.subscribe((params) => {

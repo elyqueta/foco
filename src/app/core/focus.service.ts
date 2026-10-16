@@ -21,6 +21,8 @@ export class FocusService {
   readonly session = this._session.asReadonly();
   readonly paused = this._paused.asReadonly();
   readonly widgetVisible = this._widgetVisible.asReadonly();
+  /** Contador que muda a cada segundo — usado para reavaliar temporizadores derivados. */
+  readonly tickCount = this._tick.asReadonly();
 
   constructor() {
     this._paused.set(this._session()?.paused ?? false);

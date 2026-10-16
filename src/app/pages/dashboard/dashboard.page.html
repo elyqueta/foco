@@ -1,4 +1,105 @@
 <div class="mt-8">
+  @if (loadError()) {
+    <section class="grid min-w-0 grid-cols-12 items-stretch gap-5">
+      <div class="col-span-12 min-w-0 xl:col-span-5">
+        <h1 class="text-3xl font-bold tracking-tight text-ink text-balance">Olá, {{ userName() }}! O que tens planeado para hoje?</h1>
+        <p class="mt-3 max-w-[420px] text-sm text-ink-500">Aqui está o que precisas de fazer hoje. Foca-te numa coisa de cada vez.</p>
+      </div>
+      <div class="col-span-12 min-w-0 xl:col-span-7">
+        <div class="flex h-full min-w-0 flex-col items-start justify-center gap-3 rounded-3xl bg-danger-soft p-6">
+          <div class="flex items-center gap-2 text-danger">
+            <app-icon name="triangle-alert" [size]="20" />
+            <h2 class="text-base font-bold">Não foi possível carregar os dados</h2>
+          </div>
+          <p class="text-sm text-danger/90">{{ loadError() }}</p>
+          <app-button icon="rotate-ccw" label="Tentar novamente" variant="secondary" [iconOnlyBelow]="null" (click)="retry()"></app-button>
+        </div>
+      </div>
+    </section>
+  } @else if (loading()) {
+    <section class="grid min-w-0 grid-cols-12 items-stretch gap-5">
+      <div class="col-span-12 min-w-0 xl:col-span-5">
+        <app-skeleton class="h-9 w-72 mb-4" />
+        <app-skeleton class="h-4 w-80" />
+      </div>
+      <div class="col-span-12 grid min-w-0 grid-cols-2 gap-5 sm:grid-cols-4 xl:col-span-7">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="flex h-[160px] min-w-0 flex-col justify-between rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+            <app-skeleton class="h-10 w-10 !rounded-xl" />
+            <div>
+              <app-skeleton class="h-8 w-14 mb-2" />
+              <app-skeleton class="h-3 w-20 mb-1" />
+              <app-skeleton class="h-2 w-24" />
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="mt-5 grid min-w-0 grid-cols-12 items-stretch gap-5">
+      <div class="col-span-12 min-w-0 md:col-span-6">
+        <div class="flex h-full flex-col rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+          <app-skeleton class="h-4 w-32 mb-4" />
+          <div class="flex flex-col gap-3">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="flex items-center gap-4 px-1 py-2">
+                <app-skeleton class="h-5 w-5 !rounded-full" />
+                <div class="min-w-0 flex-1">
+                  <app-skeleton class="h-3.5 w-2/5 mb-2" />
+                  <app-skeleton class="h-2 w-1/4" />
+                </div>
+                <app-skeleton class="h-6 w-16 !rounded-full" />
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="col-span-12 min-w-0 md:col-span-6">
+        <div class="flex h-full flex-col rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+          <app-skeleton class="h-4 w-24 mb-4" />
+          <div class="flex flex-col gap-3">
+            @for (i of [1, 2]; track i) {
+              <div class="rounded-2xl border border-surface-line p-4">
+                <app-skeleton class="h-5 w-20 mb-3 !rounded-md" />
+                <app-skeleton class="h-4 w-3/5 mb-3" />
+                <div class="flex items-center justify-between">
+                  <app-skeleton class="h-6 w-16 !rounded-full" />
+                  <app-skeleton class="h-3 w-20" />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="col-span-12 min-w-0 md:col-span-6">
+        <div class="flex h-full flex-col rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+          <app-skeleton class="h-4 w-28 mb-4" />
+          <app-skeleton class="h-8 w-full mb-4 !rounded-xl" />
+          <div class="grid grid-cols-7 gap-2">
+            @for (i of [1, 2, 3, 4, 5, 6, 7]; track i) {
+              <app-skeleton class="mx-auto h-7 w-7 !rounded-full" />
+            }
+          </div>
+        </div>
+      </div>
+      <div class="col-span-12 min-w-0 md:col-span-6">
+        <div class="flex h-full flex-col rounded-3xl bg-surface-card p-5 shadow-card ring-1 ring-ink/10">
+          <app-skeleton class="h-4 w-32 mb-4" />
+          <div class="flex flex-col gap-3">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="flex items-start gap-3">
+                <app-skeleton class="mt-1.5 h-2 w-2 !rounded-full" />
+                <div class="min-w-0 flex-1">
+                  <app-skeleton class="h-3.5 w-3/5 mb-2" />
+                  <app-skeleton class="h-2 w-1/4" />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  } @else {
   <section class="grid min-w-0 grid-cols-12 items-stretch gap-5">
     <div class="col-span-12 min-w-0 xl:col-span-5">
       <h1 class="text-3xl font-bold tracking-tight text-ink text-balance">Olá, {{ userName() }}! O que tens planeado para hoje?</h1>
@@ -176,7 +277,11 @@
               <p class="text-xs uppercase tracking-wide opacity-70">Tarefa actual</p>
               <p class="mt-1 text-xl font-semibold leading-snug">{{ focusTask()!.title }}</p>
             </div>
-            <app-button variant="secondary" icon="play" label="Começar" [iconOnlyBelow]="null" buttonClass="w-full" (click)="startFocus(focusTask()!.id)"></app-button>
+            @if (focusTaskTimerPaused()) {
+              <app-button variant="secondary" icon="play" label="Retomar" [iconOnlyBelow]="null" buttonClass="w-full" (click)="resumeFocusTask(focusTask()!.id)"></app-button>
+            } @else {
+              <app-button variant="secondary" icon="play" label="Começar" [iconOnlyBelow]="null" buttonClass="w-full" (click)="startFocus(focusTask()!.id)"></app-button>
+            }
           } @else {
             <div class="my-6">
               <app-icon name="sparkles" [size]="32" class="opacity-80" />
@@ -204,4 +309,5 @@
       </app-card>
     </div>
   </section>
+  }
 </div>

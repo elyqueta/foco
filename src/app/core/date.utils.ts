@@ -10,6 +10,27 @@ export function toISODateTime(d: Date): string {
   return `${toISODate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * Hora por omissão de um prazo: a próxima meia hora quando o dia é hoje,
+ * 09:00 nos restantes dias.
+ */
+export function defaultDueTime(dateISO: string): string {
+  if (dateISO === todayISO()) {
+    const now = new Date();
+    if (now.getHours() >= 23 && now.getMinutes() >= 30) return '23:59';
+    now.setMinutes(now.getMinutes() < 30 ? 30 : 60, 0, 0);
+    return toISODateTime(now).split('T')[1];
+  }
+  return '09:00';
+}
+
+/** Garante que um prazo tenha data e hora (aceita apenas data no dia). */
+export function withDefaultDueTime(due: string | null): string | null {
+  if (!due) return null;
+  if (due.includes('T')) return due;
+  return `${due}T${defaultDueTime(due)}`;
+}
+
 export function todayISO(): string {
   return toISODate(new Date());
 }
@@ -64,6 +85,36 @@ export function isOverdue(dateStr: string | null): boolean {
   if (!dateStr) return false;
   const datePart = toDatePart(dateStr);
   return datePart < todayISO();
+}
+
+/**
+ * Rótulo do grupo temporal de uma data, para históricos:
+ * "Hoje", "Ontem", "Esta semana", "Semana passada" ou a data
+ * ("12 de outubro"; com o ano quando for de outro ano).
+ * As semanas começam na segunda-feira.
+ */
+export function dateGroupLabel(iso: string): string {
+  const date = parseISODate(toDatePart(iso));
+  if (isNaN(date.getTime())) return '';
+  const today = parseISODate(todayISO());
+  const dayMs = 24 * 60 * 60 * 1000;
+  const diffDays = Math.round((today.getTime() - date.getTime()) / dayMs);
+  if (diffDays <= 0) return 'Hoje';
+  if (diffDays === 1) return 'Ontem';
+
+  // Início da semana (segunda-feira) como timestamp.
+  const startOfWeek = (d: Date): number => {
+    const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return copy.setDate(copy.getDate() - ((copy.getDay() + 6) % 7));
+  };
+  const thisWeek = startOfWeek(today);
+  const lastWeek = thisWeek - 7 * dayMs;
+  const time = date.getTime();
+  if (time >= thisWeek) return 'Esta semana';
+  if (time >= lastWeek) return 'Semana passada';
+
+  const sameYear = date.getFullYear() === today.getFullYear();
+  return new Intl.DateTimeFormat('pt-PT', { day: 'numeric', month: 'long', year: sameYear ? undefined : 'numeric' }).format(date);
 }
 
 export function urgencyOrder(u: string): number {

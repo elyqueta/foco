@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { DataStore } from './data.store';
 import { ImportService } from './import.service';
 import { ConfirmService } from './confirm.service';
+import { Project } from './models';
 
 export interface FocoConsoleApi {
   addTask(input: {
@@ -15,7 +16,7 @@ export interface FocoConsoleApi {
     canPostpone?: boolean;
     estimateMinutes?: number;
     tags?: string[];
-  }): void;
+  }): Promise<void>;
   addProject(input: {
     name: string;
     category?: string;
@@ -23,8 +24,8 @@ export interface FocoConsoleApi {
     dueDate?: string;
     nextStep?: string;
     description?: string;
-  }): void;
-  import(data: string | object): void;
+  }): Promise<Project | null>;
+  import(data: string | object): Promise<void>;
   list(): void;
   today(): void;
   export(): string;
@@ -56,58 +57,47 @@ export class ConsoleApi {
 
   init(): void {
     const api: FocoConsoleApi = {
-      addTask: (input) => {
+      addTask: async (input) => {
         const category = pickCategory(input.category);
         const urgency = pickUrgency(input.urgency);
-        const existingProject = input.projectName
-          ? this.store.data().projects.find((p) => p.name.toLowerCase() === input.projectName!.toLowerCase())
-          : null;
+        let projectId: string | null = null;
 
-        if (!existingProject && input.projectName) {
-          const project = {
-            name: input.projectName,
-            category,
-            urgency,
-            dueDate: input.dueDate ?? null,
-            nextStep: input.nextStep ?? '',
-            description: input.description ?? '',
-            color: '#6C5CE7',
-            status: 'active' as const,
-            canPostpone: input.canPostpone ?? true,
-          };
-          this.store.addProject(project);
-          const created = this.store.data().projects.find((p) => p.name.toLowerCase() === input.projectName!.toLowerCase());
-          this.store.addTask({
-            title: input.title,
-            description: input.description ?? '',
-            category,
-            urgency,
-            status: 'todo',
-            canPostpone: input.canPostpone ?? true,
-            dueDate: input.dueDate ?? null,
-            nextStep: input.nextStep ?? '',
-            estimateMinutes: input.estimateMinutes ?? null,
-            tags: input.tags ?? [],
-            projectId: created?.id ?? null,
-          });
-        } else {
-          this.store.addTask({
-            title: input.title,
-            description: input.description ?? '',
-            category,
-            urgency,
-            status: 'todo',
-            canPostpone: input.canPostpone ?? true,
-            dueDate: input.dueDate ?? null,
-            nextStep: input.nextStep ?? '',
-            estimateMinutes: input.estimateMinutes ?? null,
-            tags: input.tags ?? [],
-            projectId: existingProject?.id ?? null,
-          });
+        if (input.projectName) {
+          const existing = this.store.data().projects.find((p) => p.name.toLowerCase() === input.projectName!.toLowerCase());
+          if (existing) {
+            projectId = existing.id;
+          } else {
+            const created = await this.store.addProject({
+              name: input.projectName,
+              description: input.description ?? '',
+              category,
+              urgency,
+              status: 'active',
+              canPostpone: input.canPostpone ?? true,
+              dueDate: input.dueDate ?? null,
+              nextStep: input.nextStep ?? '',
+              color: '#6C5CE7',
+            });
+            projectId = created?.id ?? null;
+          }
         }
+
+        await this.store.addTask({
+          title: input.title,
+          description: input.description ?? '',
+          category,
+          urgency,
+          status: 'todo',
+          canPostpone: input.canPostpone ?? true,
+          dueDate: input.dueDate ?? null,
+          nextStep: input.nextStep ?? '',
+          estimateMinutes: input.estimateMinutes ?? null,
+          tags: input.tags ?? [],
+          projectId,
+        });
         console.log(`[foco] Tarefa criada: ${input.title}`);
       },
-      addProject: (input) => {
+      addProject: (input) =>
         this.store.addProject({
           name: input.name,
           description: input.description ?? '',
@@ -118,12 +108,10 @@ export class ConsoleApi {
           dueDate: input.dueDate ?? null,
           nextStep: input.nextStep ?? '',
           color: '#6C5CE7',
-        });
-        console.log(`[foco] Projeto criado: ${input.name}`);
-      },
-      import: (data) => {
+        }),
+      import: async (data) => {
         const json = typeof data === 'string' ? data : JSON.stringify(data);
-        this.importService.import(json);
+        await this.importService.import(json);
       },
       list: () => {
         const tasks = this.store.data().tasks.filter((t) => t.status !== 'done');

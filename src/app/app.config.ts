@@ -4,7 +4,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
 import { ConsoleApi } from './core/console-api';
-import { DataRepository, LocalStorageRepository } from './core/storage.repository';
+import { DataRepository, LocalStorageRepository, LocalTasksRepository } from './core/storage.repository';
 import { LucideAngularModule } from 'lucide-angular';
 import { APP_ICONS } from './core/icons';
 import { AuthRepository } from './core/auth/auth.repository';
@@ -20,8 +20,8 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(),
     provideHttpClient(withInterceptors([authInterceptor])),
     importProvidersFrom(LucideAngularModule.pick(APP_ICONS)),
-    { provide: DataRepository, useClass: LocalStorageRepository },
-    { provide: AuthRepository, useClass: environment.useMockAuth ? MockAuthRepository : ApiAuthRepository },
+    { provide: DataRepository, useClass: environment.useApi ? LocalTasksRepository : LocalStorageRepository },
+    { provide: AuthRepository, useClass: environment.useApi ? ApiAuthRepository : MockAuthRepository },
     ConsoleApi,
   ],
 };

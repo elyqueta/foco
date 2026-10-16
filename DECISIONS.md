@@ -97,3 +97,187 @@
 ## 16. Cor de tema no modo escuro
 - No modo escuro, `ColorSchemeService` mistura a cor do esquema escolhido em bases quase pretas para os tokens da página, app, cartões, bordas e botão escuro. Os níveis de mistura aumentam gradualmente entre superfícies para conservar a hierarquia visual sem clarear excessivamente os fundos.
 - Ao regressar ao modo claro, os overrides inline das superfícies escuras são removidos e os tokens claros existentes voltam a ser usados; os valores Tailwind de modo escuro servem como fallback para o esquema roxo antes da aplicação dos valores guardados.
+
+## 17. Integração com a API v1 (Foco API)
+
+### Ambientes
+- `src/environments/environment.ts` (produção): `production: true`, `useApi: true`, `apiBaseUrl: '/api/v1'` (relativo, mesma origem em produção).
+- `src/environments/environment.development.ts` (desenvolvimento): `production: false`, `useApi: true`, `apiBaseUrl: 'http://localhost:8000/api/v1'`.
+- `angular.json` passa a usar `fileReplacements` na configuração `development` do build, substituindo `environment.ts` por `environment.development.ts` (verificado nos bundles: produz `/api/v1` e `http://localhost:8000/api/v1`).
+- A flag `useMockAuth` foi substituída por `useApi`: quando true, `App` usa `ApiAuthRepository` + `LocalTasksRepository`; caso contrário, mock + storage local completo.
+
+### Camada de API
+- `core/api.service.ts` (`ApiService`) centraliza os endpoints existentes em `/api/v1`: auth (login, register, logout, logout-all, me, password, profile), settings (GET/PATCH), categories (list/create/delete), projects (list com filtros, get, create, update, delete, notes) e health.
+- `core/api.models.ts` define os DTOs da API; `ApiError` normaliza erros (`status`, `code`) e expõe `isNoChanges` para o contrato `422 NO_CHANGES`.
+- Todos os pedidos passam pelo `authInterceptor` (Bearer + `Accept: application/json`); respostas validadas contra a API real em desenvolvimento.
+
+### Endpoints aplicados vs. o que fica local
+- **Remotos (API):** categorias, projetos (CRUD + notas), definições (userName/tema), autenticação completa.
+- **Locais (localStorage, `foco:tasks:v1`):** tarefas, notas de tarefas, atividade de tarefas, esquema de cor, modo foco, notificações — a API v1 ainda não tem estes endpoints. Nada foi desabilitado.
+- `LocalTasksRepository` persiste apenas `tasks` + `settings` em modo API e miga uma única vez os dados de `foco:data:v1`; em modo local o `LocalStorageRepository` mantém o comportamento anterior.
+- O progresso dos projetos é calculado a partir das tarefas locais; quando não há tarefas locais, usa-se o `progress` devolvido pela API como fallback.
+
+### Carregamento, erros e skeletons
+- O carregamento remoto (`DataStore.init()`) arranca só depois de a sessão ser validada (`AuthService.validateSession()` → `GET /auth/me`), evitando pedidos antes da autenticação; `reload()` é chamado após login/registo.
+- `DataStore` expõe `loading`, `loadError`, `retryLoad()` e `flash` (toast). Skeletons (`app-skeleton`, `animate-pulse` com tokens existentes) em dashboard, projetos, tarefas, detalhe de projeto, categorias e calendários; estados de erro com ação "Tentar novamente".
+- Erros de escrita (criar/atualizar/remover) e `422 NO_CHANGES` ("Nenhuma alteração detetada.") são comunicados por toast (`ToastComponent` no shell).
+
+### Ajustes de conformidade com a API real
+- `GET /settings` devolve `userName` (não `name`) — o modelo aceita ambos.
+- As 3 categorias provisionadas no registo vêm com `isDefault: false` (são removíveis): a proteção passa a depender exclusivamente do `isDefault` do servidor em modo API; em modo local mantém-se a lista das três padrão.
+- Categorias personalizadas (ex.: "Estudos") são suportadas em filtros, badges (`app-badge-category` com rótulo/fallback), dashboard e importação.
+
+### Correções de lacunas pré-existentes expostas pela integração
+- `ProjectFormComponent` não carregava o `@Input() project`: o modal de edição abria vazio e o submit ficava desabilitado. Passa a inicializar o formulário em `ngOnInit`.
+- A página de detalhe de projeto não tinha botões para `openEditProject`/`deleteProject` (código existente sem UI): adicionados "Editar" e "Apagar" no cabeçalho.
+- O detalhe do projeto passa a derivar o projeto da store (computed), refletindo notas e edições sem recarregar a página.
+
+### Verificações
+- `ng build` (development e production) sem erros.
+- E2E headless contra a API real em `localhost:8000`: login pelo formulário, dashboard, projetos (listar/criar/editar com e sem alterações), notas, categorias (criar/remover), definições (nome+tema sincronizados), tarefas locais com persistência, skeletons confirmados com API atrasada, zero erros de consola.
+- Não relacionado: `ng test` já falhava antes destas alterações (incompatibilidade `module`/`moduleResolution` em `tsconfig`) e o `app.spec.ts` espera um título que não existe; não foi alterado.
+
+## 18. Correções da revisão de código e ecrã de cadastro
+
+### Isolamento de dados locais por conta (CRITICAL)
+- `LocalTasksRepository` passou a ter escopo de sessão: chave `foco:tasks:v1:<userId>`; `DataStore.setSessionScope(userId)` é chamada no login, no registo, na validação da sessão (caminho de reload da página) e a `null` no logout/401 (`AuthService.clearLocal`). Sem sessão, a store usa dados vazios.
+- A migração a partir de `foco:data:v1` é única e só corrida no primeiro login com conta associada (a flag `foco:tasks:v1:migrated` só é escrita quando há scope), evitando que o bootstrap sem sessão a consuma antes do primeiro utilizador.
+
+### Sessão mais robusta
+- `ApiAuthRepository.me()` passa a falhar fechado: qualquer resposta >= 400 do `/auth/me` invalida a sessão.
+- `AuthService.validateSession()` só limpa a sessão em `401`; erros de rede/5xx mantêm a sessão e a app continua a renderizar (sem skeleton infinito).
+- `ensureValidated()` memoiza a validação e é usada pelo `authGuard`/`guestGuard` (aguardam a validação antes de decidir) e pelo arranque da app, com uma única chamada a `/auth/me` por arranque. Os guards capturam `inject(Router)` antes do `await` (sem `inject` fora do contexto de injeção).
+- `app.ts` usa `ensureValidated()` antes de `store.init()`.
+
+### Regressões e bugs corrigidos
+- `removeCategory` voltou a remapear também os `projects` para `professional` (a reescrita tinha perdido esse remapeamento no modo local).
+- Importação passa a mapear o `id` original do ficheiro JSON para o id final do projeto (API e local), restaurando a ligação tarefa→projeto que estava desaparecida.
+- `fetchProjectDetail` ignora respostas obsoletas (guarda pelo id atual da rota), evitando skeleton escondido cedo/dados antigos em navegação rápida.
+- `loadFromApi` passa a ter de-duplicação em voo (`inFlight`), evitando lotes duplicados e escritas fora de ordem; o bloco de refresh foi extraído para `refreshCategoriesAndProjects()`.
+
+### Migração sem perda silenciosa
+- Nas Definições (modo API), quando existe `foco:data:v1` aparece um cartão de aviso com ação "Exportar backup antigo", para que os projetos/categorias locais anteriores não fiquem inacessíveis sem aviso.
+
+### Nome do perfil
+- Alterar "O teu nome" nas Definições passa a sincronizar com `PATCH /auth/profile` (com debounce), atualizando também o utilizador da sessão — saudação e topbar refletem a mudança.
+
+### Ecrã de cadastro
+- Nova rota `/cadastro` (`RegisterPage`) com o design system do login (painel gradiente, passos, campos com validação PT, mostrar/ocultar palavra-passe, confirmação com validação de coincidência, link "Já tens conta? Entrar").
+- A página de login ganhou o link "Cadastra-te" → `/cadastro`.
+- O registo entra diretamente na app: `AuthService.register()` grava a sessão, associa o scope das tarefas locais e carrega os dados remotos; o utilizador segue para o dashboard sem login manual.
+- `LoginField` e o mapeamento de erros da API passam a cobrir `name` e `passwordConfirmation`, mostrando os erros de validação no campo certo.
+
+### Duplicação e código morto
+- Rótulos de atividade extraídos para `core/activity.utils.ts` (`activityLabel`), usados no detalhe de projeto e de tarefa.
+- Estatísticas de projeto centralizadas em `DataStore.projectStats()` (tarefas locais com fallback para o `progress` da API), usadas nas páginas de projetos e detalhe.
+- Removidos: `ApiService.health()`, `DataStore.mergeTasks()`, `DataStore.categoryLabel()` (todos sem callers).
+- O ramo mock/local (`MockAuthRepository`/`LocalStorageRepository`, bloco de demonstração no login) mantém-se como fallback offline explícito, ativável por `useApi: false` nos ambientes; está documentado porque nenhum ambiente o seleciona atualmente.
+
+### Deploy
+- Produção continua a usar `apiBaseUrl: '/api/v1'` (same-origin). O deploy precisa de expor `/api/v1` na mesma origem (reverse proxy/rewrite) ou alterar o URL de produção; fica registado como requisito de infraestrutura.
+
+### Verificações adicionais
+- Registo automático (sem login manual) verificado por E2E, incluindo migração de dados legacy, isolamento entre duas contas no mesmo dispositivo (chaves separadas, sem visibilidade cruzada), persistência de tarefas por conta e regressão completa de projetos/notas/categorias/definições sem erros de consola.
+
+## 19. Tarefas passam a ser geridas pela API
+
+Com os endpoints de tarefas adicionados à API v1, a gestão de tarefas deixa de ser local:
+
+### Endpoints aplicados
+- `GET /v1/tasks` — carregamento inicial com `includeDone=true&includeExpired=true` (a UI continua a filtrar/ordenar no cliente, preservando filtros, pesquisa e toggles existentes).
+- `POST /v1/tasks` — criação (módulo do topbar, página de tarefas, detalhe de projeto, console API e importação).
+- `GET /v1/tasks/{id}` — detalhe com atividade (página de detalhe carrega via API e deriva o resto da store).
+- `PATCH /v1/tasks/{id}` — edição parcial de campos; respeita a máquina de estados do servidor (`INVALID_TRANSITION`, `POSTPONE_REQUIRES_DATE`, `PAST_DUE_DATE`, `NO_CHANGES`); a opção `expired` foi removida do seletor de estado (é definida pelo sistema).
+- `POST /v1/tasks/{id}/complete` e `/reopen` — usados pelas transições concluir/reabrir em vez de PATCH.
+- `POST /v1/tasks/{id}/postpone` — adiamento com data e hora (`YYYY-MM-DDTHH:mm`, formato já emitido pelo modal).
+- `POST /v1/tasks/{id}/notes` — notas de tarefa.
+- `DELETE /v1/tasks/{id}` — remoção com confirmação.
+
+### Consequências na arquitetura
+- `LocalTasksRepository` deixa de espelhar tarefas: guarda apenas preferências locais. `pendingTasks()`/`clearTasks()` existem só para a migração única de tarefas de armazenamentos antigos (`foco:data:v1` → chave com escopo → upload via `POST /tasks` → limpeza da cache). Tarefas com prazo no passado são recriadas sem prazo; as que falham são reportadas por toast.
+- `projectStats` passa a usar o `progress` devolvido pelo servidor em modo API.
+- A expiração preguiçosa (`expireOverdueTasks`) passou a correr só em modo local — o servidor expira ao listar.
+- O botão "Apagar dados locais" (Definições) limpa apenas a cache local; os dados do servidor não são afetados.
+- O cartão de backup legado e o aviso nas Definições foram atualizados para refletir que projetos, categorias e tarefas estão no servidor.
+
+### Verificações
+- E2E contra a API real: criar tarefa pelo modal, listar (dados do servidor), detalhe com nota (aparece na timeline), concluir, reabrir, adiar, editar urgência por select e apagar com confirmação — todos os endpoints chamados corretamente, zero erros de consola.
+- Migração de 3 tarefas antigas (incluindo uma com prazo no passado e uma concluída) verificada: sobem para a API e a cache local fica vazia.
+
+## 20. Timer de tarefas via API
+
+Com os endpoints de timer adicionados à API v1, o temporizador passou a ser gerido pelo servidor (substituindo o pomodoro local apenas no modo API; o `FocusService` local continua como fallback do modo local):
+
+### Endpoints aplicados
+- `POST /v1/tasks/{id}/timer/start` — inicia (`todo`/`postponed` passam a `in_progress`); devolve `{ task, pausedTask? }` e aplica ambas à store, refletindo a pausa automática da tarefa que estava a correr.
+- `POST /v1/tasks/{id}/timer/pause` — pausa e acumula segundos; `422 TIMER_NOT_RUNNING` mostra toast.
+- `POST /v1/tasks/{id}/timer/resume` — retoma (única forma de uma `postponed` voltar a `in_progress`).
+- `GET /v1/timer/active` — chamado no carregamento remoto para recuperar o timer ativo ao abrir a app.
+
+### Estado e UI
+- `DataStore.activeTimerTask` devolve apenas a tarefa com timer **a correr** (alinhado com `/timer/active`); `activeTimerSeconds` soma `trackedSeconds` ao tempo decorrido desde `runningSince`, com reavaliação a cada segundo via tick do `FocusService`.
+- O widget de foco em modo API mostra a tarefa ativa e o tempo acumulado, com Pausar/Parar (ambos pausam — a API não tem "parar"); a retoma faz-se no detalhe da tarefa.
+- O detalhe da tarefa mostra "Começar/Pausar/Retomar temporizador" conforme o estado do timer, um indicador com o tempo acumulado e a atividade do timer na timeline (entradas `timer_started`/`timer_paused`/`timer_resumed`/`timer_stopped`).
+- `409 TIMER_ALREADY_RUNNING` mostra toast informativo em vez de erro.
+
+### Verificações
+- E2E contra a API real: iniciar pelo detalhe (estado passa a "Em curso" e o widget aparece a contar), pausar e retomar pelo widget, pausa automática ao iniciar outra tarefa, widget a seguir o novo timer, estado reposto após recarregar a página e retoma pelo detalhe; atividade do timer visível na timeline; zero erros de consola.
+
+## 21. Timeline de atividade paginada e timer em tempo real
+
+- **Paginação da timeline:** a lista de atividade no detalhe da tarefa mostra inicialmente as 5 entradas mais recentes, com botão "Ver mais N actividades" que acrescenta 5 de cada vez (some quando não há mais). Evita cartões/páginas demasiado longos em tarefas com muitas entradas. O limite é reiniciado ao navegar entre tarefas.
+- **Timer em tempo real:** o temp derivado (`activeTimerSeconds`) dependia do `FocusService.tick`, que devolve sempre o mesmo valor (0) sem sessão local — e nos signals do Angular um computado com valor inalterado corta a propagação, deixando o contador congelado. Passa a depender de `FocusService.tickCount` (contador que muda a cada segundo), pelo que o tempo avança em tempo real tanto no widget como no indicador do detalhe da tarefa.
+- Verificado por E2E: o valor sobe um segundo por segundo (00:02 → 00:07) e a paginação percorre 5 → 10 → 13 entradas até esgotar, sem erros de consola.
+
+## 22. Paginação horizontal da timeline e botão do card de foco
+
+- **Paginação horizontal:** a timeline de atividade passou a ser paginada por páginas (5 entradas por página) com controlos horizontais no fim da lista — "Página anterior", números de página e "Página seguinte" — em vez de um botão vertical "Ver mais". Mantém as entradas uma por linha e evita que o card (e o input de nota abaixo) fiquem demasiado longos. A página reinicia ao trocar de tarefa e volta à primeira quando uma nota é adicionada (a nota nova é a entrada mais recente).
+- **Card "Modo foco" da dashboard:** em modo API passa a reflecting o timer do servidor — mostra a tarefa com o timer a correr e o tempo em tempo real, e o botão da vista de repouso é **"Retomar"** (em vez de "Começar") quando a tarefa em destaque tem o timer pausado, evitando o `422 TIMER_WRONG_STATE` da API ao tentar iniciar uma tarefa já pausada.
+
+## 23. Contrato paginado da API e preservação de detalhe
+
+- A API passou a devolver **respostas paginadas** em `GET /v1/projects` e `GET /v1/tasks` (`{ items, page, perPage, total, totalPages, counts }`), enquanto a documentação local ainda descreve arrays — a API é a fonte da verdade. `ApiService` passou a ler `items` (tolerante a arrays simples, para compatibilidade) e a percorrer todas as páginas (`perPage=100`) antes de devolver a lista, para não truncar dados de utilizadores com muitos itens.
+- `GET /v1/timer/active` passou a devolver `{ task, message }` em vez de `204`/task direta — o serviço extrai `task` e devolve `null` quando não há timer a correr.
+- Foi corrigida a perda de atividade quando respostas sem `activity` (lista paginada, ações de timer, estado) substituíam uma tarefa cujo detalhe já tinha sido carregado: `preserveDetail()` nas listas e preservação no `applyTask()`.
+- Verificado por E2E: dashboard carrega sem erro (projetos, tarefas, categorias, definições e timer ativo), timeline mantém as entradas após iniciar/pausar/retomar o timer e paginação navega entre páginas sem erros de consola.
+
+## 24. Definições: nome com botão Salvar e alteração de palavra-passe
+
+- **Nome com gravação explícita:** o campo "O teu nome" deixou de sincronizar automaticamente com a API a cada tecla. Passa a ter um botão **Salvar** (desabilitado quando não há alterações ou o nome é inválido), um aviso "Tens alterações por guardar" e feedback por toast. Ao guardar faz `PATCH /auth/profile` (fonte do nome visível na topbar/saudação) e atualiza o nome local; erros da API (ex.: 422) são mostrados no campo sem aplicar o valor. Enquanto o utilizador não escreve, o campo segue o nome carregado do servidor.
+- **Alteração de palavra-passe:** novo cartão "Palavra-passe" nas Definições que usa `PATCH /auth/password` (`currentPassword`, `password`, `passwordConfirmation`) — válido no modo API e no mock. Inclui mostrar/ocultar em cada campo, validações (nova ≥ 8, confirmação igual, diferente da atual), erros da API mostrados no cartão (ex.: "A palavra-passe atual está incorreta."), limpeza dos campos e toast de sucesso. A nota informa que as outras sessões do utilizador são terminadas.
+- Verificado por E2E: nenhuma chamada à API enquanto se escreve o nome, `PATCH` apenas no Salvar com toast, e ciclo completo da palavra-passe (erro com password incorreta → sucesso com campos limpos), sem erros de consola.
+
+## 25. Notificações via API
+
+Com os endpoints de notificações adicionados à API v1, as notificações deixam de ser apenas locais:
+
+### Endpoints aplicados
+- `GET /v1/notifications` — lista (mais recentes primeiro) com `unread`, `limit` (1…100, 50 por omissão) e `before` (cursor UUID para paginar para trás). O serviço pede a primeira página no arranque e acrescenta páginas com "Carregar mais" (`hasMore` = página cheia).
+- `GET /v1/notifications/unread-count` — `{ count }` para o badge da topbar.
+- `POST /v1/notifications/{id}/read` — marca uma como lida (otimista, idempotente).
+- `POST /v1/notifications/read-all` — marca todas como lidas.
+- `DELETE /v1/notifications/{id}` — remove uma (com botão no cartão).
+- `DELETE /v1/notifications` — limpa todas (com confirmação do `ConfirmService`).
+
+### Modelo e UI
+- `ApiNotification`/`ApiNotificationFilters` em `api.models.ts`; `notification.utils.ts` mapeia `body`→`message`, `readAt`→`read` e `data.taskId`/`data.projectId` para o assunto, além da aparência por tipo (tom + ícone) e do rótulo legível dos 11 tipos do servidor.
+- A página `/notificacoes` (agora com `templateUrl`, substituindo o template inline e o ficheiro `.html` morto) mostra skeletons no primeiro carregamento, estado de erro com "Tentar novamente", contador de novas, "Marcar tudo como lido", "Limpar tudo" (com confirmação) e "Carregar mais".
+- Clicar numa notificação marca-a como lida e navega para o assunto: `/tarefas/{taskId}` ou `/projetos/{projectId}`.
+- O badge da topbar usa `bell-ring` quando há não lidas e o contador vem do servidor.
+
+### Reatividade e ciclo de vida
+- `NotificationService.bootstrap()` corre no carregamento remoto (`DataStore.fetchRemoteData`) e mantém o badge atualizado com polling de 60 s e refresh ao voltar ao separador (`visibilitychange`).
+- Concluir/reabrir uma tarefa dispara `notifications.refresh()` porque `task_completed` é criado pelo servidor nesse evento.
+- `AuthService.clearLocal()` chama `notifications.reset()` (limpa itens, contador e para o polling) no logout e em 401.
+- Em modo local (mock) mantém-se o comportamento anterior: seed + `localStorage` (`foco:notifications:v1`).
+
+### Verificações
+- `ng build` (development) sem erros. E2E contra a API real pendente (backend `localhost:8000` não estava a correr durante a integração).
+
+## 26. Ajustes de UI: filtros com scroll, login/cadastro sem alternador de tema e notificações agrupadas por data
+
+- **Filtros de projetos com scroll horizontal:** a linha de filtros por categoria em `/projetos` passa a `overflow-x-auto` (só faz scroll quando o conteúdo passa a largura, no mobile ou com muitas categorias), com `shrink-0` e `whitespace-nowrap` nos botões para não encolherem/quebrarem e `py-1` para o anel de foco não ficar cortado.
+- **Login e cadastro sem alternador de tema:** o `<app-theme-toggle>` e o posicionamento absoluto foram removidos das duas páginas (o `relative` do contentor também, já que só existia para o toggle); os imports de `AppThemeToggleComponent` saíram dos componentes. O tema continua a ser aplicado a partir da preferência guardada e o toggle continua disponível na topbar e nas Definições.
+- **Notificações agrupadas por data:** `dateGroupLabel()` em `core/date.utils.ts` devolve "Hoje", "Ontem", "Esta semana", "Semana passada" (semanas começam na segunda) ou a data ("12 de outubro", com o ano quando antigo). A página `/notificacoes` agrupa os cartões por essas etiquetas com separador, mantendo a ordem mais-recente-primeiro da API; os skeletons, erro, "Carregar mais" e o estado vazio ficam fora dos grupos.
+- Verificado: `ng build` sem erros e validação da aritmética dos grupos (0/1/2-6/7-13/14+ dias atrás → Hoje/Ontem/Esta semana/Semana passada/data).
+

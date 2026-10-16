@@ -1,64 +1,92 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { NotificationService } from '../../core/notification.service';
+import { notificationAppearance, notificationTypeLabel } from '../../core/notification.utils';
+import { dateGroupLabel } from '../../core/date.utils';
 import { AppNotification } from '../../core/models';
+import { ConfirmService } from '../../core/confirm.service';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 
 @Component({
   selector: 'app-notifications-page',
   standalone: true,
-  imports: [CommonModule, AppIconComponent, AppButtonComponent],
-  template: `
-    <div class="mt-8 max-w-[720px]">
-      <div class="flex items-center justify-between">
-        <h1 class="text-[28px] font-extrabold text-ink">Notificações</h1>
-        @if (unreadCount() > 0) {
-          <app-button variant="ghost" icon="check" label="Marcar tudo como lido" (click)="markAllRead()"></app-button>
-        }
-      </div>
-
-      <div class="mt-6 flex flex-col gap-3">
-        @for (item of sortedItems(); track item.id) {
-          <div [class]="'rounded-2xl border p-4 transition ' + (item.read ? 'border-surface-line bg-surface-card' : 'border-brand/30 bg-brand-50 shadow-card')">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <p class="text-[13px] font-semibold text-ink">{{ item.title }}</p>
-                <p class="mt-1 text-[12px] text-ink-500">{{ item.message }}</p>
-                <p class="mt-2 text-[10px] text-ink-400">{{ formatDate(item.createdAt) }}</p>
-              </div>
-              <div class="shrink-0">
-                @if (item.type === 'focus') {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand text-white"><app-icon name="target" /></span>
-                } @else if (item.type === 'success') {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-success text-white"><app-icon name="check" /></span>
-                } @else if (item.type === 'warning') {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-warn text-white"><app-icon name="triangle-alert" /></span>
-                } @else {
-                  <span class="grid h-8 w-8 place-items-center rounded-xl bg-surface-app text-ink-500"><app-icon name="info" /></span>
-                }
-              </div>
-            </div>
-          </div>
-        } @empty {
-          <p class="text-[13px] text-ink-500">Sem notificações.</p>
-        }
-      </div>
-    </div>
-  `,
+  imports: [CommonModule, AppIconComponent, AppButtonComponent, SkeletonComponent],
+  templateUrl: './notifications.page.html',
 })
 export class NotificationsPage {
-  private readonly notifications = inject(NotificationService);
+  readonly notifications = inject(NotificationService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly router = inject(Router);
 
   readonly items = this.notifications.items;
-  readonly unreadCount = computed(() => this.notifications.unreadCount());
+  readonly unreadCount = this.notifications.unreadCount;
+  readonly loading = this.notifications.loading;
+  readonly loadingMore = this.notifications.loadingMore;
+  readonly hasMore = this.notifications.hasMore;
+  readonly error = this.notifications.error;
 
-  sortedItems(): AppNotification[] {
-    return [...this.items()].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  readonly appearance = notificationAppearance;
+  readonly label = notificationTypeLabel;
+
+  /** Erro visível apenas quando não há lista para mostrar. */
+  readonly showError = computed(() => !!this.error() && this.items().length === 0);
+
+  /**
+   * Notificações agrupadas por data (a API devolve as mais recentes primeiro):
+   * Hoje, Ontem, Esta semana, Semana passada e, mais atrás, a data completa.
+   */
+  readonly groups = computed(() => {
+    const groups: { label: string; items: AppNotification[] }[] = [];
+    for (const item of this.items()) {
+      const label = dateGroupLabel(item.createdAt);
+      const last = groups.at(-1);
+      if (last && last.label === label) {
+        last.items.push(item);
+      } else {
+        groups.push({ label, items: [item] });
+      }
+    }
+    return groups;
+  });
+
+  /** Abre o assunto da notificação (tarefa ou projeto) e marca como lida. */
+  async open(item: AppNotification): Promise<void> {
+    await this.notifications.markRead(item.id);
+    if (item.taskId) {
+      await this.router.navigate(['/tarefas', item.taskId]);
+    } else if (item.projectId) {
+      await this.router.navigate(['/projetos', item.projectId]);
+    }
+  }
+
+  remove(id: string): void {
+    void this.notifications.remove(id);
   }
 
   markAllRead(): void {
-    this.notifications.markAllRead();
+    void this.notifications.markAllRead();
+  }
+
+  async clearAll(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Limpar notificações?',
+      message: 'Isto vai apagar todas as notificações. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Limpar',
+    });
+    if (!ok) return;
+    await this.notifications.clear();
+  }
+
+  loadMore(): void {
+    void this.notifications.loadMore();
+  }
+
+  retry(): void {
+    void this.notifications.refresh();
   }
 
   formatDate(value: string): string {

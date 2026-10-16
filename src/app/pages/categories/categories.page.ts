@@ -1,14 +1,15 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataStore } from '../../core/data.store';
 import { ConfirmService } from '../../core/confirm.service';
+import { SkeletonComponent } from '../../shared/ui/skeleton.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 
 @Component({
   selector: 'app-categories-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppButtonComponent],
+  imports: [CommonModule, FormsModule, AppButtonComponent, SkeletonComponent],
   template: `
     <div class="mt-8 max-w-[720px]">
       <h1 class="text-[28px] font-extrabold text-ink mb-2">Categorias</h1>
@@ -18,7 +19,7 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
         <h3 class="text-[16px] font-bold text-ink mb-4">Nova categoria</h3>
         <div class="flex gap-3">
           <input type="text" [(ngModel)]="newName" name="newCategory" class="min-w-0 flex-1 rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Nome da categoria" (keydown.enter)="add()" />
-          <app-button icon="plus" label="Adicionar" [disabled]="!canAdd()" buttonClass="shrink-0" (click)="add()"></app-button>
+          <app-button icon="plus" label="Adicionar" [disabled]="!canAdd() || saving()" buttonClass="shrink-0" (click)="add()"></app-button>
         </div>
         @if (error()) {
           <p class="mt-1.5 text-[11px] text-danger">{{ error() }}</p>
@@ -27,18 +28,34 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
 
       <div class="rounded-card bg-surface-card p-5 shadow-card">
         <h3 class="text-[16px] font-bold text-ink mb-4">Categorias existentes</h3>
-        <div class="flex flex-col gap-2">
-          @for (cat of store.categories(); track cat) {
-            <div class="flex items-center justify-between rounded-xl border border-surface-line px-4 py-3">
-              <span class="text-[13px] font-semibold text-ink">{{ cat }}</span>
-              @if (cat !== 'professional' && cat !== 'personal' && cat !== 'household') {
-                <app-button variant="danger" size="sm" icon="trash-2" label="Remover" (click)="remove(cat)"></app-button>
-              } @else {
-                <span class="text-[11px] text-ink-400">Padrão</span>
-              }
-            </div>
-          }
-        </div>
+        @if (loading()) {
+          <div class="flex flex-col gap-2">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="flex items-center justify-between rounded-xl border border-surface-line px-4 py-3">
+                <app-skeleton class="h-3.5 w-32" />
+                <app-skeleton class="h-7 w-20 !rounded-xl" />
+              </div>
+            }
+          </div>
+        } @else if (loadError()) {
+          <div class="flex flex-col items-start gap-3">
+            <p class="text-[12px] text-danger">{{ loadError() }}</p>
+            <app-button icon="rotate-ccw" label="Tentar novamente" variant="secondary" size="sm" (click)="retry()"></app-button>
+          </div>
+        } @else {
+          <div class="flex flex-col gap-2">
+            @for (cat of store.categories(); track cat) {
+              <div class="flex items-center justify-between rounded-xl border border-surface-line px-4 py-3">
+                <span class="text-[13px] font-semibold text-ink">{{ cat }}</span>
+                @if (isProtected(cat)) {
+                  <span class="text-[11px] text-ink-400">Padrão</span>
+                } @else {
+                  <app-button variant="danger" size="sm" icon="trash-2" label="Remover" [disabled]="saving()" (click)="remove(cat)"></app-button>
+                }
+              </div>
+            }
+          </div>
+        }
       </div>
     </div>
   `,
@@ -48,6 +65,14 @@ export class CategoriesPage {
   private confirm = inject(ConfirmService);
   newName = signal('');
   error = signal('');
+  saving = signal(false);
+
+  loading = this.store.loading;
+  loadError = this.store.loadError;
+
+  isProtected(name: string): boolean {
+    return this.store.isProtectedCategory(name);
+  }
 
   canAdd(): boolean {
     const name = this.newName().trim();
@@ -55,15 +80,21 @@ export class CategoriesPage {
     return name.length >= 2 && !cats.includes(name);
   }
 
-  add(): void {
+  async add(): Promise<void> {
     const name = this.newName().trim();
     if (!this.canAdd()) {
       this.error.set('Dá um nome com pelo menos 2 caracteres e que ainda não exista.');
       return;
     }
-    this.store.addCategory(name);
-    this.newName.set('');
     this.error.set('');
+    this.saving.set(true);
+    const ok = await this.store.addCategory(name);
+    this.saving.set(false);
+    if (ok) {
+      this.newName.set('');
+    } else {
+      this.error.set('Não foi possível criar a categoria. Tenta novamente.');
+    }
   }
 
   async remove(name: string): Promise<void> {
@@ -74,6 +105,12 @@ export class CategoriesPage {
       confirmLabel: 'Remover',
     });
     if (!ok) return;
-    this.store.removeCategory(name);
+    this.saving.set(true);
+    await this.store.removeCategory(name);
+    this.saving.set(false);
+  }
+
+  retry(): void {
+    this.store.retryLoad();
   }
 }

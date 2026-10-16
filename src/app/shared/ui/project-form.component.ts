@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, signal, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Project, Category, Urgency } from '../../core/models';
@@ -11,7 +11,7 @@ import { AppButtonComponent } from './button.component';
   imports: [CommonModule, FormsModule, AppButtonComponent],
   templateUrl: './project-form.component.html',
 })
-export class ProjectFormComponent {
+export class ProjectFormComponent implements OnInit {
   @Input() project?: Partial<Project>;
   @Output() submit = new EventEmitter<Partial<Project>>();
   @Output() cancel = new EventEmitter<void>();
@@ -22,5 +22,12 @@ export class ProjectFormComponent {
 
   categoryOptions(): string[] {
     return this.store.categories();
+  }
+
+  ngOnInit(): void {
+    // Em edição, o modal abre com os valores atuais do projeto.
+    if (this.project) {
+      this.form.set({ ...this.project });
+    }
   }
 }

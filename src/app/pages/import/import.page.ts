@@ -37,8 +37,8 @@ export class ImportPage {
     setTimeout(() => this.copied.set(false), 2000);
   }
 
-  importJson(): void {
-    const result = this.importService.import(this.jsonText());
+  async importJson(): Promise<void> {
+    const result = await this.importService.import(this.jsonText());
     if (result.ok) {
       this.errors.set([]);
       this.success.set(true);

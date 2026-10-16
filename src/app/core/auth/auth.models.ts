@@ -15,7 +15,7 @@ export interface LoginPayload {
   password: string;
 }
 
-export type LoginField = 'email' | 'password';
+export type LoginField = 'email' | 'password' | 'name' | 'passwordConfirmation' | 'currentPassword';
 
 export class AuthError extends Error {
   constructor(

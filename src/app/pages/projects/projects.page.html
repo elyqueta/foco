@@ -4,13 +4,45 @@
         <app-button variant="dark" icon="folder-plus" label="Novo projeto" (click)="openModal()"></app-button>
       </div>
 
-      <div class="flex items-center gap-3 mb-6">
+      <div class="mb-6 flex items-center gap-3 overflow-x-auto py-1">
         @for (f of filters(); track f.value) {
-          <button (click)="setFilter(f.value)" class="h-9 rounded-full px-4 text-[12px] font-semibold transition" [class.bg-brand]="filter() === f.value" [class.text-white]="filter() === f.value" [class.border]="filter() !== f.value" [class.border-surface-line]="filter() !== f.value" [class.text-ink-500]="filter() !== f.value">{{ f.label }}</button>
+          <button (click)="setFilter(f.value)" class="h-9 shrink-0 whitespace-nowrap rounded-full px-4 text-[12px] font-semibold transition" [class.bg-brand]="filter() === f.value" [class.text-white]="filter() === f.value" [class.border]="filter() !== f.value" [class.border-surface-line]="filter() !== f.value" [class.text-ink-500]="filter() !== f.value">{{ f.label }}</button>
         }
       </div>
 
-      @if (filtered().length === 0) {
+      @if (loadError()) {
+        <app-empty-state
+          icon="triangle-alert"
+          title="Não foi possível carregar os projetos"
+          [message]="loadError()!"
+          actionLabel="Tentar novamente"
+          (actionClick)="retry()"
+        />
+      } @else if (loading()) {
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <div class="flex h-full flex-col rounded-card bg-surface-card p-5 shadow-card">
+              <div class="flex items-center gap-2 mb-3">
+                <app-skeleton class="h-3 w-3 !rounded-full" />
+                <app-skeleton class="h-4 w-32" />
+              </div>
+              <app-skeleton class="h-3 w-full mb-2" />
+              <app-skeleton class="h-3 w-2/3 mb-4" />
+              <div class="flex items-center gap-3 mb-3">
+                <app-skeleton class="h-11 w-11 !rounded-full" />
+                <div class="flex-1">
+                  <app-skeleton class="h-3 w-20 mb-1" />
+                  <app-skeleton class="h-2 w-24" />
+                </div>
+              </div>
+              <div class="mt-auto flex items-center gap-2">
+                <app-skeleton class="h-6 w-16 !rounded-full" />
+                <app-skeleton class="h-6 w-24 !rounded-md" />
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (filtered().length === 0) {
         <app-empty-state title="Sem projetos" message="Cria o teu primeiro projeto para começar." actionLabel="Novo projeto" (actionClick)="openModal()" />
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">

@@ -1,4 +1,4 @@
-<form (ngSubmit)="submit.emit(form())" class="flex flex-col gap-4">
+<form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
       <div>
         <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Título</label>
         <input type="text" [(ngModel)]="form().title" name="title" required class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Título da tarefa" />
@@ -42,13 +42,18 @@
         </div>
         <div>
           <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Prazo</label>
-          <input type="datetime-local" [value]="dueDateTime()" (input)="onDueDateTime($event)" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" [min]="minDateTime()" />
+          <input type="datetime-local" [value]="dueDateTime()" (input)="onDueDateTime($event)" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" [class.border-danger]="dueDateError()" [min]="minDateTime()" [max]="maxDueDateTime()" />
+          @if (dueDateError()) {
+            <p class="mt-1 text-[11px] text-danger">{{ dueDateError() }}</p>
+          } @else if (selectedProject()?.dueDate; as projectDue) {
+            <p class="mt-1 text-[11px] text-ink-400">Prazo do projeto: {{ formatDate(projectDue) }}</p>
+          }
         </div>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Projeto</label>
-          <select [(ngModel)]="form().projectId" name="projectId" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
+          <select [ngModel]="form().projectId ?? ''" (ngModelChange)="onProjectChange($event)" name="projectId" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30">
             <option value="">Sem projeto</option>
             @for (p of projects(); track p.id) {
               <option [value]="p.id">{{ p.name }}</option>
@@ -71,7 +76,7 @@
         </label>
         <div class="flex gap-3">
           <app-button type="button" variant="secondary" icon="x" label="Cancelar" [iconOnlyBelow]="null" (click)="cancel.emit()"></app-button>
-          <app-button type="submit" icon="save" [label]="task ? 'Guardar' : 'Criar'" [disabled]="!form().title?.trim() || (form().title?.trim()?.length ?? 0) < 2" [iconOnlyBelow]="null"></app-button>
+          <app-button type="submit" icon="save" [label]="task ? 'Guardar' : 'Criar'" [disabled]="!canSave()" [iconOnlyBelow]="null"></app-button>
         </div>
       </div>
     </form>

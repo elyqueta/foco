@@ -1,5 +1,6 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { TaskFormComponent } from '../shared/ui/task-form.component';
+import { withDefaultDueTime } from './date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class TaskModalService {
@@ -15,9 +16,7 @@ export class TaskModalService {
   }
 
   show(dueDate?: string | null): void {
-    if (dueDate) {
-      this.dueDate.set(dueDate);
-    }
+    this.dueDate.set(withDefaultDueTime(dueDate ?? null));
     this.open.set(true);
   }
 

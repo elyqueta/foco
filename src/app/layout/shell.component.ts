@@ -7,6 +7,7 @@ import { TaskFormComponent } from '../shared/ui/task-form.component';
 import { ConfirmDialogComponent } from '../shared/ui/confirm-dialog.component';
 import { FocusWidgetComponent } from '../shared/ui/focus-widget.component';
 import { ToastComponent } from '../shared/ui/toast.component';
+import { OnboardingComponent } from '../shared/ui/onboarding.component';
 import { TaskModalService } from '../core/task-modal.service';
 import { ConfirmService } from '../core/confirm.service';
 import { DataStore } from '../core/data.store';
@@ -15,7 +16,7 @@ import { Task } from '../core/models';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent, ModalComponent, TaskFormComponent, ConfirmDialogComponent, FocusWidgetComponent, ToastComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent, ModalComponent, TaskFormComponent, ConfirmDialogComponent, FocusWidgetComponent, ToastComponent, OnboardingComponent],
   templateUrl: './shell.component.html',
 })
 export class ShellComponent {

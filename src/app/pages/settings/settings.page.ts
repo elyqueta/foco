@@ -11,6 +11,7 @@ import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 import { NotificationChannelPrefs, NotificationPreferences } from '../../core/api.models';
+import { OnboardingService } from '../../core/onboarding.service';
 
 @Component({
   selector: 'app-settings-page',
@@ -180,6 +181,24 @@ import { NotificationChannelPrefs, NotificationPreferences } from '../../core/ap
   </div>
 
   <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
+    <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Ajuda</h3>
+    <p class="mb-3 text-[13px] text-ink-500">Precisas de um guia rápido sobre as principais funcionalidades da app?</p>
+    <app-button
+      variant="secondary"
+      size="sm"
+      icon="info"
+      label="Ver tutorial novamente"
+      [iconOnlyBelow]="null"
+      buttonClass="w-full justify-start"
+      [disabled]="!canRestartTutorial()"
+      (click)="restartTutorial()"
+    ></app-button>
+    @if (!canRestartTutorial()) {
+      <p class="mt-1.5 text-[11px] text-ink-400">O tutorial será iniciado automaticamente na tua próxima visita se ainda não o concluíste.</p>
+    }
+  </div>
+
+  <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
         <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Dados</h3>
         @if (hasLegacyBackup()) {
           <div class="mb-4 rounded-xl border border-warn/40 bg-warn-soft p-4">
@@ -207,6 +226,7 @@ export class SettingsPage implements OnInit {
   private confirm = inject(ConfirmService);
   private colorService = inject(ColorSchemeService);
   private auth = inject(AuthService);
+  private onboarding = inject(OnboardingService);
   colorScheme = this.colorService.scheme;
   userName = signal(this.store.data().settings.userName);
   useApi = this.store.useApi;
@@ -471,5 +491,11 @@ export class SettingsPage implements OnInit {
     });
     if (!ok) return;
     this.store.clearAll();
+  }
+
+  readonly canRestartTutorial = this.onboarding.completed;
+
+  restartTutorial(): void {
+    this.onboarding.start();
   }
 }

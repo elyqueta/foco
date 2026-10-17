@@ -151,7 +151,7 @@
 
   <section class="mt-5 grid min-w-0 grid-cols-12 items-stretch gap-5">
     <div class="col-span-12 min-w-0 md:col-span-6">
-      <app-card title="Tarefas de hoje" class="flex h-full flex-col">
+      <app-card title="Tarefas de hoje" class="flex h-full flex-col" [attr.data-onboarding]="'task-list'">
         @if (todayTasks().length === 0) {
           <app-empty-state title="Dia livre!" message="Adiciona a tua primeira tarefa." actionLabel="Nova tarefa" (actionClick)="openModal()" />
         } @else {

@@ -1,11 +1,11 @@
 import { Component, inject, signal, computed, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 import { AuthService } from '../../core/auth/auth.service';
-import { AuthError } from '../../core/auth/auth.models';
+import { AuthError, emailValidator } from '../../core/auth/auth.models';
 import { MOCK_LOGIN_HINT } from '../../core/auth/mock-auth.repository';
 import { environment } from '../../../environments/environment';
 
@@ -21,7 +21,7 @@ export class LoginPage {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, emailValidator]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
@@ -33,29 +33,47 @@ export class LoginPage {
 
   submitted = false;
 
+  private readonly emailDirty = signal(false);
+  private readonly emailErrors = signal<ValidationErrors | null>(null);
+  private readonly passwordDirty = signal(false);
+  private readonly passwordErrors = signal<ValidationErrors | null>(null);
+
   constructor() {
     afterNextRender(() => {
       const el = document.getElementById('email');
       if (el) el.focus();
     });
+
+    this.form.controls['email'].statusChanges.subscribe(() => {
+      const control = this.form.controls['email'];
+      this.emailDirty.set(control.dirty);
+      this.emailErrors.set(control.errors ?? null);
+    });
+    this.form.controls['password'].statusChanges.subscribe(() => {
+      const control = this.form.controls['password'];
+      this.passwordDirty.set(control.dirty);
+      this.passwordErrors.set(control.errors ?? null);
+    });
   }
 
-  readonly emailInvalid = computed(() => this.form.controls['email'].invalid && (this.form.controls['email'].touched || this.submitted));
-  readonly emailValid = computed(() => this.form.controls['email'].valid && this.form.controls['email'].dirty);
+  readonly emailInvalid = computed(() => !!this.emailErrors() && (this.emailDirty() || this.submitted));
+  readonly emailValid = computed(() => !this.emailErrors() && this.emailDirty());
   readonly emailError = computed(() => {
-    const errors = this.form.controls['email'].errors;
-    if (errors?.['server']) return errors['server'];
-    if (errors?.['required']) return 'Indica o teu email.';
-    if (errors?.['email']) return 'Email inválido.';
+    const errors = this.emailErrors();
+    if (!errors) return '';
+    if (errors['server']) return errors['server'];
+    if (errors['required']) return 'Indica o teu email.';
+    if (errors['invalidEmail']) return 'Use o formato email@email.email.';
     return '';
   });
 
-  readonly passwordInvalid = computed(() => this.form.controls['password'].invalid && (this.form.controls['password'].touched || this.submitted));
+  readonly passwordInvalid = computed(() => !!this.passwordErrors() && (this.passwordDirty() || this.submitted));
   readonly passwordError = computed(() => {
-    const errors = this.form.controls['password'].errors;
-    if (errors?.['server']) return errors['server'];
-    if (errors?.['required']) return 'Indica a tua palavra-passe.';
-    if (errors?.['minlength']) return 'Mínimo de 8 caracteres.';
+    const errors = this.passwordErrors();
+    if (!errors) return '';
+    if (errors['server']) return errors['server'];
+    if (errors['required']) return 'Indica a tua palavra-passe.';
+    if (errors['minlength']) return 'Mínimo de 8 caracteres.';
     return '';
   });
 

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AppIconComponent } from './icon.component';
 import { DataStore } from '../../core/data.store';
 import { NotificationService } from '../../core/notification.service';
+import { OnboardingService } from '../../core/onboarding.service';
 import { notificationAppearance } from '../../core/notification.utils';
 import { AppNotification } from '../../core/models';
 
@@ -57,6 +58,7 @@ import { AppNotification } from '../../core/models';
 export class NotificationBannerComponent {
   private notifications = inject(NotificationService);
   private store = inject(DataStore);
+  private onboarding = inject(OnboardingService);
 
   readonly banner = signal<AppNotification | null>(null);
   private shownIds = new Set<string>();
@@ -96,6 +98,11 @@ export class NotificationBannerComponent {
 
   constructor() {
     effect(() => {
+      // Only show notifications after onboarding is completed or dismissed
+      if (this.onboarding.open()) {
+        this.banner.set(null);
+        return;
+      }
       const prefs = this.store.data().settings.notifications;
       if (prefs?.inAppEnabled === false) {
         this.banner.set(null);

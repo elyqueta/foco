@@ -26,3 +26,10 @@ export class AuthError extends Error {
     super(message);
   }
 }
+
+export const EMAIL_PATTERN = /^[^@]{2,}@[^@]{2,}\.[^@]{2,}$/;
+
+export function emailValidator(control: { value: string }): { [key: string]: boolean } | null {
+  if (!control.value) return null;
+  return EMAIL_PATTERN.test(control.value) ? null : { invalidEmail: true };
+}

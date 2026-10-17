@@ -1,7 +1,7 @@
 <form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
       <div>
         <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Título</label>
-        <input type="text" [(ngModel)]="form().title" name="title" required class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Título da tarefa" />
+        <input type="text" [(ngModel)]="form().title" name="title" required class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" [class.border-danger]="touched() && !form().title?.trim()" placeholder="Título da tarefa" />
         @if (touched() && !form().title?.trim()) {
           <p class="mt-1 text-[11px] text-danger">Dá um título à tarefa.</p>
         }
@@ -42,7 +42,7 @@
         </div>
         <div>
           <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Prazo</label>
-          <input type="datetime-local" [value]="dueDateTime()" (input)="onDueDateTime($event)" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" [class.border-danger]="dueDateError()" [min]="minDateTime()" [max]="maxDueDateTime()" />
+          <input type="datetime-local" [value]="dueDateTime()" (input)="onDueDateTime($event)" (change)="onDueDateChange($event)" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30" [class.border-danger]="dueDateError()" [min]="minDateTime()" [max]="maxDueDateTime()" />
           @if (dueDateError()) {
             <p class="mt-1 text-[11px] text-danger">{{ dueDateError() }}</p>
           } @else if (selectedProject()?.dueDate; as projectDue) {
@@ -69,14 +69,16 @@
         <label class="mb-1.5 block text-[12px] font-semibold text-ink-700">Próximo passo</label>
         <input type="text" [(ngModel)]="form().nextStep" name="nextStep" class="w-full rounded-xl border border-surface-line bg-surface-card px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Próximo passo concreto" />
       </div>
-      <div class="flex items-center justify-between">
-        <label class="flex items-center gap-2 text-[13px] text-ink">
-          <input type="checkbox" [(ngModel)]="form().canPostpone" name="canPostpone" class="h-4 w-4 rounded border-surface-line accent-brand" />
-          Pode adiar
-        </label>
-        <div class="flex gap-3">
-          <app-button type="button" variant="secondary" icon="x" label="Cancelar" [iconOnlyBelow]="null" (click)="cancel.emit()"></app-button>
-          <app-button type="submit" icon="save" [label]="task ? 'Guardar' : 'Criar'" [disabled]="!canSave()" [iconOnlyBelow]="null"></app-button>
+      <div class="flex flex-col gap-3 max-[359px]:items-start">
+        <div class="flex w-full flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <label class="flex items-center gap-2 text-[13px] text-ink lg:flex-shrink-0">
+            <input type="checkbox" [(ngModel)]="form().canPostpone" name="canPostpone" class="h-4 w-4 rounded border-surface-line accent-brand" />
+            Pode adiar
+          </label>
+          <div class="flex gap-3 w-full lg:w-auto justify-end">
+            <app-button type="button" variant="secondary" icon="x" label="Cancelar" [iconOnlyBelow]="null" (click)="cancel.emit()"></app-button>
+            <app-button type="submit" icon="save" [label]="task ? 'Guardar' : 'Criar'" [disabled]="!canSave()" [iconOnlyBelow]="null"></app-button>
+          </div>
         </div>
       </div>
     </form>

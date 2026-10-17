@@ -1,11 +1,11 @@
-import { Component, inject, signal, computed, afterNextRender } from '@angular/core';
+import { Component, inject, signal, computed, Signal, WritableSignal, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
 import { AuthService } from '../../core/auth/auth.service';
-import { AuthError } from '../../core/auth/auth.models';
+import { AuthError, emailValidator } from '../../core/auth/auth.models';
 
 @Component({
   selector: 'app-register-page',
@@ -20,7 +20,7 @@ export class RegisterPage {
   readonly form = this.fb.nonNullable.group(
     {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, emailValidator]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       passwordConfirmation: ['', [Validators.required, Validators.minLength(8)]],
     },
@@ -34,50 +34,77 @@ export class RegisterPage {
 
   submitted = false;
 
+  private readonly nameDirty = signal(false);
+  private readonly nameErrors = signal<ValidationErrors | null>(null);
+  private readonly emailDirty = signal(false);
+  private readonly emailErrors = signal<ValidationErrors | null>(null);
+  private readonly passwordDirty = signal(false);
+  private readonly passwordErrors = signal<ValidationErrors | null>(null);
+  private readonly confirmationDirty = signal(false);
+  private readonly confirmationErrors = signal<ValidationErrors | null>(null);
+
   constructor() {
     afterNextRender(() => {
       const el = document.getElementById('name');
       if (el) el.focus();
     });
+
+    const track = (controlName: string, dirtySignal: WritableSignal<boolean>, errorsSignal: WritableSignal<ValidationErrors | null>) => {
+      const control = this.form.get(controlName);
+      if (!control) return;
+      control.statusChanges.subscribe(() => {
+        dirtySignal.set(control.dirty);
+        errorsSignal.set(control.errors ?? null);
+      });
+    };
+
+    track('name', this.nameDirty, this.nameErrors);
+    track('email', this.emailDirty, this.emailErrors);
+    track('password', this.passwordDirty, this.passwordErrors);
+    track('passwordConfirmation', this.confirmationDirty, this.confirmationErrors);
   }
 
-  readonly nameInvalid = computed(() => this.form.controls['name'].invalid && (this.form.controls['name'].touched || this.submitted));
-  readonly nameValid = computed(() => this.form.controls['name'].valid && this.form.controls['name'].dirty);
+  readonly nameInvalid = computed(() => !!this.nameErrors() && (this.nameDirty() || this.submitted));
+  readonly nameValid = computed(() => !this.nameErrors() && this.nameDirty());
   readonly nameError = computed(() => {
-    const errors = this.form.controls['name'].errors;
-    if (errors?.['server']) return errors['server'];
-    if (errors?.['required']) return 'Indica o teu nome.';
-    if (errors?.['minlength']) return 'Mínimo de 2 caracteres.';
-    if (errors?.['maxlength']) return 'Máximo de 60 caracteres.';
+    const errors = this.nameErrors();
+    if (!errors) return '';
+    if (errors['server']) return errors['server'];
+    if (errors['required']) return 'Indica o teu nome.';
+    if (errors['minlength']) return 'Mínimo de 2 caracteres.';
+    if (errors['maxlength']) return 'Máximo de 60 caracteres.';
     return '';
   });
 
-  readonly emailInvalid = computed(() => this.form.controls['email'].invalid && (this.form.controls['email'].touched || this.submitted));
-  readonly emailValid = computed(() => this.form.controls['email'].valid && this.form.controls['email'].dirty);
+  readonly emailInvalid = computed(() => !!this.emailErrors() && (this.emailDirty() || this.submitted));
+  readonly emailValid = computed(() => !this.emailErrors() && this.emailDirty());
   readonly emailError = computed(() => {
-    const errors = this.form.controls['email'].errors;
-    if (errors?.['server']) return errors['server'];
-    if (errors?.['required']) return 'Indica o teu email.';
-    if (errors?.['email']) return 'Email inválido.';
+    const errors = this.emailErrors();
+    if (!errors) return '';
+    if (errors['server']) return errors['server'];
+    if (errors['required']) return 'Indica o teu email.';
+    if (errors['invalidEmail']) return 'Use o formato email@email.email.';
     return '';
   });
 
-  readonly passwordInvalid = computed(() => this.form.controls['password'].invalid && (this.form.controls['password'].touched || this.submitted));
+  readonly passwordInvalid = computed(() => !!this.passwordErrors() && (this.passwordDirty() || this.submitted));
   readonly passwordError = computed(() => {
-    const errors = this.form.controls['password'].errors;
-    if (errors?.['server']) return errors['server'];
-    if (errors?.['required']) return 'Indica uma palavra-passe.';
-    if (errors?.['minlength']) return 'Mínimo de 8 caracteres.';
+    const errors = this.passwordErrors();
+    if (!errors) return '';
+    if (errors['server']) return errors['server'];
+    if (errors['required']) return 'Indica uma palavra-passe.';
+    if (errors['minlength']) return 'Mínimo de 8 caracteres.';
     return '';
   });
 
   readonly passwordConfirmationInvalid = computed(
     () =>
-      (this.form.controls['passwordConfirmation'].invalid || this.form.hasError('passwordsMismatch')) &&
-      (this.form.controls['passwordConfirmation'].touched || this.submitted),
+      (!!this.confirmationErrors() || this.form.hasError('passwordsMismatch')) &&
+      (this.confirmationDirty() || this.submitted),
   );
   readonly passwordConfirmationError = computed(() => {
-    const errors = this.form.controls['passwordConfirmation'].errors;
+    const errors = this.confirmationErrors();
+    if (!errors && !this.form.hasError('passwordsMismatch')) return '';
     if (errors?.['server']) return errors['server'];
     if (errors?.['required']) return 'Confirma a palavra-passe.';
     if (errors?.['minlength']) return 'Mínimo de 8 caracteres.';

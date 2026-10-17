@@ -101,13 +101,14 @@ export class OnboardingService {
 
   constructor() {
     effect(() => {
+      const cameFromRegister = this.auth.cameFromRegister();
       const userId = this.auth.user()?.id;
       const state = readState(userId ? String(userId) : null);
       this._completed.set(state.completed);
       this._currentStep.set(state.currentStep);
 
-      // Auto-launch on first visit (not completed and not already open)
-      if (!state.completed && !this._open()) {
+      // Auto-launch only on first visit after registering (cadastro), not on login
+      if (cameFromRegister && !state.completed && !this._open()) {
         this._open.set(true);
       }
     });

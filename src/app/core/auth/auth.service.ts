@@ -44,6 +44,7 @@ export class AuthService {
   readonly cameFromRegister = this._cameFromRegister.asReadonly();
 
   async login(payload: { email: string; password: string }): Promise<void> {
+    this._cameFromRegister.set(false);
     const session = await this.repo.login(payload);
     this.applySession(session);
   }
@@ -163,6 +164,7 @@ export class AuthService {
     this._session.set(null);
     this._validated.set(false);
     this._validation = null;
+    this._cameFromRegister.set(false);
     this.store.setSessionScope(null);
   }
 

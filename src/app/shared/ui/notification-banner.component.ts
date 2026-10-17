@@ -14,12 +14,12 @@ import { AppNotification } from '../../core/models';
   template: `
     @if (banner()) {
       <div
-        class="fixed top-6 right-6 z-50 w-full max-w-[440px] pointer-events-auto"
+        class="fixed top-6 z-50 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-[440px] pointer-events-auto"
         role="alert"
         aria-live="polite"
       >
         <div
-          class="rounded-2xl border border-surface-line bg-surface-card p-4 shadow-float flex items-start gap-3"
+          class="rounded-2xl border border-surface-line bg-surface-card p-4 max-[453px]:p-3 shadow-float flex items-start gap-3 max-[453px]:gap-2"
         >
           <div
             class="shrink-0 grid h-10 w-10 place-items-center rounded-xl"
@@ -29,7 +29,7 @@ import { AppNotification } from '../../core/models';
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <h3 class="text-[13px] font-semibold text-ink leading-tight">{{ banner()!.title }}</h3>
+              <h3 class="text-[13px] max-[453px]:text-[12px] font-semibold text-ink leading-tight">{{ banner()!.title }}</h3>
               <button
                 type="button"
                 (click)="dismiss()"
@@ -39,12 +39,12 @@ import { AppNotification } from '../../core/models';
                 <app-icon name="x" [size]="14" />
               </button>
             </div>
-            <p class="mt-0.5 text-[12px] text-ink-500 leading-relaxed">{{ banner()!.message }}</p>
-            <div class="mt-2.5 flex items-center justify-between gap-2">
-              <span class="text-[11px] text-ink-400">{{ banner()!.createdAt | date:'HH:mm' }}</span>
+            <p class="mt-0.5 text-[12px] max-[453px]:text-[11px] text-ink-500 leading-relaxed">{{ banner()!.message }}</p>
+            <div class="mt-2.5 max-[453px]:mt-2 flex items-center justify-between gap-2 max-[453px]:gap-1">
+              <span class="text-[11px] max-[453px]:text-[10px] text-ink-400">{{ banner()!.createdAt | date:'HH:mm' }}</span>
               <a
                 routerLink="/notificacoes"
-                class="text-[12px] font-semibold text-brand hover:text-brand-600 transition-colors duration-150"
+                class="text-[12px] max-[453px]:text-[11px] font-semibold text-brand hover:text-brand-600 transition-colors duration-150"
                 >Ver todas as notificações</a
               >
             </div>

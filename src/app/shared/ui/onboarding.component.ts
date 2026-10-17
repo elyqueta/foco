@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal, computed, AfterViewInit, HostListener } from '@angular/core';
+import { Component, effect, inject, signal, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OnboardingService } from '../../core/onboarding.service';
 import { AppButtonComponent } from './button.component';
@@ -37,7 +37,8 @@ interface Rect {
 
       @if (currentStep()) {
         <div
-          class="fixed z-[62] pointer-events-auto w-full max-w-[420px] transition-all duration-300"
+          class="fixed z-[62] pointer-events-auto transition-all duration-300"
+          [style.width.px]="tooltipWidth()"
           [style.left.px]="tooltipX()"
           [style.top.px]="tooltipY()"
           [class.opacity-0]="!visible()"
@@ -45,14 +46,14 @@ interface Rect {
           [class.translate-y-2]="!visible()"
           [class.translate-y-0]="visible()"
         >
-          <div class="rounded-2xl border border-surface-line bg-surface-card p-4 shadow-float">
-            <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="rounded-2xl border border-surface-line bg-surface-card p-4 max-[359px]:p-3 shadow-float">
+            <div class="flex items-start justify-between gap-3 mb-3 max-[359px]:gap-2 max-[359px]:mb-2">
               <div class="flex-1 min-w-0">
-                <h3 class="text-[15px] font-bold text-ink">{{ currentStep()!.title }}</h3>
-                <p class="mt-1 text-[13px] text-ink-500 leading-relaxed">{{ currentStep()!.description }}</p>
+                <h3 class="text-[15px] max-[359px]:text-[13px] font-bold text-ink">{{ currentStep().title }}</h3>
+                <p class="mt-1 text-[13px] max-[359px]:text-[12px] text-ink-500 leading-relaxed">{{ currentStep().description }}</p>
               </div>
-              <div class="shrink-0 grid h-10 w-10 place-items-center rounded-full bg-brand-50 text-brand">
-                <span class="text-[12px] font-bold">{{ currentIndex() + 1 }}</span>
+              <div class="shrink-0 grid h-10 max-[359px]:h-9 w-10 max-[359px]:w-9 place-items-center rounded-full bg-brand-50 text-brand">
+                <span class="text-[12px] max-[359px]:text-[11px] font-bold">{{ currentIndex() + 1 }}</span>
               </div>
             </div>
 
@@ -61,7 +62,7 @@ interface Rect {
               <div class="flex-1 h-1 bg-brand"></div>
             </div>
 
-            <div class="mt-4 flex items-center justify-end gap-2">
+            <div class="mt-4 max-[359px]:mt-3 flex items-center justify-end gap-2 max-[359px]:gap-1">
               @if (currentIndex() > 0) {
                 <app-button
                   variant="ghost"
@@ -129,7 +130,6 @@ export class OnboardingComponent implements AfterViewInit {
       const step = this.currentStep();
       if (step && this.open()) {
         this.measureTarget(step.target);
-        // Small delay to let layout settle before showing tooltip
         setTimeout(() => this.visible.set(true), 50);
       } else {
         this.targetRect.set(null);
@@ -186,18 +186,24 @@ export class OnboardingComponent implements AfterViewInit {
     });
   }
 
+  tooltipWidth(): number {
+    const viewportWidth = window.innerWidth;
+    return Math.min(420, viewportWidth - 32);
+  }
+
   tooltipX(): number {
     const rect = this.targetRect();
     if (!rect) return 16;
     const viewportWidth = window.innerWidth;
-    const tooltipWidth = 420;
-    const gap = 14;
-    const pad = 16;
+    const width = this.tooltipWidth();
+    const gap = viewportWidth <= 359 ? 10 : 14;
+    const pad = viewportWidth <= 359 ? 12 : 16;
 
     let x: number;
-    switch (this.currentStep()!.placement) {
+    const placement = this.currentStep()?.placement;
+    switch (placement) {
       case 'left':
-        x = rect.left - tooltipWidth - gap;
+        x = rect.left - width - gap;
         break;
       case 'right':
         x = rect.right + gap;
@@ -205,25 +211,27 @@ export class OnboardingComponent implements AfterViewInit {
       case 'top':
       case 'bottom':
       default:
-        x = rect.left + rect.width / 2 - tooltipWidth / 2;
+        x = rect.left + rect.width / 2 - width / 2;
         break;
     }
 
-    return Math.max(pad, Math.min(x, viewportWidth - tooltipWidth - pad));
+    return Math.max(pad, Math.min(x, viewportWidth - width - pad));
   }
 
   tooltipY(): number {
     const rect = this.targetRect();
-    if (!rect) return 16;
+    if (!rect) return 12;
+    const vw = this.viewportWidth();
     const viewportHeight = window.innerHeight;
-    const tooltipHeight = 210;
-    const gap = 14;
-    const pad = 16;
+    const height = vw <= 359 ? 170 : 210;
+    const gap = vw <= 359 ? 10 : 14;
+    const pad = vw <= 359 ? 12 : 16;
 
     let y: number;
-    switch (this.currentStep()!.placement) {
+    const placement = this.currentStep()?.placement;
+    switch (placement) {
       case 'top':
-        y = rect.top - tooltipHeight - gap;
+        y = rect.top - height - gap;
         break;
       case 'bottom':
         y = rect.bottom + gap;
@@ -231,11 +239,15 @@ export class OnboardingComponent implements AfterViewInit {
       case 'left':
       case 'right':
       default:
-        y = rect.top + rect.height / 2 - tooltipHeight / 2;
+        y = rect.top + rect.height / 2 - height / 2;
         break;
     }
 
-    return Math.max(pad, Math.min(y, viewportHeight - tooltipHeight - pad));
+    return Math.max(pad, Math.min(y, viewportHeight - height - pad));
+  }
+
+  private viewportWidth(): number {
+    return typeof window !== 'undefined' ? window.innerWidth : 0;
   }
 
   next(): void {

@@ -110,9 +110,9 @@ import { OnboardingService } from '../../core/onboarding.service';
     </div>
   </div>
 
-  <div class="mb-4 rounded-card bg-surface-card p-5 shadow-card sm:mb-5 sm:p-6">
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-      <div>
+  <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mb-4 sm:mb-6">
+      <div class="min-w-0 flex-1">
         <h3 class="mb-1 text-[18px] font-extrabold text-ink sm:mb-2 sm:text-[20px]">Notificações</h3>
         <p class="text-[13px] leading-relaxed text-ink-500">Escolhe quais canais e tipos de notificação queres receber. Desativar um canal impede o envio para todos os tipos; desativar um tipo afeta apenas esse tipo.</p>
       </div>
@@ -121,91 +121,123 @@ import { OnboardingService } from '../../core/onboarding.service';
       </div>
     </div>
 
-    <div class="space-y-6">
+    <div class="space-y-4 sm:space-y-6">
       <!-- Canais -->
-      <div>
-        <div class="flex items-center gap-2 mb-3">
+      <div class="rounded-xl border border-surface-line bg-surface-card p-4 sm:p-5">
+        <div class="flex items-center gap-2 mb-3 sm:mb-4">
           <div class="h-8 w-8 shrink-0 rounded-xl bg-surface-app border border-surface-line flex items-center justify-center">
             <app-icon name="bell-ring" [size]="16" class="text-ink-500" />
           </div>
-          <label class="text-[13px] font-semibold text-ink-700">Canais</label>
+          <label class="text-[13px] font-semibold text-ink-700 sm:text-[14px]">Canais</label>
         </div>
-        <p class="mb-4 text-[12px] leading-relaxed text-ink-500">Escolhe por onde queres receber as notificações.</p>
+        <p class="mb-3 sm:mb-4 text-[12px] leading-relaxed text-ink-500">Escolhe por onde queres receber as notificações.</p>
 
-        <div class="space-y-2">
-          <label class="flex items-center justify-between gap-3 rounded-xl border border-surface-line bg-surface-card p-3 hover:border-brand/30 transition cursor-pointer select-none group">
-            <div class="flex items-center gap-3">
-              <div class="h-8 w-8 shrink-0 rounded-xl bg-brand-50 border border-brand/20 flex items-center justify-center">
-                <app-icon name="bell-ring" [size]="16" class="text-brand" />
+        <div class="space-y-2 sm:space-y-3">
+          <label class="flex items-center justify-between gap-3 rounded-xl border border-surface-line bg-surface-card p-3 sm:p-3.5 hover:border-brand/30 transition cursor-pointer select-none group">
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="h-7 w-7 sm:h-8 sm:w-8 shrink-0 rounded-xl bg-brand-50 border border-brand/20 flex items-center justify-center">
+                <app-icon name="bell-ring" [size]="14" sm:size="16" class="text-brand" />
               </div>
-              <div>
-                <span class="block text-[13px] font-semibold text-ink">E-mail</span>
-                <span class="block text-[11px] text-ink-500">Recebe notificações no teu endereço de e-mail.</span>
+              <div class="min-w-0">
+                <span class="block text-[12px] sm:text-[13px] font-semibold text-ink">E-mail</span>
+                <span class="block text-[11px] sm:text-[12px] text-ink-500">Recebe notificações no teu endereço de e-mail.</span>
               </div>
             </div>
             <input type="checkbox" [ngModel]="emailEnabled()" (ngModelChange)="emailEnabled.set($event)"
-              class="h-5 w-5 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
+              class="h-5 w-5 sm:h-6 sm:w-6 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
           </label>
-          <label class="flex items-center justify-between gap-3 rounded-xl border border-surface-line bg-surface-card p-3 hover:border-brand/30 transition cursor-pointer select-none group">
-            <div class="flex items-center gap-3">
-              <div class="h-8 w-8 shrink-0 rounded-xl bg-brand-50 border border-brand/20 flex items-center justify-center">
-                <app-icon name="smartphone" [size]="16" class="text-brand" />
+          <label class="flex items-center justify-between gap-3 rounded-xl border border-surface-line bg-surface-card p-3 sm:p-3.5 hover:border-brand/30 transition cursor-pointer select-none group">
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="h-7 w-7 sm:h-8 sm:w-8 shrink-0 rounded-xl bg-brand-50 border border-brand/20 flex items-center justify-center">
+                <app-icon name="smartphone" [size]="14" sm:size="16" class="text-brand" />
               </div>
-              <div>
-                <span class="block text-[13px] font-semibold text-ink">Notificações na app</span>
-                <span class="block text-[11px] text-ink-500">Recebe notificações diretamente na aplicação.</span>
+              <div class="min-w-0">
+                <span class="block text-[12px] sm:text-[13px] font-semibold text-ink">Notificações na app</span>
+                <span class="block text-[11px] sm:text-[12px] text-ink-500">Recebe notificações diretamente na aplicação.</span>
               </div>
             </div>
             <input type="checkbox" [ngModel]="inAppEnabled()" (ngModelChange)="inAppEnabled.set($event)"
-              class="h-5 w-5 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
+              class="h-5 w-5 sm:h-6 sm:w-6 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
           </label>
         </div>
       </div>
 
       <!-- Tipos de notificação -->
-      <div>
-        <div class="flex items-center gap-2 mb-3">
+      <div class="rounded-xl border border-surface-line bg-surface-card p-4 sm:p-5">
+        <div class="flex items-center gap-2 mb-3 sm:mb-4">
           <div class="h-8 w-8 shrink-0 rounded-xl bg-surface-app border border-surface-line flex items-center justify-center">
             <app-icon name="settings" [size]="16" class="text-ink-500" />
           </div>
-          <label class="text-[13px] font-semibold text-ink-700">Tipos de notificação</label>
+          <label class="text-[13px] font-semibold text-ink-700 sm:text-[14px]">Tipos de notificação</label>
         </div>
-        <p class="mb-4 text-[12px] leading-relaxed text-ink-500">Personaliza o que queres receber em cada canal.</p>
+        <p class="mb-3 sm:mb-4 text-[12px] leading-relaxed text-ink-500">Personaliza o que queres receber em cada canal.</p>
 
-        <div class="rounded-xl border border-surface-line bg-surface-card overflow-hidden">
-          <div class="grid grid-cols-[1fr_auto_auto] border-b border-surface-line">
-            <div class="px-4 py-3 text-[12px] font-semibold text-ink-700"></div>
-            <div class="px-4 py-3 text-[12px] font-semibold text-ink-700 text-center">E-mail</div>
-            <div class="px-4 py-3 text-[12px] font-semibold text-ink-700 text-center">Na app</div>
-          </div>
-          @for (t of notificationTypes; track t.key) {
-            <div class="grid grid-cols-[1fr_auto_auto] border-b border-surface-line last:border-b-0 group">
-              <div class="flex items-center gap-3 px-4 py-3">
-                <div class="h-7 w-7 shrink-0 rounded-lg bg-surface-app border border-surface-line flex items-center justify-center">
-                  <app-icon [name]="t.icon" [size]="14" class="text-ink-500" />
+        <!-- Colunas (desktop) -->
+        <div class="grid grid-cols-[1fr_auto_auto] border-b border-surface-line hidden sm:block">
+          <div class="px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[12px] font-semibold text-ink-700"></div>
+          <div class="px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[12px] font-semibold text-ink-700 text-center">E-mail</div>
+          <div class="px-3 sm:px-4 py-2 sm:py-3 text-[11px] sm:text-[12px] font-semibold text-ink-700 text-center">Na app</div>
+        </div>
+
+        @for (t of notificationTypes; track t.key) {
+          <div class="border-b border-surface-line last:border-b-0 group">
+            <!-- Mobile: cartão compacto com tudo em coluna -->
+            <div class="px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+              <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div class="h-6 w-6 sm:h-7 sm:w-7 shrink-0 rounded-lg bg-surface-app border border-surface-line flex items-center justify-center flex-shrink-0">
+                  <app-icon [name]="t.icon" [size]="12" sm:size="14" class="text-ink-500" />
                 </div>
-                <div>
-                  <span class="block text-[13px] font-semibold text-ink">{{ t.label }}</span>
-                  <span class="block text-[11px] text-ink-500">{{ t.description }}</span>
+                <div class="min-w-0 flex-1">
+                  <span class="block text-[12px] sm:text-[13px] font-semibold text-ink leading-tight">{{ t.label }}</span>
+                  <span class="block text-[11px] sm:text-[12px] text-ink-500 leading-tight">{{ t.description }}</span>
                 </div>
               </div>
-              <div class="flex items-center justify-center px-4 py-3">
-                <label class="flex items-center gap-1.5 cursor-pointer select-none" [class.opacity-50]="!emailEnabled()">
+
+              <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end sm:justify-center">
+                <label class="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none" [class.opacity-50]="!emailEnabled()">
                   <input type="checkbox" [ngModel]="typeEmail(t.key)" (ngModelChange)="setTypePref(t.key, 'email', $event)"
                     [disabled]="!emailEnabled()"
-                    class="h-4 w-4 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
-                  <span class="text-[11px] text-ink-600">E-mail</span>
+                    class="h-4 w-4 sm:h-5 sm:w-5 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
+                  <span class="text-[11px] sm:text-[12px] text-ink-600">E-mail</span>
                 </label>
-              </div>
-              <div class="flex items-center justify-center px-4 py-3">
-                <label class="flex items-center gap-1.5 cursor-pointer select-none" [class.opacity-50]="!inAppEnabled()">
+                <label class="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none" [class.opacity-50]="!inAppEnabled()">
                   <input type="checkbox" [ngModel]="typeInApp(t.key)" (ngModelChange)="setTypePref(t.key, 'inApp', $event)"
                     [disabled]="!inAppEnabled()"
-                    class="h-4 w-4 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
-                  <span class="text-[11px] text-ink-600">Na app</span>
+                    class="h-4 w-4 sm:h-5 sm:w-5 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
+                  <span class="text-[11px] sm:text-[12px] text-ink-600">Na app</span>
                 </label>
               </div>
             </div>
+
+            <!-- Desktop: linha de tabela com colunas alinhadas -->
+            <div class="grid grid-cols-[1fr_auto_auto] px-3 sm:px-4 py-2.5 sm:py-3 hidden sm:block border-t border-surface-line sm:border-t-0 group">
+              <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div class="h-6 w-6 sm:h-7 sm:w-7 shrink-0 rounded-lg bg-surface-app border border-surface-line flex items-center justify-center flex-shrink-0">
+                  <app-icon [name]="t.icon" [size]="12" sm:size="14" class="text-ink-500" />
+                </div>
+                <div class="min-w-0">
+                  <span class="block text-[12px] sm:text-[13px] font-semibold text-ink leading-tight">{{ t.label }}</span>
+                  <span class="block text-[11px] sm:text-[12px] text-ink-500 leading-tight">{{ t.description }}</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-center px-3 sm:px-4 py-2.5 sm:py-3">
+                <label class="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none" [class.opacity-50]="!emailEnabled()">
+                  <input type="checkbox" [ngModel]="typeEmail(t.key)" (ngModelChange)="setTypePref(t.key, 'email', $event)"
+                    [disabled]="!emailEnabled()"
+                    class="h-4 w-4 sm:h-5 sm:w-5 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
+                  <span class="text-[11px] sm:text-[12px] text-ink-600">E-mail</span>
+                </label>
+              </div>
+              <div class="flex items-center justify-center px-3 sm:px-4 py-2.5 sm:py-3">
+                <label class="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none" [class.opacity-50]="!inAppEnabled()">
+                  <input type="checkbox" [ngModel]="typeInApp(t.key)" (ngModelChange)="setTypePref(t.key, 'inApp', $event)"
+                    [disabled]="!inAppEnabled()"
+                    class="h-4 w-4 sm:h-5 sm:w-5 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
+                  <span class="text-[11px] sm:text-[12px] text-ink-600">Na app</span>
+                </label>
+              </div>
+            </div>
+          </div>
           }
         </div>
       </div>
@@ -213,28 +245,29 @@ import { OnboardingService } from '../../core/onboarding.service';
 
     <!-- Estados -->
     @if (savingNotifications()) {
-      <div class="mt-4 flex items-center gap-2 rounded-xl bg-brand-50 p-3">
+      <div class="mt-3 sm:mt-4 flex items-center gap-2 rounded-xl bg-brand-50 p-3">
         <app-icon name="loader-circle" [size]="16" class="animate-spin text-brand-fg" />
         <span class="text-[12px] font-medium text-brand-fg">A guardar alterações…</span>
       </div>
     } @else if (notificationsError()) {
-      <div class="mt-4 flex items-center gap-2 rounded-xl border border-danger/40 bg-danger-soft p-3">
+      <div class="mt-3 sm:mt-4 flex items-center gap-2 rounded-xl border border-danger/40 bg-danger-soft p-3">
         <app-icon name="triangle-alert" [size]="16" class="text-danger" />
         <span class="text-[12px] font-medium text-danger">{{ notificationsError() }}</span>
       </div>
     } @else if (notificationsDirty()) {
-      <div class="mt-4 flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-50 p-3">
+      <div class="mt-3 sm:mt-4 flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-50 p-3">
         <app-icon name="pencil" [size]="16" class="text-brand-fg" />
         <span class="text-[12px] font-medium text-brand-fg">Tens alterações de notificações por guardar.</span>
       </div>
     }
 
-    <div class="mt-6 flex justify-end">
+    <div class="mt-4 sm:mt-6 flex w-full justify-end">
       <app-button
         icon="save"
         [label]="savingNotifications() ? 'A guardar…' : 'Guardar notificações'"
         [loading]="savingNotifications()"
         [disabled]="!canSaveNotifications()"
+        buttonClass="w-full sm:w-auto justify-center"
         (click)="saveNotifications()"
       ></app-button>
     </div>
@@ -278,7 +311,6 @@ import { OnboardingService } from '../../core/onboarding.service';
           }
         </div>
       </div>
-    </div>
   `,
 })
 export class SettingsPage implements OnInit {

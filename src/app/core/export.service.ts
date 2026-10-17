@@ -10,7 +10,23 @@ export class ExportService {
   private readonly store = inject(DataStore);
   private readonly colorService = inject(ColorSchemeService);
 
-  exportJson(): void {
+  async exportJson(): Promise<void> {
+    if (this.store.useApi) {
+      const result = await this.store.exportData();
+      if (!result.ok || !result.data) {
+        this.store.showFlash('error', result.error ?? 'Não foi possível exportar os dados.');
+        return;
+      }
+      const blob = new Blob([result.data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const date = this.dateStamp();
+      a.href = url;
+      a.download = `foco-backup-${date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
     const data = this.store.exportJson();
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);

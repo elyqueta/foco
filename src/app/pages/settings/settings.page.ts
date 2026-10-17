@@ -516,7 +516,16 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  exportJson(): void {
+  async exportJson(): Promise<void> {
+    if (this.store.useApi) {
+      const result = await this.store.exportData();
+      if (!result.ok || !result.data) {
+        this.store.showFlash('error', result.error ?? 'Não foi possível exportar os dados.');
+        return;
+      }
+      this.download(result.data, 'foco-backup.json');
+      return;
+    }
     this.download(this.store.exportJson(), 'foco-backup.json');
   }
 
@@ -534,23 +543,33 @@ export class SettingsPage implements OnInit {
     const ok = await this.confirm.confirm({
       type: 'warning',
       title: 'Restaurar dados de exemplo?',
-      message: 'Isto substitui todos os dados pelos de exemplo. Continuar?',
+      message: this.useApi
+        ? 'Isto carrega dados de exemplo no servidor se não houver projetos nem tarefas. Continuar?'
+        : 'Isto substitui todos os dados pelos de exemplo. Continuar?',
       confirmLabel: 'Restaurar',
     });
     if (!ok) return;
+    if (this.useApi) {
+      await this.store.seedDemoData();
+      return;
+    }
     this.store.replaceAll(emptyAppData());
   }
 
   async clearAll(): Promise<void> {
     const ok = await this.confirm.confirm({
       type: 'danger',
-      title: this.useApi ? 'Apagar dados locais?' : 'Apagar tudo?',
+      title: this.useApi ? 'Apagar todos os dados?' : 'Apagar tudo?',
       message: this.useApi
-        ? 'Isto apaga os dados guardados apenas neste dispositivo. Os projetos, categorias e tarefas no servidor não são afetados. Continuar?'
+        ? 'Isto apaga projetos, tarefas, atividade e notificações do servidor. A conta e as definições são mantidas. Continuar?'
         : 'Isto apaga todos os dados. Continuar?',
       confirmLabel: 'Apagar',
     });
     if (!ok) return;
+    if (this.useApi) {
+      await this.store.resetData();
+      return;
+    }
     this.store.clearAll();
   }
 

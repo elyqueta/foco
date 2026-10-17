@@ -18,6 +18,9 @@ import {
   ApiTaskInput,
   ApiTaskListFilters,
   ApiTimerActionResult,
+  ImportRequest,
+  ImportResponse,
+  SearchResult,
 } from './api.models';
 
 export class ApiError extends Error {
@@ -123,8 +126,10 @@ export class ApiService {
     return this.request(() => firstValueFrom(this.http.patch<T>(`${this.base}${path}`, body ?? {})));
   }
 
-  private delete<T>(path: string): Promise<T> {
-    return this.request(() => firstValueFrom(this.http.delete<T>(`${this.base}${path}`)));
+  private delete<T>(path: string, body?: unknown): Promise<T> {
+    const options: { body?: unknown } = {};
+    if (body) options.body = body;
+    return this.request(() => firstValueFrom(this.http.delete<T>(`${this.base}${path}`, options)));
   }
 
   // ---------- Auth ----------
@@ -289,6 +294,38 @@ export class ApiService {
 
   clearNotifications(): Promise<void> {
     return this.delete('/notifications').then(() => undefined);
+  }
+
+  // ---------- Dados (export/import/reset/seed) ----------
+
+  exportData(): Promise<unknown> {
+    return this.get<unknown>('/export');
+  }
+
+  importData(body: ImportRequest): Promise<ImportResponse> {
+    return this.post('/import', body);
+  }
+
+  getImportPrompt(): Promise<{ prompt: string }> {
+    return this.get<{ prompt: string }>('/import/prompt');
+  }
+
+  resetData(confirm: string): Promise<void> {
+    return this.delete('/data', { confirm }).then(() => undefined);
+  }
+
+  seedDemoData(): Promise<void> {
+    return this.post('/data/seed-demo', {}).then(() => undefined);
+  }
+
+  resetDemoData(confirm: string): Promise<void> {
+    return this.post('/data/reset-demo', { confirm }).then(() => undefined);
+  }
+
+  // ---------- Pesquisa ----------
+
+  search(q: string): Promise<SearchResult> {
+    return this.get<SearchResult>('/search', { q });
   }
 
   // ---------- Timer ----------

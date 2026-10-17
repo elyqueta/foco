@@ -59,10 +59,72 @@ interface SearchGroup {
 })
 export class SearchDropdownComponent {
   private store = inject(DataStore);
+  private search = inject(SearchService);
   searchQuery = input.required<string>();
   clearSearch = output<void>();
 
-  private buildItems(query: string): SearchItem[] {
+  private buildItemsFromApi(projects: { id: string; name: string; category: string; status: string }[], tasks: { id: string; title: string; projectId: string | null; projectName?: string; status: string; category: string }[]): SearchItem[] {
+    const items: SearchItem[] = [];
+    for (const p of projects) {
+      items.push({
+        id: p.id,
+        title: p.name,
+        subtitle: `${p.category}`,
+        link: ['/projetos', p.id],
+        type: 'project',
+        icon: 'folder-kanban',
+        iconColor: 'text-brand',
+        iconBg: 'bg-brand-100',
+      });
+    }
+    for (const t of tasks) {
+      items.push({
+        id: t.id,
+        title: t.title,
+        subtitle: t.projectName ? `${formatDate('')} · ${t.projectName}` : 'Sem projeto',
+        link: ['/tarefas', t.id],
+        type: 'task',
+        icon: 'square-check',
+        iconColor: 'text-brand',
+        iconBg: 'bg-brand-100',
+      });
+    }
+    return items.slice(0, 10);
+  }
+
+  groupedResults(): SearchGroup[] {
+    const query = this.searchQuery().trim().toLowerCase();
+    if (!query) return [];
+
+    if (this.store.useApi) {
+      const results = this.search.results();
+      if (!results) return [];
+      const projects = results.projects.map((p) => ({
+        id: p.id,
+        title: p.name,
+        subtitle: p.category,
+        link: ['/projetos', p.id] as string[],
+        type: 'project' as const,
+        icon: 'folder-kanban',
+        iconColor: 'text-brand',
+        iconBg: 'bg-brand-100',
+      }));
+      const tasks = results.tasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        subtitle: t.projectName ? `· ${t.projectName}` : 'Sem projeto',
+        link: ['/tarefas', t.id] as string[],
+        type: 'task' as const,
+        icon: 'square-check',
+        iconColor: 'text-brand',
+        iconBg: 'bg-brand-100',
+      }));
+      const groups: SearchGroup[] = [];
+      if (projects.length > 0) groups.push({ type: 'project', label: 'Projetos', items: projects });
+      if (tasks.length > 0) groups.push({ type: 'task', label: 'Tarefas', items: tasks });
+      return groups;
+    }
+
     const items: SearchItem[] = [];
     for (const t of this.store.data().tasks) {
       const project = t.projectId ? this.store.data().projects.find((p) => p.id === t.projectId) : null;
@@ -96,18 +158,12 @@ export class SearchDropdownComponent {
         });
       }
     }
-    return items.slice(0, 10);
-  }
-
-  groupedResults(): SearchGroup[] {
-    const query = this.searchQuery().trim().toLowerCase();
-    if (!query) return [];
-    const items = this.buildItems(query);
-    const projects = items.filter((i) => i.type === 'project');
-    const tasks = items.filter((i) => i.type === 'task');
+    const sorted = items.slice(0, 10);
+    const projectItems = sorted.filter((i) => i.type === 'project');
+    const taskItems = sorted.filter((i) => i.type === 'task');
     const groups: SearchGroup[] = [];
-    if (projects.length > 0) groups.push({ type: 'project', label: 'Projetos', items: projects });
-    if (tasks.length > 0) groups.push({ type: 'task', label: 'Tarefas', items: tasks });
+    if (projectItems.length > 0) groups.push({ type: 'project', label: 'Projetos', items: projectItems });
+    if (taskItems.length > 0) groups.push({ type: 'task', label: 'Tarefas', items: taskItems });
     return groups;
   }
 }

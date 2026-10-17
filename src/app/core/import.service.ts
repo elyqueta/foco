@@ -13,15 +13,22 @@ export class ImportService {
   private store = inject(DataStore);
 
   async import(json: string): Promise<{ ok: boolean; errors: string[] }> {
+    if (this.store.useApi) {
+      return this.store.importData(json);
+    }
+    return this.importLocal(json);
+  }
+
+  private importLocal(json: string): Promise<{ ok: boolean; errors: string[] }> {
     const errors: string[] = [];
     let parsed: { projects?: Partial<Project>[]; tasks?: Partial<Task>[] };
     try {
       parsed = JSON.parse(json);
     } catch {
-      return { ok: false, errors: ['JSON inválido.'] };
+      return Promise.resolve({ ok: false, errors: ['JSON inválido.'] });
     }
     if (!parsed || typeof parsed !== 'object') {
-      return { ok: false, errors: ['Objeto raiz inválido.'] };
+      return Promise.resolve({ ok: false, errors: ['Objeto raiz inválido.'] });
     }
 
     const validCategories: Category[] = this.store.categories();
@@ -101,7 +108,7 @@ export class ImportService {
     }
 
     if (errors.length > 0) {
-      return { ok: false, errors };
+      return Promise.resolve({ ok: false, errors });
     }
 
     // Mapeia o id original do ficheiro para o id final de cada projeto criado.
@@ -110,22 +117,6 @@ export class ImportService {
       if (!fileRef) return null;
       return byFileId.get(fileRef) ?? null;
     };
-
-    if (this.store.useApi) {
-      // Projetos são criados no servidor; as tarefas (sem endpoint) ficam locais.
-      for (const { fileId, project } of importedProjects) {
-        const created = await this.store.addProject(project);
-        if (created) {
-          if (fileId) byFileId.set(fileId, created.id);
-        } else {
-          errors.push(`projects: não foi possível criar "${project.name}"`);
-        }
-      }
-      for (const task of tasks) {
-        await this.store.addTask({ ...task, projectId: resolveProjectId(task.projectId) });
-      }
-      return { ok: errors.length === 0, errors };
-    }
 
     for (const { fileId, project } of importedProjects) {
       if (fileId) byFileId.set(fileId, project.id);
@@ -139,6 +130,6 @@ export class ImportService {
       categories: current.categories ?? [...validCategories],
     };
     this.store.replaceAll(merged);
-    return { ok: true, errors: [] };
+    return Promise.resolve({ ok: true, errors: [] });
   }
 }

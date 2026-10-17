@@ -222,3 +222,20 @@ export interface ApiProjectFilters {
   status?: ApiProjectStatus;
   q?: string;
 }
+
+export interface ImportRequest {
+  projects?: Array<{ name: string; description?: string; category?: string; urgency?: string; status?: string; canPostpone?: boolean; dueDate?: string | null; nextStep?: string; color?: string; id?: string | null }>;
+  tasks?: Array<{ title: string; description?: string; category?: string; urgency?: string; status?: string; canPostpone?: boolean; dueDate?: string | null; nextStep?: string; estimateMinutes?: number | null; tags?: string[]; projectId?: string | null }>;
+}
+
+export interface ImportResponse {
+  ok: boolean;
+  projectsCreated?: number;
+  tasksCreated?: number;
+  errors?: string[];
+}
+
+export interface SearchResult {
+  projects: Array<{ id: string; name: string; category: string; status: string }>;
+  tasks: Array<{ id: string; title: string; projectId: string | null; projectName?: string; status: string; category: string }>;
+}

@@ -20,10 +20,12 @@
     "@angular/platform-server": "^22.0.0",
     "@angular/router": "^22.0.0",
     "@angular/ssr": "^22.0.4",
+    "@types/pdfmake": "^0.3.3",
     "express": "^5.1.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-angular": "^0.577.0",
+    "pdfmake": "^0.3.12",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

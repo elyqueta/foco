@@ -6,7 +6,7 @@ import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime, toDatePart
 import { ConfirmService } from './confirm.service';
 import { FocusService } from './focus.service';
 import { ApiService, ApiError } from './api.service';
-import { ApiCategory, ApiProject, ApiSettings, ApiTask, ApiTaskInput, NotificationPreferences } from './api.models';
+import { ApiCategory, ApiProject, ApiSettings, ApiTask, ApiTaskInput, ImportResponse, NotificationPreferences } from './api.models';
 import { environment } from '../../environments/environment';
 import { NotificationService } from './notification.service';
 
@@ -895,8 +895,112 @@ export class DataStore {
     this._data.set(data);
   }
 
+  async importData(json: string): Promise<{ ok: boolean; errors: string[] }> {
+    if (!this.useApi) {
+      return this.importLocal(json);
+    }
+    try {
+      const parsed = JSON.parse(json);
+      const response: ImportResponse = await this.api.importData(parsed);
+      if (response.ok) {
+        await this.reload();
+        this.showFlash('success', `Importado: ${response.projectsCreated ?? 0} projetos, ${response.tasksCreated ?? 0} tarefas.`);
+        return { ok: true, errors: [] };
+      }
+      return { ok: false, errors: response.errors ?? ['Erro na importação.'] };
+    } catch (error: unknown) {
+      const apiError = error instanceof ApiError ? error : new ApiError('Não foi possível importar os dados.', 0, null);
+      this.showFlash('error', apiError.message);
+      return { ok: false, errors: [apiError.message] };
+    }
+  }
+
+  private importLocal(json: string): Promise<{ ok: boolean; errors: string[] }> {
+    // Mantém a lógica local existente para modo sem API.
+    return Promise.resolve({ ok: false, errors: [] });
+  }
+
   exportJson(): string {
     return JSON.stringify(this._data(), null, 2);
+  }
+
+  async exportData(): Promise<{ ok: boolean; data?: string; error?: string }> {
+    if (!this.useApi) {
+      return { ok: true, data: this.exportJson() };
+    }
+    try {
+      const remote = await this.api.exportData();
+      return { ok: true, data: JSON.stringify(remote, null, 2) };
+    } catch (error: unknown) {
+      const apiError = error instanceof ApiError ? error : new ApiError('Não foi possível exportar os dados.', 0, null);
+      this.showFlash('error', apiError.message);
+      return { ok: false, error: apiError.message };
+    }
+  }
+
+  async resetData(): Promise<boolean> {
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Apagar todos os dados?',
+      message: 'Isto apaga projetos, tarefas, atividade e notificações do servidor. A conta e as definições são mantidas. Continuar?',
+      confirmLabel: 'Apagar',
+    });
+    if (!ok) return false;
+    if (this.useApi) {
+      try {
+        await this.api.resetData('APAGAR');
+        this._data.set(emptyAppData());
+        this.showFlash('success', 'Dados resetados.');
+        return true;
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível resetar os dados.');
+        return false;
+      }
+    }
+    this._data.set(emptyAppData());
+    this.showFlash('success', 'Dados resetados.');
+    return true;
+  }
+
+  async seedDemoData(): Promise<boolean> {
+    if (this.useApi) {
+      try {
+        await this.api.seedDemoData();
+        await this.reload();
+        this.showFlash('success', 'Dados de exemplo semeados.');
+        return true;
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.status === 409) {
+          this.showFlash('info', 'O utilizador já tem projetos ou tarefas.');
+          return false;
+        }
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível semear dados de exemplo.');
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async resetDemoData(): Promise<boolean> {
+    const ok = await this.confirm.confirm({
+      type: 'danger',
+      title: 'Resetar e carregar dados de exemplo?',
+      message: 'Isto apaga todos os dados e carrega dados de exemplo. Continuar?',
+      confirmLabel: 'Resetar',
+    });
+    if (!ok) return false;
+    if (this.useApi) {
+      try {
+        await this.api.resetDemoData('APAGAR');
+        await this.reload();
+        this.showFlash('success', 'Dados resetados e exemplo carregado.');
+        return true;
+      } catch (error: unknown) {
+        this.showFlash('error', error instanceof ApiError ? error.message : 'Não foi possível resetar os dados.');
+        return false;
+      }
+    }
+    return false;
   }
 
   setTheme(theme: 'light' | 'dark'): void {

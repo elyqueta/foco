@@ -28,6 +28,7 @@ export class ProjectsPage {
   showModal = signal(false);
   filter = signal<string>('all');
   searchQuery = this.search.query;
+  searchResults = this.search.results;
   saving = signal(false);
 
   loading = this.store.loading;
@@ -42,6 +43,28 @@ export class ProjectsPage {
   }
 
   filtered() {
+    if (this.store.useApi) {
+      const results = this.searchResults();
+      if (!results) return [];
+      const projects = results.projects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: '',
+        category: p.category,
+        urgency: 'medium' as const,
+        status: p.status as any,
+        canPostpone: true,
+        dueDate: null,
+        nextStep: '',
+        color: '#6C5CE7',
+        activity: [],
+        createdAt: '',
+        updatedAt: '',
+      }) as Project);
+      const f = this.filter();
+      if (f !== 'all') return projects.filter((p) => p.category === f);
+      return projects;
+    }
     const f = this.filter();
     let projects = this.store.data().projects;
     if (f !== 'all') projects = projects.filter((p) => p.category === f);

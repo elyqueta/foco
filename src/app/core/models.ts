@@ -1,4 +1,4 @@
-import type { ApiNotificationType } from './api.models';
+import type { ApiNotificationType, NotificationPreferences } from './api.models';
 
 export type Category = string;
 export type Urgency = 'critical' | 'high' | 'medium' | 'low';
@@ -83,7 +83,7 @@ export interface AppData {
   schemaVersion: 1;
   projects: Project[];
   tasks: Task[];
-  settings: { theme: 'light' | 'dark'; userName: string; colorScheme: ColorScheme };
+  settings: { theme: 'light' | 'dark'; userName: string; colorScheme: ColorScheme; notifications?: NotificationPreferences };
   categories: string[];
   /** Nomes das categorias padrão (protegidas); no modo API vem do servidor. */
   categoryDefaults?: string[];

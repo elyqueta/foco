@@ -6,7 +6,7 @@ import { todayISO, urgencyOrder, addDays, formatDate, formatDateTime, toDatePart
 import { ConfirmService } from './confirm.service';
 import { FocusService } from './focus.service';
 import { ApiService, ApiError } from './api.service';
-import { ApiCategory, ApiProject, ApiSettings, ApiTask, ApiTaskInput } from './api.models';
+import { ApiCategory, ApiProject, ApiSettings, ApiTask, ApiTaskInput, NotificationPreferences } from './api.models';
 import { environment } from '../../environments/environment';
 import { NotificationService } from './notification.service';
 
@@ -387,6 +387,7 @@ export class DataStore {
         ...d.settings,
         userName: name ? name : d.settings.userName,
         theme: settings.theme === 'dark' ? 'dark' : 'light',
+        notifications: settings.notifications ?? d.settings.notifications,
       },
     }));
   }
@@ -912,13 +913,18 @@ export class DataStore {
     if (this.useApi) void this.pushSettings({ userName: name });
   }
 
-  private async pushSettings(patch: { theme?: 'light' | 'dark'; userName?: string }): Promise<void> {
+  private async pushSettings(patch: { theme?: 'light' | 'dark'; userName?: string; notifications?: NotificationPreferences }): Promise<void> {
     try {
       await this.api.updateSettings(patch);
     } catch (error: unknown) {
       if (error instanceof ApiError && error.isNoChanges) return;
       // sincronização best-effort: o valor local já foi aplicado
     }
+  }
+
+  setNotifications(prefs: NotificationPreferences): void {
+    this._data.update((d) => ({ ...d, settings: { ...d.settings, notifications: prefs } }));
+    if (this.useApi) void this.pushSettings({ notifications: prefs });
   }
 
   async clearAll(): Promise<void> {

@@ -38,38 +38,51 @@
     <div class="mt-6 flex flex-col gap-7">
       @for (group of groups(); track group.label) {
         <section>
-          <div class="mb-3 flex items-center gap-3">
+          <button
+            type="button"
+            (click)="toggleGroup(group.label)"
+            [attr.aria-expanded]="isOpen(group.label)"
+            class="mb-2 flex w-full items-center gap-2.5 rounded-xl px-1 py-1.5 text-left transition hover:bg-surface-app"
+          >
+            <app-icon name="chevron-down" [size]="16" class="shrink-0 text-ink-400 transition-transform duration-200" [class.rotate-180]="isOpen(group.label)" />
             <h2 class="text-[12px] font-bold uppercase tracking-wide text-ink-400">{{ group.label }}</h2>
-            <span class="h-px flex-1 bg-surface-line"></span>
-          </div>
-          <div class="flex flex-col gap-3">
-            @for (item of group.items; track item.id) {
-              <div [class]="'rounded-2xl border p-4 transition ' + (item.read ? 'border-surface-line bg-surface-card' : 'border-brand/30 bg-brand-50 shadow-card')">
-                <div class="flex items-start gap-3">
-                  <button type="button" class="flex min-w-0 flex-1 items-start gap-3 text-left" (click)="open(item)">
-                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white" [class]="appearance(item.type).toneClass">
-                      <app-icon [name]="appearance(item.type).icon" [size]="16" />
-                    </span>
-                    <span class="min-w-0 flex-1">
-                      <span class="block text-[13px] font-semibold text-ink">{{ item.title }}</span>
-                      <span class="mt-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-400">{{ label(item.type) }}</span>
-                      <span class="mt-1 block text-[12px] text-ink-500">{{ item.message }}</span>
-                      <span class="mt-2 block text-[10px] text-ink-400">{{ formatDate(item.createdAt) }}</span>
-                    </span>
-                  </button>
-                  <app-button
-                    variant="ghost"
-                    size="sm"
-                    icon="trash-2"
-                    label="Remover notificação"
-                    [iconOnly]="true"
-                    buttonClass="!text-ink-400 hover:!text-danger"
-                    (click)="remove(item.id)"
-                  ></app-button>
-                </div>
-              </div>
+            @if (group.unread > 0) {
+              <span class="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-white">{{ group.unread }} novas</span>
+            } @else {
+              <span class="rounded-full bg-surface-app px-2 py-0.5 text-[10px] font-bold text-ink-500">{{ group.items.length }}</span>
             }
-          </div>
+            <span class="h-px flex-1 bg-surface-line"></span>
+          </button>
+          @if (isOpen(group.label)) {
+            <div class="flex flex-col gap-3">
+              @for (item of group.items; track item.id) {
+                <div [class]="'rounded-2xl border p-4 transition ' + (item.read ? 'border-surface-line bg-surface-card' : 'border-brand/30 bg-brand-50 shadow-card')">
+                  <div class="flex items-start gap-3">
+                    <button type="button" class="flex min-w-0 flex-1 items-start gap-3 text-left" (click)="open(item)">
+                      <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white" [class]="appearance(item.type).toneClass">
+                        <app-icon [name]="appearance(item.type).icon" [size]="16" />
+                      </span>
+                      <span class="min-w-0 flex-1">
+                        <span class="block text-[13px] font-semibold text-ink">{{ item.title }}</span>
+                        <span class="mt-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-400">{{ label(item.type) }}</span>
+                        <span class="mt-1 block text-[12px] text-ink-500">{{ item.message }}</span>
+                        <span class="mt-2 block text-[10px] text-ink-400">{{ formatDate(item.createdAt) }}</span>
+                      </span>
+                    </button>
+                    <app-button
+                      variant="ghost"
+                      size="sm"
+                      icon="trash-2"
+                      label="Remover notificação"
+                      [iconOnly]="true"
+                      buttonClass="!text-ink-400 hover:!text-danger"
+                      (click)="remove(item.id)"
+                    ></app-button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </section>
       } @empty {
         <p class="text-[13px] text-ink-500">Sem notificações.</p>

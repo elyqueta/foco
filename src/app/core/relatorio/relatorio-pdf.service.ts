@@ -8,13 +8,6 @@ import { RELATORIO_LABELS } from './relatorio-pdf.labels';
 
 type TFont = 'regular' | 'medium' | 'semibold' | 'bold';
 
-interface FontMap {
-  regular: { normal: string; bold: string; italics: string; bolditalics: string };
-  medium: { normal: string; bold: string; italics: string; bolditalics: string };
-  semibold: { normal: string; bold: string; italics: string; bolditalics: string };
-  bold: { normal: string; bold: string; italics: string; bolditalics: string };
-}
-
 /**
  * Serviço de geração do PDF do Relatório de Produtividade.
  * Carrega o pdfmake e as fontes via import() dinâmico apenas quando solicitado.
@@ -23,6 +16,7 @@ interface FontMap {
 @Injectable({ providedIn: 'root' })
 export class RelatorioPdfService {
   private pdfMake: any = null;
+  private vfs: Record<string, string> = {};
   private loaded = false;
 
   /** Nome do ficheiro gerado. */
@@ -31,63 +25,36 @@ export class RelatorioPdfService {
     return `relatorio-produtividade-${period}-${today}.pdf`;
   }
 
-  /** Carrega pdfmake uma única vez. */
+  /** Carrega pdfmake uma única vez e registra as fontes padrão (vfs) globalmente. */
   private async ensureLoaded(): Promise<void> {
     if (this.loaded) return;
     const pdfMakeModule = await import('pdfmake/build/pdfmake');
+    const vfsFontsModule = await import('pdfmake/build/vfs_fonts');
 
     this.pdfMake = pdfMakeModule.default ?? pdfMakeModule;
-    this.defineFonts(this.buildFontMap());
+    const vfsRaw = vfsFontsModule.default as any;
+    const vfsObj = vfsRaw.pdfMake?.vfs ?? vfsRaw.vfs ?? vfsRaw;
+
+    // Cria aliases no vfs para Helvetica apontando para Roboto (as únicas fontes disponíveis).
+    const vfsWithAliases: Record<string, string> = { ...vfsObj };
+    vfsWithAliases['Helvetica'] = vfsObj['Roboto-Regular.ttf'];
+    vfsWithAliases['Helvetica-Bold'] = vfsObj['Roboto-Medium.ttf'];
+    vfsWithAliases['Helvetica-Oblique'] = vfsObj['Roboto-Italic.ttf'];
+    vfsWithAliases['Helvetica-BoldOblique'] = vfsObj['Roboto-MediumItalic.ttf'];
+    this.vfs = vfsWithAliases;
+
+    // Registra globalmente no pdfMake.
+    (this.pdfMake as any).vfs = vfsWithAliases;
 
     this.loaded = true;
   }
 
-  private buildFontMap(): FontMap {
-    return {
-      regular: {
-        normal: 'Helvetica',
-        bold: 'Helvetica-Bold',
-        italics: 'Helvetica-Oblique',
-        bolditalics: 'Helvetica-BoldOblique',
-      },
-      medium: {
-        normal: 'Helvetica',
-        bold: 'Helvetica-Bold',
-        italics: 'Helvetica-Oblique',
-        bolditalics: 'Helvetica-BoldOblique',
-      },
-      semibold: {
-        normal: 'Helvetica-Bold',
-        bold: 'Helvetica-Bold',
-        italics: 'Helvetica-BoldOblique',
-        bolditalics: 'Helvetica-BoldOblique',
-      },
-      bold: {
-        normal: 'Helvetica-Bold',
-        bold: 'Helvetica-Bold',
-        italics: 'Helvetica-BoldOblique',
-        bolditalics: 'Helvetica-BoldOblique',
-      },
-    };
-  }
-
-  private defineFonts(fontMap: FontMap): void {
-    const styles: Record<string, { normal: string; bold: string; italics: string; bolditalics: string }> = {};
-    for (const [weight, fonts] of Object.entries(fontMap)) {
-      styles[weight] = fonts;
-    }
-    (this.pdfMake as any).fontMap = {
-      ...((this.pdfMake as any).fontMap || {}),
-      ...styles,
-    };
-  }
-
+  /** Nome da fonte padrão do pdfmake (Helvetica com aliases para Roboto no vfs). */
   private font(weight: TFont = 'regular'): string {
-    return weight;
+    return weight === 'bold' ? 'Helvetica-Bold' : 'Helvetica';
   }
 
-  /** Formata uma string YYYY-MM-DD para "DD/MM. YYYY" (sem dependência de fuso). */
-  private formatDatePt(dateStr: string | null): string {
+  /** Formata uma string YYYY-MM-DD para "DD/MM. YYYY" (sem dependência de fuso). */  private formatDatePt(dateStr: string | null): string {
     if (!dateStr) return '';
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
@@ -717,6 +684,7 @@ export class RelatorioPdfService {
         ...this.projectsBlock(data.projects),
         ...this.tasksBlock(data.tasks),
       ],
+      vfs: this.vfs,
       styles: {},
       defaultStyle: {
         font: this.font('regular'),

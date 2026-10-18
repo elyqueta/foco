@@ -34,27 +34,17 @@ export class RelatorioPdfService {
     this.pdfMake = pdfMakeModule.default ?? pdfMakeModule;
     const vfsRaw = vfsFontsModule.default as any;
     const vfsObj = vfsRaw.pdfMake?.vfs ?? vfsRaw.vfs ?? vfsRaw;
-
     this.vfs = vfsObj;
 
     // Registra globalmente no pdfMake.
     (this.pdfMake as any).vfs = vfsObj;
-    (this.pdfMake as any).fontMap = {
-      ...((this.pdfMake as any).fontMap || {}),
-      Helvetica: {
-        normal: 'Roboto-Regular.ttf',
-        bold: 'Roboto-Medium.ttf',
-        italics: 'Roboto-Italic.ttf',
-        bolditalics: 'Roboto-MediumItalic.ttf',
-      },
-    };
 
     this.loaded = true;
   }
 
-  /** Nome da fonte padrão do pdfmake. */
-  private font(weight: TFont = 'regular'): string {
-    return weight === 'bold' ? 'Helvetica-Bold' : 'Helvetica';
+  /** Nome da fonte padrão do pdfmake (Helvetica; o vfs + fontMap resolvem para Roboto). */
+  private font(): string {
+    return 'Helvetica';
   }
 
   /** Formata uma string YYYY-MM-DD para "DD/MM. YYYY" (sem dependência de fuso). */  private formatDatePt(dateStr: string | null): string {
@@ -698,7 +688,7 @@ export class RelatorioPdfService {
       },
       styles: {},
       defaultStyle: {
-        font: this.font('regular'),
+        font: this.font(),
         fontSize: theme.fontSize.body,
         color: theme.ink,
       },

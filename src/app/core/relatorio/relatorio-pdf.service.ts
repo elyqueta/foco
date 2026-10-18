@@ -35,21 +35,24 @@ export class RelatorioPdfService {
     const vfsRaw = vfsFontsModule.default as any;
     const vfsObj = vfsRaw.pdfMake?.vfs ?? vfsRaw.vfs ?? vfsRaw;
 
-    // Cria aliases no vfs para Helvetica apontando para Roboto (as únicas fontes disponíveis).
-    const vfsWithAliases: Record<string, string> = { ...vfsObj };
-    vfsWithAliases['Helvetica'] = vfsObj['Roboto-Regular.ttf'];
-    vfsWithAliases['Helvetica-Bold'] = vfsObj['Roboto-Medium.ttf'];
-    vfsWithAliases['Helvetica-Oblique'] = vfsObj['Roboto-Italic.ttf'];
-    vfsWithAliases['Helvetica-BoldOblique'] = vfsObj['Roboto-MediumItalic.ttf'];
-    this.vfs = vfsWithAliases;
+    this.vfs = vfsObj;
 
     // Registra globalmente no pdfMake.
-    (this.pdfMake as any).vfs = vfsWithAliases;
+    (this.pdfMake as any).vfs = vfsObj;
+    (this.pdfMake as any).fontMap = {
+      ...((this.pdfMake as any).fontMap || {}),
+      Helvetica: {
+        normal: 'Roboto-Regular.ttf',
+        bold: 'Roboto-Medium.ttf',
+        italics: 'Roboto-Italic.ttf',
+        bolditalics: 'Roboto-MediumItalic.ttf',
+      },
+    };
 
     this.loaded = true;
   }
 
-  /** Nome da fonte padrão do pdfmake (Helvetica com aliases para Roboto no vfs). */
+  /** Nome da fonte padrão do pdfmake. */
   private font(weight: TFont = 'regular'): string {
     return weight === 'bold' ? 'Helvetica-Bold' : 'Helvetica';
   }
@@ -685,6 +688,14 @@ export class RelatorioPdfService {
         ...this.tasksBlock(data.tasks),
       ],
       vfs: this.vfs,
+      fontMap: {
+        Helvetica: {
+          normal: 'Roboto-Regular.ttf',
+          bold: 'Roboto-Medium.ttf',
+          italics: 'Roboto-Italic.ttf',
+          bolditalics: 'Roboto-MediumItalic.ttf',
+        },
+      },
       styles: {},
       defaultStyle: {
         font: this.font('regular'),
@@ -699,6 +710,8 @@ export class RelatorioPdfService {
   /** Gera o PDF e dispara o download no navegador. */
   async exportPdf(report: ProductivityReportResponse): Promise<void> {
     await this.ensureLoaded();
+    // Garante que o vfs está disponível na instância do pdfMake no momento da criação.
+    (this.pdfMake as any).vfs = this.vfs;
     const docDefinition = await this.buildDocument(report);
     const pdfDoc = this.pdfMake.createPdf(docDefinition);
     const fileName = this.fileName(report.data.report.period.type);

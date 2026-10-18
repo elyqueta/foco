@@ -34,10 +34,16 @@ export class RelatorioPdfService {
     this.pdfMake = pdfMakeModule.default ?? pdfMakeModule;
     const vfsRaw = vfsFontsModule.default as any;
     const vfsObj = vfsRaw.pdfMake?.vfs ?? vfsRaw.vfs ?? vfsRaw;
-    this.vfs = vfsObj;
+    // Adicionar aliases Helvetica/Helvetica-Bold no vfs (sem extensão).
+    const vfsWithAliases: Record<string, string> = { ...vfsObj };
+    vfsWithAliases['Helvetica'] = vfsObj['Roboto-Regular.ttf'];
+    vfsWithAliases['Helvetica-Bold'] = vfsObj['Roboto-Medium.ttf'];
+    vfsWithAliases['Helvetica-Oblique'] = vfsObj['Roboto-Italic.ttf'];
+    vfsWithAliases['Helvetica-BoldOblique'] = vfsObj['Roboto-MediumItalic.ttf'];
+    this.vfs = vfsWithAliases;
 
     // Registra globalmente no pdfMake.
-    (this.pdfMake as any).vfs = vfsObj;
+    (this.pdfMake as any).vfs = vfsWithAliases;
 
     this.loaded = true;
   }
@@ -135,9 +141,9 @@ export class RelatorioPdfService {
                 },
                 {
                   stack: [
-                    { text: `${labels.userLabel}:`, fontSize: 10, color: theme.ink500, bold: true },
+                    { text: `${labels.userLabel}:`, fontSize: 10, color: theme.ink500, font: 'Helvetica-Bold' },
                     { text: user.name, fontSize: 13, color: theme.ink, margin: [0, 2, 0, 10] },
-                    { text: `${labels.generatedAtLabel}:`, fontSize: 10, color: theme.ink500, bold: true },
+                    { text: `${labels.generatedAtLabel}:`, fontSize: 10, color: theme.ink500, font: 'Helvetica-Bold' },
                     { text: this.formatDateTimePt(meta.generated_at), fontSize: 13, color: theme.ink },
                   ],
                 },
@@ -386,14 +392,14 @@ export class RelatorioPdfService {
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectDeadline, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        { text: labels.projectDeadline, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
                         { text: deadline || '—', fontSize: theme.fontSize.body, color: theme.ink, margin: [0, 1, 0, 6] },
                       ],
                     },
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectUrgency, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        { text: labels.projectUrgency, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
                         {
                           canvas: [
                             { type: 'rect', x: 0, y: 0, w: 54, h: 14, r: 3, color: urgencyColor(project.urgency) },
@@ -412,15 +418,15 @@ export class RelatorioPdfService {
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectProgress, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
-                        { text: `${project.progress}%`, fontSize: theme.fontSize.body, bold: true, color: theme.brand, margin: [0, 1, 0, 6] },
+                        { text: labels.projectProgress, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
+                        { text: `${project.progress}%`, fontSize: theme.fontSize.body, font: 'Helvetica-Bold', color: theme.brand, margin: [0, 1, 0, 6] },
                         { stack: [{ canvas: this.progressBar(project.progress) }], margin: [0, 0, 0, 6] },
                       ],
                     },
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectNextStep, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        { text: labels.projectNextStep, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
                         { text: nextStep || '—', fontSize: theme.fontSize.body, color: theme.ink, margin: [0, 1, 0, 0] },
                       ],
                     },
@@ -504,13 +510,13 @@ export class RelatorioPdfService {
                     {
                       width: '20%',
                       stack: [
-                        { text: categoryLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        { text: categoryLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
                       ],
                     },
                     {
                       width: '20%',
                       stack: [
-                        { text: priorityLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        { text: priorityLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
                         {
                           canvas: [
                             { type: 'rect', x: 0, y: 0, w: 44, h: 12, r: 3, color: urgencyColor(task.priority) },
@@ -680,15 +686,15 @@ export class RelatorioPdfService {
       vfs: this.vfs,
       fontMap: {
         Helvetica: {
-          normal: 'Roboto-Regular.ttf',
-          bold: 'Roboto-Medium.ttf',
-          italics: 'Roboto-Italic.ttf',
-          bolditalics: 'Roboto-MediumItalic.ttf',
+          normal: 'Helvetica',
+          bold: 'Helvetica-Bold',
+          italics: 'Helvetica-Oblique',
+          bolditalics: 'Helvetica-BoldOblique',
         },
       },
       styles: {},
       defaultStyle: {
-        font: this.font(),
+        font: 'Helvetica',
         fontSize: theme.fontSize.body,
         color: theme.ink,
       },

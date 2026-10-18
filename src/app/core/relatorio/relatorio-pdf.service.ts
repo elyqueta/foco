@@ -5,16 +5,6 @@ import {
 } from './relatorio.models';
 import { RELATORIO_THEME } from './relatorio-pdf.theme';
 import { RELATORIO_LABELS } from './relatorio-pdf.labels';
-import {
-  RELATORIO_LOGO_SVG,
-  ICON_PROJECT_SVG,
-  ICON_TASK_SVG,
-  ICON_DATE_SVG,
-  ICON_TIME_SVG,
-  ICON_PROGRESS_SVG,
-  DECORATIVE_CARD_SVG,
-  FOOTER_LOGO_SVG,
-} from './relatorio-pdf.assets';
 
 type TFont = 'regular' | 'medium' | 'semibold' | 'bold';
 
@@ -25,78 +15,14 @@ interface FontMap {
   bold: { normal: string; bold: string; italics: string; bolditalics: string };
 }
 
-/** Cor de fundo da etiqueta de urgência/prioridade. */
-function urgencyColor(value: string): string {
-  switch (value) {
-    case 'critical': return RELATORIO_THEME.danger;
-    case 'high': return RELATORIO_THEME.warn;
-    case 'medium': return RELATORIO_THEME.brand;
-    case 'low': return RELATORIO_THEME.success;
-    default: return RELATORIO_THEME.ink500;
-  }
-}
-
-/** Cor do texto da etiqueta (branco quando fundo escuro/vivo). */
-function urgencyFg(value: string): string {
-  switch (value) {
-    case 'critical': return '#FFFFFF';
-    case 'high': return '#FFFFFF';
-    case 'medium': return '#FFFFFF';
-    case 'low': return '#FFFFFF';
-    default: return RELATORIO_THEME.ink500;
-  }
-}
-
-/** Cor de fundo da etiqueta de estado de projeto. */
-function projectStatusColor(value: string): string {
-  switch (value) {
-    case 'active': return RELATORIO_THEME.successSoft;
-    case 'paused': return RELATORIO_THEME.warnSoft;
-    case 'done': return RELATORIO_THEME.ink300;
-    default: return RELATORIO_THEME.surfaceLine;
-  }
-}
-
-/** Cor do texto do estado de projeto. */
-function projectStatusFg(value: string): string {
-  switch (value) {
-    case 'active': return RELATORIO_THEME.success;
-    case 'paused': return RELATORIO_THEME.warn;
-    case 'done': return RELATORIO_THEME.ink700;
-    default: return RELATORIO_THEME.ink500;
-  }
-}
-
-/** Cor de fundo da etiqueta de estado de tarefa. */
-function taskStatusColor(value: string): string {
-  switch (value) {
-    case 'done': return RELATORIO_THEME.successSoft;
-    case 'in_progress': return RELATORIO_THEME.brandLight;
-    case 'postponed': return RELATORIO_THEME.warnSoft;
-    case 'expired': return RELATORIO_THEME.dangerSoft;
-    default: return RELATORIO_THEME.surfaceLine;
-  }
-}
-
-/** Cor do texto do estado de tarefa. */
-function taskStatusFg(value: string): string {
-  switch (value) {
-    case 'done': return RELATORIO_THEME.success;
-    case 'in_progress': return RELATORIO_THEME.brandDark;
-    case 'postponed': return RELATORIO_THEME.warn;
-    case 'expired': return RELATORIO_THEME.danger;
-    default: return RELATORIO_THEME.ink500;
-  }
-}
-
 /**
  * Serviço de geração do PDF do Relatório de Produtividade.
  * Carrega o pdfmake e as fontes via import() dinâmico apenas quando solicitado.
+ * Não usa imagens (evita problemas de formato no pdfmake); usa canvas e texto.
  */
 @Injectable({ providedIn: 'root' })
 export class RelatorioPdfService {
   private pdfMake: any = null;
-  private vfs: Record<string, string> = {};
   private loaded = false;
 
   /** Nome do ficheiro gerado. */
@@ -105,18 +31,12 @@ export class RelatorioPdfService {
     return `relatorio-produtividade-${period}-${today}.pdf`;
   }
 
-  /** Carrega pdfmake + fontes padrão (Helvetica da vfs do pdfmake) uma única vez. */
+  /** Carrega pdfmake uma única vez. */
   private async ensureLoaded(): Promise<void> {
     if (this.loaded) return;
     const pdfMakeModule = await import('pdfmake/build/pdfmake');
-    const vfsFontsModule = await import('pdfmake/build/vfs_fonts');
 
     this.pdfMake = pdfMakeModule.default ?? pdfMakeModule;
-    const vfsRaw = (vfsFontsModule.default as any) as { pdfMake: { vfs: Record<string, string> } };
-    this.vfs = vfsRaw.pdfMake.vfs;
-
-    // Registra fontes padrão do pdfmake (Helvetica) com suporte a acentos PT.
-    // Estrutura pronta para aceitar TTFs em base64 de Inter / Plus Jakarta Sans.
     this.defineFonts(this.buildFontMap());
 
     this.loaded = true;
@@ -166,12 +86,6 @@ export class RelatorioPdfService {
     return weight;
   }
 
-  /** Converte uma string SVG para data URI usável pelo pdfmake. */
-  private svgDataUri(svg: string): string {
-    const encoded = btoa(unescape(encodeURIComponent(svg)));
-    return `data:image/svg+xml;base64,${encoded}`;
-  }
-
   /** Formata uma string YYYY-MM-DD para "DD/MM. YYYY" (sem dependência de fuso). */
   private formatDatePt(dateStr: string | null): string {
     if (!dateStr) return '';
@@ -193,62 +107,113 @@ export class RelatorioPdfService {
     return map[value] ?? value;
   }
 
+  /** Caractere Unicode para usar como ícone. */
+  private iconChar(tipo: 'project' | 'task' | 'date' | 'time' | 'progress' | 'check' | 'folder'): string {
+    switch (tipo) {
+      case 'project': return '📁';
+      case 'task': return '✅';
+      case 'date': return '📅';
+      case 'time': return '⏱️';
+      case 'progress': return '📊';
+      case 'check': return '✔';
+      case 'folder': return '📂';
+      default: return '•';
+    }
+  }
+
+  /** Retângulo preenchido (canvas) para etiquetas coloridas. */
+  private rect(x: number, y: number, w: number, h: number, color: string, r = 0): any {
+    return { type: 'rect', x, y, w, h, r, color };
+  }
+
+  /** Barra de progresso (canvas): fundo + preenchimento. */
+  private progressBar(progress: number): any[] {
+    const theme = RELATORIO_THEME;
+    const width = 150;
+    const height = 6;
+    return [
+      { type: 'rect', x: 0, y: 0, w: width, h: height, r: 3, color: theme.surfaceLine },
+      { type: 'rect', x: 0, y: 0, w: width * (progress / 100), h: height, r: 3, color: theme.brand },
+    ];
+  }
+
   // ========================================================================
   // Blocos de construção do documento
   // ========================================================================
 
   private coverBlock(report: ProductivityReportResponse['data']): any {
     const { report: meta, user } = report;
-    const logoUri = this.svgDataUri(RELATORIO_LOGO_SVG);
-    const decorativeUri = this.svgDataUri(DECORATIVE_CARD_SVG);
+    const theme = RELATORIO_THEME;
+    const labels = RELATORIO_LABELS;
 
-    return [
-      {
-        columns: [
-          {
-            width: '60%',
-            stack: [
-              { image: logoUri, width: 120, margin: [0, 0, 0, 40] },
-              {
-                text: RELATORIO_LABELS.title,
-                fontSize: RELATORIO_THEME.fontSize.title,
-                bold: true,
-                color: RELATORIO_THEME.ink,
-                margin: [0, 0, 0, 8],
-              },
-              {
-                text: meta.period.label,
-                fontSize: RELATORIO_THEME.fontSize.h3,
-                color: RELATORIO_THEME.ink500,
-                margin: [0, 0, 0, 24],
-              },
-              {
-                stack: [
-                  { text: `${RELATORIO_LABELS.userLabel}:`, fontSize: 10, color: RELATORIO_THEME.ink500, bold: true },
-                  { text: user.name, fontSize: 13, color: RELATORIO_THEME.ink, margin: [0, 2, 0, 10] },
-                  { text: `${RELATORIO_LABELS.generatedAtLabel}:`, fontSize: 10, color: RELATORIO_THEME.ink500, bold: true },
-                  { text: this.formatDateTimePt(meta.generated_at), fontSize: 13, color: RELATORIO_THEME.ink },
-                ],
-              },
-            ],
-          },
-          {
-            width: '40%',
-            stack: [
-              { image: decorativeUri, width: 220, margin: [0, 0, 0, 0] },
-            ],
-          },
-        ],
-        margin: [RELATORIO_THEME.spacing.pageMargin, RELATORIO_THEME.spacing.pageMargin],
-        pageBreak: 'after',
-      },
-    ];
+    return {
+      stack: [
+        {
+          columns: [
+            {
+              width: '60%',
+              stack: [
+                {
+                  text: 'Foco',
+                  fontSize: 32,
+                  bold: true,
+                  color: theme.brand,
+                  margin: [0, 0, 0, 10],
+                },
+                {
+                  text: labels.title,
+                  fontSize: theme.fontSize.title,
+                  bold: true,
+                  color: theme.ink,
+                  margin: [0, 0, 0, 8],
+                },
+                {
+                  text: meta.period.label,
+                  fontSize: theme.fontSize.h3,
+                  color: theme.ink500,
+                  margin: [0, 0, 0, 24],
+                },
+                {
+                  stack: [
+                    { text: `${labels.userLabel}:`, fontSize: 10, color: theme.ink500, bold: true },
+                    { text: user.name, fontSize: 13, color: theme.ink, margin: [0, 2, 0, 10] },
+                    { text: `${labels.generatedAtLabel}:`, fontSize: 10, color: theme.ink500, bold: true },
+                    { text: this.formatDateTimePt(meta.generated_at), fontSize: 13, color: theme.ink },
+                  ],
+                },
+              ],
+            },
+            {
+              width: '40%',
+              stack: [
+                {
+                  canvas: [
+                    { type: 'rect', x: 0, y: 0, w: 220, h: 110, r: 12, color: theme.brandLight },
+                    { type: 'rect', x: 150, y: 30, w: 60, h: 60, r: 30, color: '#FFFFFF', opacity: 0.6 },
+                  ],
+                  margin: [0, 0, 0, 0],
+                },
+                {
+                  text: 'Grandes resultados nascem de pequenos passos consistentes.',
+                  fontSize: 11,
+                  color: theme.ink700,
+                  margin: [0, 16, 0, 0],
+                  alignment: 'center',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      margin: [theme.spacing.pageMargin, theme.spacing.pageMargin],
+      pageBreak: 'after',
+    };
   }
 
   private headerBlock(report: ProductivityReportResponse['data'], currentPage: number): any[] {
     const { report: meta, user } = report;
-    const logoUri = this.svgDataUri(RELATORIO_LOGO_SVG);
-    const decorativeUri = this.svgDataUri(DECORATIVE_CARD_SVG);
+    const theme = RELATORIO_THEME;
+    const labels = RELATORIO_LABELS;
 
     return [
       {
@@ -256,25 +221,31 @@ export class RelatorioPdfService {
           {
             width: '55%',
             stack: [
-              { image: logoUri, width: 80, margin: [0, 0, 0, 6] },
               {
-                text: RELATORIO_LABELS.title,
-                fontSize: RELATORIO_THEME.fontSize.h1,
+                text: 'Foco',
+                fontSize: 24,
                 bold: true,
-                color: RELATORIO_THEME.ink,
+                color: theme.brand,
+                margin: [0, 0, 0, 6],
+              },
+              {
+                text: labels.title,
+                fontSize: theme.fontSize.h1,
+                bold: true,
+                color: theme.ink,
                 margin: [0, 0, 0, 4],
               },
               {
-                text: RELATORIO_LABELS.subtitle,
-                fontSize: RELATORIO_THEME.fontSize.body,
-                color: RELATORIO_THEME.ink500,
+                text: labels.subtitle,
+                fontSize: theme.fontSize.body,
+                color: theme.ink500,
                 margin: [0, 0, 0, 8],
               },
               {
                 stack: [
-                  { text: `${RELATORIO_LABELS.userLabel}: ${user.name}`, fontSize: RELATORIO_THEME.fontSize.body, color: RELATORIO_THEME.ink },
-                  { text: `${RELATORIO_LABELS.generatedAtLabel}: ${this.formatDateTimePt(meta.generated_at)}`, fontSize: RELATORIO_THEME.fontSize.body, color: RELATORIO_THEME.ink },
-                  { text: `${RELATORIO_LABELS.periodLabel}: ${meta.period.label}`, fontSize: RELATORIO_THEME.fontSize.body, color: RELATORIO_THEME.ink },
+                  { text: `${labels.userLabel}: ${user.name}`, fontSize: theme.fontSize.body, color: theme.ink },
+                  { text: `${labels.generatedAtLabel}: ${this.formatDateTimePt(meta.generated_at)}`, fontSize: theme.fontSize.body, color: theme.ink },
+                  { text: `${labels.periodLabel}: ${meta.period.label}`, fontSize: theme.fontSize.body, color: theme.ink },
                 ],
                 margin: [0, 0, 0, 10],
               },
@@ -283,7 +254,20 @@ export class RelatorioPdfService {
           {
             width: '45%',
             stack: [
-              { image: decorativeUri, width: 180, margin: [0, 0, 0, 0] },
+              {
+                canvas: [
+                  { type: 'rect', x: 0, y: 0, w: 180, h: 80, r: 8, color: theme.brandLight },
+                  { type: 'rect', x: 120, y: 20, w: 40, h: 40, r: 20, color: '#FFFFFF', opacity: 0.6 },
+                ],
+                margin: [0, 0, 0, 0],
+              },
+              {
+                text: 'Grandes resultados nascem de pequenos passos consistentes.',
+                fontSize: 9,
+                color: theme.ink700,
+                margin: [0, 10, 0, 0],
+                alignment: 'center',
+              },
             ],
           },
         ],
@@ -291,14 +275,7 @@ export class RelatorioPdfService {
       },
       {
         canvas: [
-          {
-            type: 'rect',
-            x: 0,
-            y: 0,
-            w: RELATORIO_THEME.contentWidth,
-            lineWidth: 1,
-            color: RELATORIO_THEME.surfaceLine,
-          },
+          { type: 'rect', x: 0, y: 0, w: theme.contentWidth, h: 1, color: theme.surfaceLine },
         ],
         margin: [0, 0, 0, 12],
       },
@@ -310,20 +287,25 @@ export class RelatorioPdfService {
     const theme = RELATORIO_THEME;
 
     const indicators = [
-      { icon: ICON_PROJECT_SVG, value: summary.projects_total, label: labels.indicatorProjects },
-      { icon: ICON_PROJECT_SVG, value: summary.projects_active, label: labels.indicatorProjectsActive },
-      { icon: ICON_TASK_SVG, value: summary.tasks_total, label: labels.indicatorTasks },
-      { icon: ICON_TASK_SVG, value: summary.tasks_completed, label: labels.indicatorTasksCompleted },
-      { icon: ICON_TASK_SVG, value: summary.tasks_pending, label: labels.indicatorTasksPending },
-      { icon: ICON_TASK_SVG, value: summary.tasks_overdue, label: labels.indicatorTasksOverdue },
-      { icon: ICON_DATE_SVG, value: summary.tasks_due_today, label: labels.indicatorTasksDueToday },
+      { icon: this.iconChar('project'), value: summary.projects_total, label: labels.indicatorProjects },
+      { icon: this.iconChar('project'), value: summary.projects_active, label: labels.indicatorProjectsActive },
+      { icon: this.iconChar('task'), value: summary.tasks_total, label: labels.indicatorTasks },
+      { icon: this.iconChar('task'), value: summary.tasks_completed, label: labels.indicatorTasksCompleted },
+      { icon: this.iconChar('task'), value: summary.tasks_pending, label: labels.indicatorTasksPending },
+      { icon: this.iconChar('task'), value: summary.tasks_overdue, label: labels.indicatorTasksOverdue },
+      { icon: this.iconChar('date'), value: summary.tasks_due_today, label: labels.indicatorTasksDueToday },
     ];
 
     return {
       columns: indicators.map((ind) => ({
         width: '14.28%', // 7 colunas
         stack: [
-          { image: this.svgDataUri(ind.icon), width: 28, height: 28, margin: [0, 0, 0, 6] },
+          {
+            text: ind.icon,
+            fontSize: 20,
+            alignment: 'center',
+            margin: [0, 0, 0, 6],
+          },
           {
             text: String(ind.value),
             fontSize: theme.fontSize.indicatorNumber,
@@ -344,28 +326,33 @@ export class RelatorioPdfService {
     };
   }
 
-  private sectionHeader(title: string, subtitle: string, count: number, iconSvg: string): any {
+  private sectionHeader(title: string, subtitle: string, count: number, tipoIcone: 'project' | 'task'): any {
+    const theme = RELATORIO_THEME;
     return {
       columns: [
         {
           stack: [
-            { image: this.svgDataUri(iconSvg), width: 20, height: 20, margin: [0, 0, 0, 6] },
+            {
+              text: this.iconChar(tipoIcone),
+              fontSize: 20,
+              margin: [0, 0, 0, 6],
+            },
             {
               text: title,
-              fontSize: RELATORIO_THEME.fontSize.h2,
+              fontSize: theme.fontSize.h2,
               bold: true,
-              color: RELATORIO_THEME.ink,
+              color: theme.ink,
               margin: [0, 0, 0, 2],
             },
             {
               text: `${subtitle} (${count})`,
-              fontSize: RELATORIO_THEME.fontSize.small,
-              color: RELATORIO_THEME.ink500,
+              fontSize: theme.fontSize.small,
+              color: theme.ink500,
             },
           ],
         },
       ],
-      margin: [0, 0, 0, RELATORIO_THEME.spacing.cardGap],
+      margin: [0, 0, 0, theme.spacing.cardGap],
     };
   }
 
@@ -387,7 +374,13 @@ export class RelatorioPdfService {
             {
               width: 56,
               stack: [
-                { image: this.svgDataUri(ICON_PROJECT_SVG), width: 32, height: 32, margin: [0, 0, 0, 4] },
+                {
+                  text: this.iconChar('project'),
+                  fontSize: 28,
+                  color: theme.brand,
+                  alignment: 'center',
+                  margin: [0, 0, 0, 4],
+                },
               ],
             },
             {
@@ -407,15 +400,7 @@ export class RelatorioPdfService {
                       stack: [
                         {
                           canvas: [
-                            {
-                              type: 'rect',
-                              x: 0,
-                              y: 0,
-                              w: 66,
-                              h: 16,
-                              r: 4,
-                              color: projectStatusColor(project.status),
-                            },
+                            { type: 'rect', x: 0, y: 0, w: 66, h: 16, r: 4, color: projectStatusColor(project.status) },
                           ],
                           margin: [0, 0, 0, 0],
                         },
@@ -451,15 +436,7 @@ export class RelatorioPdfService {
                         { text: labels.projectUrgency, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
                         {
                           canvas: [
-                            {
-                              type: 'rect',
-                              x: 0,
-                              y: 0,
-                              w: 54,
-                              h: 14,
-                              r: 3,
-                              color: urgencyColor(project.urgency),
-                            },
+                            { type: 'rect', x: 0, y: 0, w: 54, h: 14, r: 3, color: urgencyColor(project.urgency) },
                           ],
                           margin: [0, 0, 0, 0],
                         },
@@ -476,20 +453,8 @@ export class RelatorioPdfService {
                       width: '25%',
                       stack: [
                         { text: labels.projectProgress, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
-                        {
-                          text: `${project.progress}%`,
-                          fontSize: theme.fontSize.body,
-                          bold: true,
-                          color: theme.brand,
-                          margin: [0, 1, 0, 6],
-                        },
-                        {
-                          canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 150, h: 6, r: 3, color: theme.surfaceLine },
-                            { type: 'rect', x: 0, y: 0, w: 150 * (project.progress / 100), h: 6, r: 3, color: theme.brand },
-                          ],
-                          margin: [0, 0, 0, 6],
-                        },
+                        { text: `${project.progress}%`, fontSize: theme.fontSize.body, bold: true, color: theme.brand, margin: [0, 1, 0, 6] },
+                        { stack: [{ canvas: this.progressBar(project.progress) }], margin: [0, 0, 0, 6] },
                       ],
                     },
                     {
@@ -506,9 +471,7 @@ export class RelatorioPdfService {
           ],
         },
         {
-          canvas: [
-            { type: 'line', x1: 0, y1: 0, x2: theme.contentWidth, y2: 0, lineWidth: 1, color: theme.surfaceLine },
-          ],
+          canvas: [{ type: 'rect', x: 0, y: 0, w: theme.contentWidth, h: 1, color: theme.surfaceLine }],
           margin: [0, 4, 0, 0],
         },
       ],
@@ -535,7 +498,13 @@ export class RelatorioPdfService {
             {
               width: 40,
               stack: [
-                { image: this.svgDataUri(ICON_TASK_SVG), width: 24, height: 24, margin: [0, 0, 0, 2] },
+                {
+                  text: this.iconChar('task'),
+                  fontSize: 20,
+                  color: theme.brand,
+                  alignment: 'center',
+                  margin: [0, 0, 0, 2],
+                },
               ],
             },
             {
@@ -555,15 +524,7 @@ export class RelatorioPdfService {
                       stack: [
                         {
                           canvas: [
-                            {
-                              type: 'rect',
-                              x: 0,
-                              y: 0,
-                              w: 50,
-                              h: 14,
-                              r: 3,
-                              color: taskStatusColor(task.status),
-                            },
+                            { type: 'rect', x: 0, y: 0, w: 50, h: 14, r: 3, color: taskStatusColor(task.status) },
                           ],
                           margin: [0, 0, 0, 0],
                         },
@@ -592,15 +553,7 @@ export class RelatorioPdfService {
                         { text: priorityLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
                         {
                           canvas: [
-                            {
-                              type: 'rect',
-                              x: 0,
-                              y: 0,
-                              w: 44,
-                              h: 12,
-                              r: 3,
-                              color: urgencyColor(task.priority),
-                            },
+                            { type: 'rect', x: 0, y: 0, w: 44, h: 12, r: 3, color: urgencyColor(task.priority) },
                           ],
                           margin: [0, 0, 0, 0],
                         },
@@ -628,7 +581,13 @@ export class RelatorioPdfService {
                     {
                       width: '20%',
                       stack: [
-                        { image: this.svgDataUri(ICON_TIME_SVG), width: 12, height: 12, margin: [0, 0, 0, 0] },
+                        {
+                          text: this.iconChar('time'),
+                          fontSize: 12,
+                          color: theme.ink500,
+                          alignment: 'center',
+                          margin: [0, 0, 0, 0],
+                        },
                       ],
                     },
                   ],
@@ -638,9 +597,7 @@ export class RelatorioPdfService {
           ],
         },
         {
-          canvas: [
-            { type: 'line', x1: 0, y1: 0, x2: theme.contentWidth, y2: 0, lineWidth: 0.5, color: theme.surfaceLine },
-          ],
+          canvas: [{ type: 'rect', x: 0, y: 0, w: theme.contentWidth, h: 0.5, color: theme.surfaceLine }],
           margin: [0, 3, 0, 0],
         },
       ],
@@ -648,22 +605,29 @@ export class RelatorioPdfService {
   }
 
   /** Estado vazio para uma secção. */
-  private emptyBlock(message: string, iconSvg: string): any {
+  private emptyBlock(message: string, tipoIcone: 'project' | 'task'): any {
+    const theme = RELATORIO_THEME;
     return {
       columns: [
         {
           stack: [
-            { image: this.svgDataUri(iconSvg), width: 32, height: 32, margin: [0, 0, 0, 8] },
+            {
+              text: this.iconChar(tipoIcone),
+              fontSize: 28,
+              color: theme.brand,
+              alignment: 'center',
+              margin: [0, 0, 0, 8],
+            },
             {
               text: message,
-              fontSize: RELATORIO_THEME.fontSize.body,
-              color: RELATORIO_THEME.ink500,
+              fontSize: theme.fontSize.body,
+              color: theme.ink500,
               alignment: 'center',
             },
           ],
         },
       ],
-      margin: [0, 0, 0, RELATORIO_THEME.spacing.sectionGap],
+      margin: [0, 0, 0, theme.spacing.sectionGap],
     };
   }
 
@@ -671,10 +635,10 @@ export class RelatorioPdfService {
   private projectsBlock(projects: ProductivityReportResponse['data']['projects']): any[] {
     const blocks: any[] = [];
     if (projects.length === 0) {
-      blocks.push(this.emptyBlock(RELATORIO_LABELS.emptyProjects, ICON_PROJECT_SVG));
+      blocks.push(this.emptyBlock(RELATORIO_LABELS.emptyProjects, 'project'));
       return blocks;
     }
-    blocks.push(this.sectionHeader(RELATORIO_LABELS.sectionProjects, RELATORIO_LABELS.sectionProjectsSubtitle, projects.length, ICON_PROJECT_SVG));
+    blocks.push(this.sectionHeader(RELATORIO_LABELS.sectionProjects, RELATORIO_LABELS.sectionProjectsSubtitle, projects.length, 'project'));
     for (const p of projects) {
       blocks.push(this.projectCard(p));
     }
@@ -685,10 +649,10 @@ export class RelatorioPdfService {
   private tasksBlock(tasks: ProductivityReportResponse['data']['tasks']): any[] {
     const blocks: any[] = [];
     if (tasks.length === 0) {
-      blocks.push(this.emptyBlock(RELATORIO_LABELS.emptyTasks, ICON_TASK_SVG));
+      blocks.push(this.emptyBlock(RELATORIO_LABELS.emptyTasks, 'task'));
       return blocks;
     }
-    blocks.push(this.sectionHeader(RELATORIO_LABELS.sectionTasks, RELATORIO_LABELS.sectionTasksSubtitle, tasks.length, ICON_TASK_SVG));
+    blocks.push(this.sectionHeader(RELATORIO_LABELS.sectionTasks, RELATORIO_LABELS.sectionTasksSubtitle, tasks.length, 'task'));
     for (const t of tasks) {
       blocks.push(this.taskRow(t));
     }
@@ -715,14 +679,19 @@ export class RelatorioPdfService {
         if (currentPage === 1) return null;
         const reportPage = currentPage - 1;
         const totalReportPages = pageCount - 1;
-        const logoUri = this.svgDataUri(FOOTER_LOGO_SVG);
 
         return {
           columns: [
             {
               width: '60%',
               stack: [
-                { image: logoUri, width: 50, margin: [0, 2, 0, 4] },
+                {
+                  text: 'Foco',
+                  fontSize: 14,
+                  bold: true,
+                  color: theme.brand,
+                  margin: [0, 2, 0, 4],
+                },
                 {
                   text: `${RELATORIO_LABELS.generatedBy} · ${this.formatDateTimePt(data.report.generated_at)}`,
                   fontSize: theme.fontSize.tiny,
@@ -743,7 +712,7 @@ export class RelatorioPdfService {
         };
       },
       content: [
-        ...this.coverBlock(data),
+        this.coverBlock(data),
         this.indicatorsBlock(data.summary),
         ...this.projectsBlock(data.projects),
         ...this.tasksBlock(data.tasks),
@@ -766,5 +735,63 @@ export class RelatorioPdfService {
     const pdfDoc = this.pdfMake.createPdf(docDefinition);
     const fileName = this.fileName(report.data.report.period.type);
     pdfDoc.download(fileName);
+  }
+}
+
+function urgencyColor(value: string): string {
+  switch (value) {
+    case 'critical': return RELATORIO_THEME.danger;
+    case 'high': return RELATORIO_THEME.warn;
+    case 'medium': return RELATORIO_THEME.brand;
+    case 'low': return RELATORIO_THEME.success;
+    default: return RELATORIO_THEME.ink500;
+  }
+}
+
+function urgencyFg(value: string): string {
+  switch (value) {
+    case 'critical': return '#FFFFFF';
+    case 'high': return '#FFFFFF';
+    case 'medium': return '#FFFFFF';
+    case 'low': return '#FFFFFF';
+    default: return RELATORIO_THEME.ink500;
+  }
+}
+
+function projectStatusColor(value: string): string {
+  switch (value) {
+    case 'active': return RELATORIO_THEME.successSoft;
+    case 'paused': return RELATORIO_THEME.warnSoft;
+    case 'done': return RELATORIO_THEME.ink300;
+    default: return RELATORIO_THEME.surfaceLine;
+  }
+}
+
+function projectStatusFg(value: string): string {
+  switch (value) {
+    case 'active': return RELATORIO_THEME.success;
+    case 'paused': return RELATORIO_THEME.warn;
+    case 'done': return RELATORIO_THEME.ink700;
+    default: return RELATORIO_THEME.ink500;
+  }
+}
+
+function taskStatusColor(value: string): string {
+  switch (value) {
+    case 'done': return RELATORIO_THEME.successSoft;
+    case 'in_progress': return RELATORIO_THEME.brandLight;
+    case 'postponed': return RELATORIO_THEME.warnSoft;
+    case 'expired': return RELATORIO_THEME.dangerSoft;
+    default: return RELATORIO_THEME.surfaceLine;
+  }
+}
+
+function taskStatusFg(value: string): string {
+  switch (value) {
+    case 'done': return RELATORIO_THEME.success;
+    case 'in_progress': return RELATORIO_THEME.brandDark;
+    case 'postponed': return RELATORIO_THEME.warn;
+    case 'expired': return RELATORIO_THEME.danger;
+    default: return RELATORIO_THEME.ink500;
   }
 }

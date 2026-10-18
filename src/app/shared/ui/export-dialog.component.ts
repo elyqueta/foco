@@ -1,5 +1,6 @@
 import { Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ExportService } from '../../core/export.service';
 import { AppIconComponent } from './icon.component';
 import { AppButtonComponent } from './button.component';
@@ -39,15 +40,16 @@ import { AppButtonComponent } from './button.component';
 })
 export class ExportDialogComponent {
   private readonly exportService = inject(ExportService);
+  private readonly router = inject(Router);
 
   close = output<void>();
 
   choose(format: 'json' | 'pdf'): void {
+    this.close.emit();
     if (format === 'json') {
       this.exportService.exportJson();
     } else {
-      this.exportService.exportPdf();
+      void this.router.navigate(['/relatorio']);
     }
-    this.close.emit();
   }
 }

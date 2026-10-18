@@ -6,7 +6,6 @@ import { RelatorioService } from '../../core/relatorio/relatorio.service';
 import { RelatorioPdfService } from '../../core/relatorio/relatorio-pdf.service';
 import { ReportPeriodOption, ReportRequestParams } from '../../core/relatorio/relatorio.models';
 import { AppButtonComponent } from '../../shared/ui/button.component';
-import { AppIconComponent } from '../../shared/ui/icon.component';
 
 const PERIOD_OPTIONS: ReportPeriodOption[] = [
   { value: 'today', label: 'Hoje', needsDates: false, needsMonth: false },
@@ -20,7 +19,7 @@ const PERIOD_OPTIONS: ReportPeriodOption[] = [
 @Component({
   selector: 'app-relatorio-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppButtonComponent, AppIconComponent],
+  imports: [CommonModule, FormsModule, AppButtonComponent],
   template: `
     <div class="mt-4 w-full min-w-0 sm:mt-8 sm:max-w-[720px]">
       <h1 class="mb-5 text-[26px] font-extrabold text-ink sm:mb-6 sm:text-[28px]">Relatório de Produtividade</h1>
@@ -32,9 +31,10 @@ const PERIOD_OPTIONS: ReportPeriodOption[] = [
         <div class="space-y-3">
           @for (opt of periodOptions; track opt.value) {
             <label class="flex items-center gap-3 rounded-xl border border-surface-line bg-surface-card p-3 cursor-pointer select-none group"
-              [class.border-brand/30]="selectedPeriod === opt.value"
-              [class.bg-brand-50]="selectedPeriod === opt.value">
-              <input type="radio" name="period" [value]="opt.value" [(ngModel)]="selectedPeriod"
+              [class.border-brand/30]="selectedPeriod() === opt.value"
+              [class.bg-brand-50]="selectedPeriod() === opt.value">
+              <input type="radio" name="period" [value]="opt.value" [ngModel]="selectedPeriod()"
+                (ngModelChange)="selectedPeriod.set($event)"
                 class="h-5 w-5 rounded border border-surface-line text-brand focus:ring-2 focus:ring-brand/30 shrink-0" />
               <span class="text-[13px] font-semibold text-ink">{{ opt.label }}</span>
             </label>
@@ -92,7 +92,7 @@ export class RelatorioPage {
   private router = inject(Router);
 
   readonly periodOptions = PERIOD_OPTIONS;
-  selectedPeriod = PERIOD_OPTIONS[0].value;
+  selectedPeriod = signal(PERIOD_OPTIONS[0].value);
   monthValue = '';
   startDate = '';
   endDate = '';
@@ -100,8 +100,8 @@ export class RelatorioPage {
   exporting = signal(false);
   error = signal('');
 
-  needsMonth = computed(() => PERIOD_OPTIONS.find((o) => o.value === this.selectedPeriod)?.needsMonth ?? false);
-  needsDates = computed(() => PERIOD_OPTIONS.find((o) => o.value === this.selectedPeriod)?.needsDates ?? false);
+  needsMonth = computed(() => PERIOD_OPTIONS.find((o) => o.value === this.selectedPeriod())?.needsMonth ?? false);
+  needsDates = computed(() => PERIOD_OPTIONS.find((o) => o.value === this.selectedPeriod())?.needsDates ?? false);
 
   canExport(): boolean {
     if (this.exporting()) return false;
@@ -117,7 +117,7 @@ export class RelatorioPage {
     this.exporting.set(true);
 
     try {
-      const params: ReportRequestParams = { period: this.selectedPeriod };
+      const params: ReportRequestParams = { period: this.selectedPeriod() };
       if (this.needsMonth() && this.monthValue) {
         params.month = this.monthValue.slice(0, 7); // YYYY-MM
       }

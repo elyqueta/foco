@@ -29,6 +29,7 @@ export class AuthService {
 
   private readonly _session = signal<AuthSession | null>(readSession());
   private readonly _validated = signal(false);
+  private readonly _cameFromRegister = signal(false);
   private _validation: Promise<void> | null = null;
 
   readonly user = computed(() => this._session()?.user ?? null);
@@ -40,14 +41,17 @@ export class AuthService {
   });
   readonly token = computed(() => this._session()?.token ?? null);
   readonly validated = computed(() => this._validated() || !environment.useApi);
+  readonly cameFromRegister = this._cameFromRegister.asReadonly();
 
   async login(payload: { email: string; password: string }): Promise<void> {
+    this._cameFromRegister.set(false);
     const session = await this.repo.login(payload);
     this.applySession(session);
   }
 
   async register(payload: RegisterPayload): Promise<void> {
     const session = await this.repo.register(payload);
+    this._cameFromRegister.set(true);
     this.applySession(session);
   }
 
@@ -160,6 +164,7 @@ export class AuthService {
     this._session.set(null);
     this._validated.set(false);
     this._validation = null;
+    this._cameFromRegister.set(false);
     this.store.setSessionScope(null);
   }
 

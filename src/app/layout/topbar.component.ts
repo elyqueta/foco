@@ -8,6 +8,7 @@ import { AuthService } from '../core/auth/auth.service';
 import { TaskModalService } from '../core/task-modal.service';
 import { SearchDropdownComponent } from '../shared/ui/search-dropdown.component';
 import { NotificationService } from '../core/notification.service';
+import { ExportService } from '../core/export.service';
 import { ExportDialogComponent } from '../shared/ui/export-dialog.component';
 import { LogoutDialogComponent } from '../shared/ui/logout-dialog.component';
 import { AppIconComponent } from '../shared/ui/icon.component';
@@ -28,6 +29,7 @@ export class TopbarComponent implements OnInit {
   private auth = inject(AuthService);
   private modal = inject(TaskModalService);
   private notifications = inject(NotificationService);
+  private exportService = inject(ExportService);
   searchQuery = this.search.query;
 
   tabs = [
@@ -92,6 +94,7 @@ export class TopbarComponent implements OnInit {
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.search.query.set(input.value);
+    void this.search.search();
   }
 
   onSearchEnter(): void {
@@ -131,16 +134,8 @@ export class TopbarComponent implements OnInit {
     this.modal.show();
   }
 
-  exportJson(): void {
-    const json = this.store.exportJson();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const date = toISODate(new Date());
-    a.href = url;
-    a.download = `foco-backup-${date}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  async exportJson(): Promise<void> {
+    await this.exportService.exportJson();
   }
 
   exportPdf(): void {

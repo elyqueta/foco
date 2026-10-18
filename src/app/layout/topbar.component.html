@@ -40,9 +40,9 @@
 
     <app-button variant="secondary" size="sm" icon="download" label="Exportar" (click)="showExportDialog.set(true)"></app-button>
 
-    <app-button variant="dark" icon="plus" label="Nova tarefa" (click)="openNewTask()"></app-button>
+    <app-button variant="dark" icon="plus" label="Nova tarefa" [attr.data-onboarding]="'new-task'" (click)="openNewTask()"></app-button>
 
-    <a [routerLink]="['/notificacoes']" aria-label="Notificações" title="Notificações"
+    <a [routerLink]="['/notificacoes']" aria-label="Notificações" title="Notificações" [attr.data-onboarding]="'notifications'"
       class="relative grid h-10 w-10 place-items-center rounded-xl text-ink-500 transition hover:bg-surface-app focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40">
       <app-icon [name]="unreadNotifications() > 0 ? 'bell-ring' : 'bell'" [size]="20" />
       @if (unreadNotifications() > 0) {

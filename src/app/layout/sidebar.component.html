@@ -14,6 +14,7 @@
       [class.hover:bg-brand-600/60]="!activeLink.isActive"
       [class.hover:text-primary-fg]="!activeLink.isActive"
       [ngClass]="isMobileOverflowItem(item) ? 'hidden lg:grid' : 'grid'"
+      [attr.data-onboarding]="item.path === '' ? 'nav' : null"
       class="h-11 w-11 shrink-0 place-items-center rounded-2xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60"
     >
       <app-icon [name]="item.icon" [size]="20" />

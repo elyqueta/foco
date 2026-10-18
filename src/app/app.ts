@@ -4,12 +4,16 @@ import { ConsoleApi } from './core/console-api';
 import { ColorSchemeService } from './core/color-scheme.service';
 import { AuthService } from './core/auth/auth.service';
 import { DataStore } from './core/data.store';
+import { NotificationBannerComponent } from './shared/ui/notification-banner.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  template: `<router-outlet />`,
+  imports: [RouterOutlet, NotificationBannerComponent],
+  template: `
+    <router-outlet />
+    <app-notification-banner />
+  `,
 })
 export class App {
   private consoleApi = inject(ConsoleApi);

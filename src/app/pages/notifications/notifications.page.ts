@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../core/notification.service';
@@ -39,18 +39,44 @@ export class NotificationsPage {
    * Hoje, Ontem, Esta semana, Semana passada e, mais atrás, a data completa.
    */
   readonly groups = computed(() => {
-    const groups: { label: string; items: AppNotification[] }[] = [];
+    const groups: { label: string; items: AppNotification[]; unread: number }[] = [];
     for (const item of this.items()) {
       const label = dateGroupLabel(item.createdAt);
       const last = groups.at(-1);
       if (last && last.label === label) {
         last.items.push(item);
+        if (!item.read) last.unread += 1;
       } else {
-        groups.push({ label, items: [item] });
+        groups.push({ label, items: [item], unread: item.read ? 0 : 1 });
       }
     }
     return groups;
   });
+
+  /** O utilizador já interagiu com o acordeão (para não reabrir o grupo por omissão). */
+  private readonly groupTouched = signal(false);
+  private readonly openGroup = signal<string | null>(null);
+
+  /** Etiqueta do grupo expandido: o escolhido ou o mais recente quando nada foi escolhido. */
+  readonly expandedLabel = computed(() => {
+    const groups = this.groups();
+    if (groups.length === 0) return null;
+    if (!this.groupTouched()) return groups[0].label;
+    const open = this.openGroup();
+    if (open && groups.some((g) => g.label === open)) return open;
+    // O grupo aberto desapareceu (ex.: notificações removidas): mostra o mais recente.
+    return open ? groups[0].label : null;
+  });
+
+  isOpen(label: string): boolean {
+    return this.expandedLabel() === label;
+  }
+
+  /** Abre um grupo e fecha os outros; clicar no grupo aberto fecha-o. */
+  toggleGroup(label: string): void {
+    this.groupTouched.set(true);
+    this.openGroup.set(this.expandedLabel() === label ? null : label);
+  }
 
   /** Abre o assunto da notificação (tarefa ou projeto) e marca como lida. */
   async open(item: AppNotification): Promise<void> {

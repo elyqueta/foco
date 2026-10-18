@@ -19,8 +19,8 @@ import { AppButtonComponent } from './button.component';
         </div>
 
         <div class="mt-6 flex flex-col gap-3">
-          <app-button variant="primary" icon="smartphone" label="Terminar sessão neste dispositivo" [iconOnlyBelow]="null" buttonClass="w-full" (click)="logoutThisDevice.emit()"></app-button>
-          <app-button variant="danger" icon="users" label="Terminar sessão em todos os dispositivos" [iconOnlyBelow]="null" buttonClass="w-full" (click)="logoutAllDevices.emit()"></app-button>
+          <app-button variant="primary" icon="smartphone" label="Terminar sessão" text="Este dispositivo" [iconOnlyBelow]="null" buttonClass="w-full" (click)="logoutThisDevice.emit()"></app-button>
+          <app-button variant="danger" icon="users" label="Terminar sessão" text="Todos os dispositivos" [iconOnlyBelow]="null" buttonClass="w-full" (click)="logoutAllDevices.emit()"></app-button>
           <app-button variant="ghost" icon="x" label="Cancelar" [iconOnlyBelow]="null" buttonClass="w-full" (click)="cancel.emit()"></app-button>
         </div>
       </div>

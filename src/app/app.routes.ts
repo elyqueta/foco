@@ -32,6 +32,7 @@ export const routes: Routes = [
       { path: 'categorias', loadComponent: () => import('./pages/categories/categories.page').then(m => m.CategoriesPage) },
       { path: 'definicoes', loadComponent: () => import('./pages/settings/settings.page').then(m => m.SettingsPage) },
       { path: 'notificacoes', loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage) },
+      { path: 'relatorio', loadComponent: () => import('./pages/relatorio/relatorio.page').then(m => m.RelatorioPage) },
     ],
   },
   { path: '**', redirectTo: '' },

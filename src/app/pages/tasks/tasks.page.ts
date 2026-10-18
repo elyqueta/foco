@@ -33,6 +33,7 @@ export class TasksPage {
   showDone = signal(false);
   showExpired = signal(false);
   searchQuery = this.search.query;
+  searchResults = this.search.results;
 
   loading = this.store.loading;
   loadError = this.store.loadError;
@@ -60,6 +61,40 @@ export class TasksPage {
   }
 
   filtered() {
+    if (this.store.useApi) {
+      const results = this.searchResults();
+      if (!results) return [];
+      const tasks = results.tasks.map((t) => {
+        const project = this.store.data().projects.find((p) => p.id === t.projectId);
+        return {
+          id: t.id,
+          title: t.title,
+          description: '',
+          category: t.category,
+          urgency: 'medium' as const,
+          status: t.status as any,
+          canPostpone: true,
+          dueDate: null,
+          nextStep: '',
+          estimateMinutes: null,
+          tags: [],
+          activity: [],
+          createdAt: '',
+          updatedAt: '',
+          completedAt: null,
+          projectId: t.projectId ?? null,
+        } as Task;
+      });
+      let filtered = tasks;
+      const cat = this.catFilter();
+      const urg = this.urgencyFilter();
+      if (cat !== 'all') filtered = filtered.filter((t) => t.category === cat);
+      if (urg !== 'all') filtered = filtered.filter((t) => t.urgency === urg);
+      const done = this.showDone();
+      if (!done) filtered = filtered.filter((t) => t.status !== 'done');
+      if (!this.showExpired()) filtered = filtered.filter((t) => t.status !== 'expired');
+      return filtered;
+    }
     let tasks = this.store.data().tasks;
     const cat = this.catFilter();
     const urg = this.urgencyFilter();
@@ -71,14 +106,6 @@ export class TasksPage {
     }
     if (!this.showExpired()) {
       tasks = tasks.filter((t) => t.status !== 'expired');
-    }
-    const query = this.searchQuery().trim().toLowerCase();
-    if (query) {
-      tasks = tasks.filter((t) => {
-        const project = t.projectId ? this.store.data().projects.find((p) => p.id === t.projectId) : null;
-        const searchText = `${t.title} ${t.description ?? ''} ${project?.name ?? ''} ${(t.tags ?? []).join(' ')}`.toLowerCase();
-        return searchText.includes(query);
-      });
     }
     return tasks;
   }

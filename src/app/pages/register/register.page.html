@@ -55,7 +55,7 @@
               placeholder="O teu nome"
               [attr.aria-invalid]="nameInvalid()"
               class="h-11 w-full rounded-xl bg-surface-app px-4 pr-11 text-[13px] text-ink placeholder:text-ink-400 transition focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-brand/30"
-              [ngClass]="nameInvalid() ? 'ring-2 ring-danger/40' : ''" />
+              [ngClass]="nameInvalid() ? 'ring-2 ring-danger/40 border-danger' : ''" />
             @if (nameValid()) {
               <app-icon name="check" class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-success" />
             }
@@ -70,7 +70,7 @@
               placeholder="o.teu@email.com"
               [attr.aria-invalid]="emailInvalid()"
               class="h-11 w-full rounded-xl bg-surface-app px-4 pr-11 text-[13px] text-ink placeholder:text-ink-400 transition focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-brand/30"
-              [ngClass]="emailInvalid() ? 'ring-2 ring-danger/40' : ''" />
+              [ngClass]="emailInvalid() ? 'ring-2 ring-danger/40 border-danger' : ''" />
             @if (emailValid()) {
               <app-icon name="check" class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-success" />
             }
@@ -84,7 +84,7 @@
             <input id="password" [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" placeholder="••••••••"
               [attr.aria-invalid]="passwordInvalid()"
               class="h-11 w-full rounded-xl bg-surface-app px-4 pr-11 text-[13px] text-ink placeholder:text-ink-400 transition focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-brand/30"
-              [ngClass]="passwordInvalid() ? 'ring-2 ring-danger/40' : ''" />
+              [ngClass]="passwordInvalid() ? 'ring-2 ring-danger/40 border-danger' : ''" />
             <app-button variant="ghost" size="sm" [icon]="showPassword() ? 'eye-off' : 'eye'" [label]="showPassword() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'" [iconOnly]="true" buttonClass="absolute right-3 top-1/2 -translate-y-1/2" (click)="showPassword.set(!showPassword())"></app-button>
           </div>
           @if (passwordInvalid()) { <p class="mt-1.5 text-[11px] text-danger">{{ passwordError() }}</p> }
@@ -96,7 +96,7 @@
             <input id="passwordConfirmation" [type]="showPasswordConfirmation() ? 'text' : 'password'" formControlName="passwordConfirmation" autocomplete="new-password" placeholder="••••••••"
               [attr.aria-invalid]="passwordConfirmationInvalid()"
               class="h-11 w-full rounded-xl bg-surface-app px-4 pr-11 text-[13px] text-ink placeholder:text-ink-400 transition focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-brand/30"
-              [ngClass]="passwordConfirmationInvalid() ? 'ring-2 ring-danger/40' : ''" />
+              [ngClass]="passwordConfirmationInvalid() ? 'ring-2 ring-danger/40 border-danger' : ''" />
             <app-button variant="ghost" size="sm" [icon]="showPasswordConfirmation() ? 'eye-off' : 'eye'" [label]="showPasswordConfirmation() ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'" [iconOnly]="true" buttonClass="absolute right-3 top-1/2 -translate-y-1/2" (click)="showPasswordConfirmation.set(!showPasswordConfirmation())"></app-button>
           </div>
           @if (passwordConfirmationInvalid()) { <p class="mt-1.5 text-[11px] text-danger">{{ passwordConfirmationError() }}</p> }

@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
   useApi: true,
-  apiBaseUrl: '/api/v1',
+  apiBaseUrl: 'https://foco-api-if0h.onrender.com/api/v1',
 };

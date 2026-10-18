@@ -10,7 +10,7 @@
     (pointerup)="onPointerUp($event)"
     (pointercancel)="onPointerUp($event)"
   >
-    <div class="rounded-2xl border border-surface-line bg-surface-card shadow-float lg:hidden">
+    <div class="rounded-2xl border border-surface-line bg-surface-card shadow-float lg:hidden" [attr.data-onboarding]="'focus'">
       <div
         class="flex items-center gap-2 p-2.5"
       >

@@ -183,6 +183,17 @@ export interface ApiCategory {
   projectsCount: number;
 }
 
+export interface NotificationChannelPrefs {
+  email?: boolean;
+  inApp?: boolean;
+}
+
+export interface NotificationPreferences {
+  emailEnabled?: boolean;
+  inAppEnabled?: boolean;
+  types?: Record<string, NotificationChannelPrefs>;
+}
+
 export interface ApiSettings {
   /** O servidor devolve `userName`; `name` é aceite como alternativa. */
   userName?: string;
@@ -190,14 +201,14 @@ export interface ApiSettings {
   theme?: 'light' | 'dark';
   timezone?: string;
   email?: string;
-  notifications?: Record<string, unknown>;
+  notifications?: NotificationPreferences;
 }
 
 export interface ApiSettingsInput {
   userName?: string;
   theme?: 'light' | 'dark';
   timezone?: string;
-  notifications?: Record<string, unknown>;
+  notifications?: NotificationPreferences;
 }
 
 export interface ApiAuthUser {
@@ -210,4 +221,21 @@ export interface ApiProjectFilters {
   category?: string;
   status?: ApiProjectStatus;
   q?: string;
+}
+
+export interface ImportRequest {
+  projects?: Array<{ name: string; description?: string; category?: string; urgency?: string; status?: string; canPostpone?: boolean; dueDate?: string | null; nextStep?: string; color?: string; id?: string | null }>;
+  tasks?: Array<{ title: string; description?: string; category?: string; urgency?: string; status?: string; canPostpone?: boolean; dueDate?: string | null; nextStep?: string; estimateMinutes?: number | null; tags?: string[]; projectId?: string | null }>;
+}
+
+export interface ImportResponse {
+  ok: boolean;
+  projectsCreated?: number;
+  tasksCreated?: number;
+  errors?: string[];
+}
+
+export interface SearchResult {
+  projects: Array<{ id: string; name: string; category: string; status: string }>;
+  tasks: Array<{ id: string; title: string; projectId: string | null; projectName?: string; status: string; category: string }>;
 }

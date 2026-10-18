@@ -81,6 +81,12 @@ export class TaskFormComponent implements OnInit {
     this.form.update((f) => ({ ...f, dueDate: input.value || null }));
   }
 
+  onDueDateChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.form.update((f) => ({ ...f, dueDate: input.value || null }));
+    input.blur();
+  }
+
   /** Ao escolher um projeto, a categoria passa a ser a do projeto. */
   onProjectChange(value: string): void {
     const projectId = value || null;

@@ -10,6 +10,8 @@ import { AuthError } from '../../core/auth/auth.models';
 import { AppIconComponent } from '../../shared/ui/icon.component';
 import { AppThemeToggleComponent } from '../../shared/ui/theme-toggle.component';
 import { AppButtonComponent } from '../../shared/ui/button.component';
+import { NotificationChannelPrefs, NotificationPreferences } from '../../core/api.models';
+import { OnboardingService } from '../../core/onboarding.service';
 
 @Component({
   selector: 'app-settings-page',
@@ -100,15 +102,164 @@ import { AppButtonComponent } from '../../shared/ui/button.component';
               [class]="'relative flex min-h-12 min-w-0 items-center gap-2 rounded-2xl border p-2 pr-7 text-left transition min-[480px]:min-h-24 min-[480px]:flex-col min-[480px]:justify-center min-[480px]:gap-2 min-[480px]:p-3 ' + (colorScheme() === option.key ? 'border-brand bg-brand-50' : 'border-surface-line bg-surface-app hover:border-brand/50')">
               <span class="h-7 w-7 shrink-0 rounded-full border border-black/5" [style]="'background: ' + option.cssColor"></span>
               <span class="min-w-0 whitespace-nowrap text-[11px] font-semibold text-ink sm:text-[12px]">{{ option.label }}</span>
-              @if (colorScheme() === option.key) {
-                <app-icon name="check" [size]="14" class="absolute right-2 top-1/2 -translate-y-1/2 text-brand-fg min-[480px]:right-3 min-[480px]:top-auto min-[480px]:bottom-2 min-[480px]:translate-y-0" />
-              }
-            </button>
-          }
+        @if (colorScheme() === option.key) {
+          <app-icon name="check" [size]="14" class="absolute right-2 top-1/2 -translate-y-1/2 text-brand-fg min-[480px]:right-3 min-[480px]:top-auto min-[480px]:bottom-2 min-[480px]:translate-y-0" />
+        }
+      </button>
+      }
+    </div>
+  </div>
+
+  <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-6">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div>
+        <h3 class="mb-1 text-[18px] font-extrabold text-ink sm:mb-2 sm:text-[20px]">Notificações</h3>
+        <p class="text-[13px] leading-relaxed text-ink-500">Escolhe quais canais e tipos de notificação queres receber. Desativar um canal impede o envio para todos os tipos; desativar um tipo afeta apenas esse tipo.</p>
+      </div>
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand/20 shadow-sm">
+        <app-icon name="bell-ring" [size]="18" class="text-brand" />
+      </div>
+    </div>
+
+    <div class="space-y-5 sm:space-y-6">
+      <!-- Canais -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="h-7 w-7 shrink-0 rounded-xl bg-surface-app border border-surface-line flex items-center justify-center">
+            <app-icon name="bell-ring" [size]="14" class="text-ink-500" />
+          </div>
+          <label class="text-[13px] font-semibold text-ink-700">Canais</label>
+        </div>
+        <p class="text-[12px] leading-relaxed text-ink-500">Escolhe por onde queres receber as notificações.</p>
+
+        <div class="space-y-2">
+          <label class="flex items-center justify-between gap-3 rounded-xl border border-surface-line bg-surface-card p-3 hover:border-brand/30 transition cursor-pointer select-none group">
+            <div class="flex items-center gap-3">
+              <div class="h-8 w-8 shrink-0 rounded-xl bg-brand-50 border border-brand/20 flex items-center justify-center">
+                <app-icon name="bell-ring" [size]="16" class="text-brand" />
+              </div>
+              <div class="min-w-0">
+                <span class="block text-[13px] font-semibold text-ink">E-mail</span>
+                <span class="block text-[11px] leading-none text-ink-500">Recebe notificações no teu endereço de e-mail.</span>
+              </div>
+            </div>
+            <input type="checkbox" [ngModel]="emailEnabled()" (ngModelChange)="emailEnabled.set($event)"
+              class="h-6 w-6 shrink-0 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30" />
+          </label>
+          <label class="flex items-center justify-between gap-3 rounded-xl border border-surface-line bg-surface-card p-3 hover:border-brand/30 transition cursor-pointer select-none group">
+            <div class="flex items-center gap-3">
+              <div class="h-8 w-8 shrink-0 rounded-xl bg-brand-50 border border-brand/20 flex items-center justify-center">
+                <app-icon name="smartphone" [size]="16" class="text-brand" />
+              </div>
+              <div class="min-w-0">
+                <span class="block text-[13px] font-semibold text-ink">Notificações na app</span>
+                <span class="block text-[11px] leading-none text-ink-500">Recebe notificações diretamente na aplicação.</span>
+              </div>
+            </div>
+            <input type="checkbox" [ngModel]="inAppEnabled()" (ngModelChange)="inAppEnabled.set($event)"
+              class="h-6 w-6 shrink-0 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30" />
+          </label>
         </div>
       </div>
 
-      <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
+      <!-- Tipos de notificação -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="h-7 w-7 shrink-0 rounded-xl bg-surface-app border border-surface-line flex items-center justify-center">
+            <app-icon name="settings" [size]="14" class="text-ink-500" />
+          </div>
+          <label class="text-[13px] font-semibold text-ink-700">Tipos de notificação</label>
+        </div>
+        <p class="text-[12px] leading-relaxed text-ink-500">Personaliza o que queres receber em cada canal.</p>
+
+        <div class="rounded-xl border border-surface-line bg-surface-card overflow-hidden">
+          <div class="grid grid-cols-[1fr_auto_auto] border-b border-surface-line hidden sm:block">
+            <div class="px-3 py-2 text-[11px] font-semibold text-ink-700"></div>
+            <div class="px-3 py-2 text-[11px] font-semibold text-ink-700 text-center">E-mail</div>
+            <div class="px-3 py-2 text-[11px] font-semibold text-ink-700 text-center">Na app</div>
+          </div>
+          @for (t of notificationTypes; track t.key) {
+            <div class="border-b border-surface-line last:border-b-0 group">
+              <div class="grid grid-cols-[1fr_auto_auto] px-3 py-3 max-[375px]:grid-cols-1 max-[375px]:gap-2 max-[375px]:py-2">
+                <div class="flex items-center gap-2 px-3 py-3 max-[375px]:px-0 max-[375px]:py-0 max-[375px]:flex-col max-[375px]:items-start max-[375px]:gap-2">
+                  <div class="h-7 w-7 shrink-0 rounded-lg bg-surface-app border border-surface-line flex items-center justify-center">
+                    <app-icon [name]="t.icon" [size]="13" class="text-ink-500" />
+                  </div>
+                  <div class="min-w-0">
+                    <span class="block text-[13px] font-semibold text-ink leading-none">{{ t.label }}</span>
+                    <span class="block text-[11px] leading-none text-ink-500">{{ t.description }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center justify-end gap-2 px-3 py-3 max-[375px]:px-0 max-[375px]:py-0 max-[375px]:flex-col max-[375px]:items-start max-[375px]:gap-2 max-[375px]:w-full max-[375px]:justify-start">
+                  <label class="flex items-center gap-1.5 cursor-pointer select-none" [class.opacity-50]="!emailEnabled()">
+                    <input type="checkbox" [ngModel]="typeEmail(t.key)" (ngModelChange)="setTypePref(t.key, 'email', $event)"
+                      [disabled]="!emailEnabled()"
+                      class="h-5 w-5 shrink-0 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30" />
+                    <span class="text-[10px] text-ink-600 hidden sm:inline">E-mail</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer select-none" [class.opacity-50]="!inAppEnabled()">
+                    <input type="checkbox" [ngModel]="typeInApp(t.key)" (ngModelChange)="setTypePref(t.key, 'inApp', $event)"
+                      [disabled]="!inAppEnabled()"
+                      class="h-5 w-5 shrink-0 rounded border border-surface-line bg-surface-card text-brand focus:ring-2 focus:ring-brand/30" />
+                    <span class="text-[10px] text-ink-600 hidden sm:inline">Na app</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Estados -->
+    @if (savingNotifications()) {
+      <div class="mt-4 flex items-center gap-2 rounded-xl bg-brand-50 p-3">
+        <app-icon name="loader-circle" [size]="16" class="animate-spin text-brand-fg" />
+        <span class="text-[12px] font-medium text-brand-fg">A guardar alterações…</span>
+      </div>
+    } @else if (notificationsError()) {
+      <div class="mt-4 flex items-center gap-2 rounded-xl border border-danger/40 bg-danger-soft p-3">
+        <app-icon name="triangle-alert" [size]="16" class="text-danger" />
+        <span class="text-[12px] font-medium text-danger">{{ notificationsError() }}</span>
+      </div>
+    } @else if (notificationsDirty()) {
+      <div class="mt-4 flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-50 p-3">
+        <app-icon name="pencil" [size]="16" class="text-brand-fg" />
+        <span class="text-[12px] font-medium text-brand-fg">Tens alterações de notificações por guardar.</span>
+      </div>
+    }
+
+    <div class="mt-6 flex flex-col sm:flex-row sm:justify-end gap-2">
+      <app-button
+        icon="save"
+        [label]="savingNotifications() ? 'A guardar…' : 'Guardar notificações'"
+        [loading]="savingNotifications()"
+        [disabled]="!canSaveNotifications()"
+        buttonClass="w-full sm:w-auto"
+        (click)="saveNotifications()"
+      ></app-button>
+    </div>
+  </div>
+
+  <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
+    <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Ajuda</h3>
+    <p class="mb-3 text-[13px] text-ink-500">Precisas de um guia rápido sobre as principais funcionalidades da app?</p>
+    <app-button
+      variant="secondary"
+      size="sm"
+      icon="info"
+      label="Ver tutorial novamente"
+      [iconOnlyBelow]="null"
+      buttonClass="w-full justify-start"
+      [disabled]="!canRestartTutorial()"
+      (click)="restartTutorial()"
+    ></app-button>
+    @if (!canRestartTutorial()) {
+      <p class="mt-1.5 text-[11px] text-ink-400">O tutorial será iniciado automaticamente na tua próxima visita se ainda não o concluíste.</p>
+    }
+  </div>
+
+  <div class="mb-4 rounded-card bg-surface-card p-4 shadow-card sm:mb-5 sm:p-5">
         <h3 class="mb-3 text-[16px] font-bold text-ink sm:mb-4">Dados</h3>
         @if (hasLegacyBackup()) {
           <div class="mb-4 rounded-xl border border-warn/40 bg-warn-soft p-4">
@@ -136,6 +287,7 @@ export class SettingsPage implements OnInit {
   private confirm = inject(ConfirmService);
   private colorService = inject(ColorSchemeService);
   private auth = inject(AuthService);
+  private onboarding = inject(OnboardingService);
   colorScheme = this.colorService.scheme;
   userName = signal(this.store.data().settings.userName);
   useApi = this.store.useApi;
@@ -177,6 +329,69 @@ export class SettingsPage implements OnInit {
     return current.length > 0 && next.length >= 8 && next === confirmation && next !== current && !this.savingPassword();
   });
 
+  // ---------- Notificações ----------
+
+  notificationTypes: { key: string; label: string; icon: string; description: string }[] = [
+    { key: 'welcome', label: 'Boas-vindas', icon: 'info', description: 'Mensagens de boas-vindas e orientações.' },
+    { key: 'task_completed', label: 'Tarefa concluída', icon: 'circle-check', description: 'Quando uma tarefa é concluída.' },
+    { key: 'task_expired', label: 'Tarefa expirada', icon: 'alarm-clock-plus', description: 'Quando uma tarefa ultrapassa o prazo.' },
+    { key: 'task_due_soon', label: 'Prazo próximo', icon: 'calendar-days', description: 'Lembretes de prazos que se aproximam.' },
+    { key: 'timer_running_long', label: 'Timer a correr há muito', icon: 'timer', description: 'Quando um timer está a decorrer há muito tempo.' },
+    { key: 'daily_digest', label: 'Digest diário', icon: 'file-text', description: 'Resumo das notificações do dia.' },
+  ];
+
+  emailEnabled = signal(true);
+  inAppEnabled = signal(true);
+  typePrefs = signal<Record<string, NotificationChannelPrefs>>({});
+  notificationsError = signal('');
+  savingNotifications = signal(false);
+  private notificationsTouched = false;
+
+  readonly notificationsDirty = computed(() => {
+    const current = this.store.data().settings.notifications ?? {};
+    return (
+      this.emailEnabled() !== (current.emailEnabled ?? true) ||
+      this.inAppEnabled() !== (current.inAppEnabled ?? true) ||
+      JSON.stringify(this.typePrefs()) !== JSON.stringify(current.types ?? {})
+    );
+  });
+
+  readonly canSaveNotifications = computed(() => this.notificationsDirty() && !this.savingNotifications());
+
+  typeEmail(key: string): boolean {
+    return this.typePrefs()[key]?.email ?? true;
+  }
+
+  typeInApp(key: string): boolean {
+    return this.typePrefs()[key]?.inApp ?? true;
+  }
+
+  setTypePref(key: string, field: 'email' | 'inApp', value: boolean): void {
+    const types = { ...this.typePrefs() };
+    types[key] = { ...(types[key] ?? {}), [field]: value };
+    this.typePrefs.set(types);
+  }
+
+  async saveNotifications(): Promise<void> {
+    if (!this.canSaveNotifications()) return;
+    this.notificationsError.set('');
+    this.savingNotifications.set(true);
+    try {
+      const prefs: NotificationPreferences = {
+        emailEnabled: this.emailEnabled(),
+        inAppEnabled: this.inAppEnabled(),
+        types: this.typePrefs(),
+      };
+      this.store.setNotifications(prefs);
+      this.notificationsTouched = true;
+      this.store.showFlash('success', 'Notificações atualizadas.');
+    } catch {
+      this.notificationsError.set('Não foi possível atualizar as notificações. Tenta novamente.');
+    } finally {
+      this.savingNotifications.set(false);
+    }
+  }
+
   /** Erros de validação visíveis ao utilizador enquanto escreve (não só no botão desativado). */
   readonly passwordValidation = computed(() => {
     const current = this.currentPassword();
@@ -196,6 +411,14 @@ export class SettingsPage implements OnInit {
       // Reflete mudanças externas (carregamento das definições do servidor).
       if (!this.nameTouched) {
         this.userName.set(this.store.data().settings.userName);
+      }
+    });
+    effect(() => {
+      if (!this.notificationsTouched) {
+        const n = this.store.data().settings.notifications ?? {};
+        this.emailEnabled.set(n.emailEnabled ?? true);
+        this.inAppEnabled.set(n.inAppEnabled ?? true);
+        this.typePrefs.set(n.types ?? {});
       }
     });
   }
@@ -293,7 +516,16 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  exportJson(): void {
+  async exportJson(): Promise<void> {
+    if (this.store.useApi) {
+      const result = await this.store.exportData();
+      if (!result.ok || !result.data) {
+        this.store.showFlash('error', result.error ?? 'Não foi possível exportar os dados.');
+        return;
+      }
+      this.download(result.data, 'foco-backup.json');
+      return;
+    }
     this.download(this.store.exportJson(), 'foco-backup.json');
   }
 
@@ -311,23 +543,39 @@ export class SettingsPage implements OnInit {
     const ok = await this.confirm.confirm({
       type: 'warning',
       title: 'Restaurar dados de exemplo?',
-      message: 'Isto substitui todos os dados pelos de exemplo. Continuar?',
+      message: this.useApi
+        ? 'Isto carrega dados de exemplo no servidor se não houver projetos nem tarefas. Continuar?'
+        : 'Isto substitui todos os dados pelos de exemplo. Continuar?',
       confirmLabel: 'Restaurar',
     });
     if (!ok) return;
+    if (this.useApi) {
+      await this.store.seedDemoData();
+      return;
+    }
     this.store.replaceAll(emptyAppData());
   }
 
   async clearAll(): Promise<void> {
     const ok = await this.confirm.confirm({
       type: 'danger',
-      title: this.useApi ? 'Apagar dados locais?' : 'Apagar tudo?',
+      title: this.useApi ? 'Apagar todos os dados?' : 'Apagar tudo?',
       message: this.useApi
-        ? 'Isto apaga os dados guardados apenas neste dispositivo. Os projetos, categorias e tarefas no servidor não são afetados. Continuar?'
+        ? 'Isto apaga projetos, tarefas, atividade e notificações do servidor. A conta e as definições são mantidas. Continuar?'
         : 'Isto apaga todos os dados. Continuar?',
       confirmLabel: 'Apagar',
     });
     if (!ok) return;
+    if (this.useApi) {
+      await this.store.resetData();
+      return;
+    }
     this.store.clearAll();
+  }
+
+  readonly canRestartTutorial = this.onboarding.completed;
+
+  restartTutorial(): void {
+    this.onboarding.start();
   }
 }

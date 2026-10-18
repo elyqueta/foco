@@ -6,11 +6,18 @@ import { ProductivityReportResponse } from './relatorio.models';
 const mockCreatePdf = vi.fn(() => ({
   download: vi.fn(),
 }));
-const mockFontMap = {};
+const mockAddVirtualFileSystem = vi.fn();
+const mockAddFonts = vi.fn();
+const mockFonts = {};
 const mockVfs = { pdfMake: { vfs: {} } };
 
 vi.mock('pdfmake/build/pdfmake', () => ({
-  default: { fontMap: mockFontMap, createPdf: mockCreatePdf },
+  default: {
+    addVirtualFileSystem: mockAddVirtualFileSystem,
+    addFonts: mockAddFonts,
+    fonts: mockFonts,
+    createPdf: mockCreatePdf,
+  },
 }));
 vi.mock('pdfmake/build/vfs_fonts', () => ({
   default: mockVfs,
@@ -118,7 +125,7 @@ describe('RelatorioPdfService', () => {
     await (service as any).ensureLoaded();
   });
 
-  it('deve construir documento com capa, indicadores, projetos e tarefas', async () => {
+  it('deve construir documento com cabeçalho, indicadores, projetos e tarefas', async () => {
     const report = makeReport();
     const doc = await service.buildDocument(report);
 
@@ -126,12 +133,12 @@ describe('RelatorioPdfService', () => {
     expect(Array.isArray(doc.content)).toBe(true);
     expect(doc.content.length).toBeGreaterThan(0);
 
-    // Capa tem pageBreak
-    const cover = doc.content[0];
-    expect(cover.pageBreak).toBe('after');
+    // O cabeçalho completo está como primeiro item do content (página 1)
+    const header = doc.content[0];
+    expect(header.columns).toBeDefined();
 
     // Indicadores existem
-    const indicators = doc.content.find((c: any) => c.columns);
+    const indicators = doc.content.find((c: any) => c.columns && c.margin);
     expect(indicators).toBeDefined();
 
     // Projetos e tarefas existem no content
@@ -140,6 +147,28 @@ describe('RelatorioPdfService', () => {
     expect(contentJson).toContain('destino-mussulo');
     expect(contentJson).toContain('Compras do supermercado');
     expect(contentJson).toContain('Integrar API real no destino-mussulo');
+  });
+
+  it('não tem pageBreak após o cabeçalho (página contínua)', async () => {
+    const report = makeReport();
+    const doc = await service.buildDocument(report);
+
+    const contentJson = JSON.stringify(doc.content);
+    expect(contentJson).not.toContain("pageBreak: 'after'");
+  });
+
+  it('rodapé usa Página X de Y sem subtrair a capa', async () => {
+    const report = makeReport();
+    const doc = await service.buildDocument(report);
+    const footerFn = doc.footer;
+
+    // Simular footer da página 1 (não deve retornar null)
+    const footerPage1 = footerFn(1, 3);
+    expect(footerPage1).toBeNull();
+
+    // Simular footer da página 2 (deve mostrar Página 2 de 3)
+    const footerPage2 = footerFn(2, 3);
+    expect(footerPage2.columns[1].text).toBe('Página 2 de 3');
   });
 
   it('deve lidar com relatório sem projetos', async () => {
@@ -201,10 +230,10 @@ describe('RelatorioPdfService', () => {
     expect(service.fileName('custom')).toMatch(/^relatorio-produtividade-custom-\d{4}-\d{2}-\d{2}\.pdf$/);
   });
 
-  it('deve formatar data curta sem fuso horário', async () => {
+  it('deve formatar data curta em pt-PT sem fuso horário', async () => {
     // Acede ao método privado via any para testar a formatação
     const formatted = (service as any).formatDatePt('2026-10-17');
-    expect(formatted).toBe('17/10. 2026');
+    expect(formatted).toBe('17 out. 2026');
 
     const formattedNull = (service as any).formatDatePt(null);
     expect(formattedNull).toBe('');

@@ -10,13 +10,12 @@ type TFont = 'regular' | 'medium' | 'semibold' | 'bold';
 
 /**
  * Serviço de geração do PDF do Relatório de Produtividade.
- * Carrega o pdfmake e as fontes via import() dinâmico apenas quando solicitado.
- * Não usa imagens (evita problemas de formato no pdfmake); usa canvas e texto.
+ * Carrega o pdfmake e as fontes Roboto via import() dinâmico apenas quando solicitado.
+ * Não usa imagens (evita problemas de formato no pdfmake); usa canvas, texto e badges de tabela.
  */
 @Injectable({ providedIn: 'root' })
 export class RelatorioPdfService {
   private pdfMake: any = null;
-  private vfs: Record<string, string> = {};
   private loaded = false;
 
   /** Nome do ficheiro gerado. */
@@ -25,46 +24,64 @@ export class RelatorioPdfService {
     return `relatorio-produtividade-${period}-${today}.pdf`;
   }
 
-  /** Carrega pdfmake uma única vez e registra as fontes padrão (vfs) globalmente. */
+  /** Carrega pdfmake uma única vez e registra as fontes Roboto via vfs. */
   private async ensureLoaded(): Promise<void> {
     if (this.loaded) return;
-    const pdfMakeModule = await import('pdfmake/build/pdfmake');
-    const vfsFontsModule = await import('pdfmake/build/vfs_fonts');
+    const pdfMakeModule: any = await import('pdfmake/build/pdfmake');
+    const vfsModule: any = await import('pdfmake/build/vfs_fonts');
 
     this.pdfMake = pdfMakeModule.default ?? pdfMakeModule;
-    const vfsRaw = vfsFontsModule.default as any;
-    const vfsObj = vfsRaw.pdfMake?.vfs ?? vfsRaw.vfs ?? vfsRaw;
-    // Adicionar aliases Helvetica/Helvetica-Bold no vfs (sem extensão).
-    const vfsWithAliases: Record<string, string> = { ...vfsObj };
-    vfsWithAliases['Helvetica'] = vfsObj['Roboto-Regular.ttf'];
-    vfsWithAliases['Helvetica-Bold'] = vfsObj['Roboto-Medium.ttf'];
-    vfsWithAliases['Helvetica-Oblique'] = vfsObj['Roboto-Italic.ttf'];
-    vfsWithAliases['Helvetica-BoldOblique'] = vfsObj['Roboto-MediumItalic.ttf'];
-    this.vfs = vfsWithAliases;
+    const vfs =
+      vfsModule.default?.pdfMake?.vfs ??
+      vfsModule.pdfMake?.vfs ??
+      vfsModule.default ??
+      vfsModule;
 
-    // Registra globalmente no pdfMake.
-    (this.pdfMake as any).vfs = vfsWithAliases;
+    if (typeof this.pdfMake.addVirtualFileSystem === 'function') {
+      this.pdfMake.addVirtualFileSystem(vfs);
+    } else {
+      this.pdfMake.vfs = vfs;
+    }
+
+    const fonts = {
+      Roboto: {
+        normal: 'Roboto-Regular.ttf',
+        bold: 'Roboto-Medium.ttf',
+        italics: 'Roboto-Italic.ttf',
+        bolditalics: 'Roboto-MediumItalic.ttf',
+      },
+    };
+    if (typeof this.pdfMake.addFonts === 'function') {
+      this.pdfMake.addFonts(fonts);
+    } else {
+      this.pdfMake.fonts = fonts;
+    }
 
     this.loaded = true;
   }
 
-  /** Nome da fonte padrão do pdfmake (Helvetica; o vfs + fontMap resolvem para Roboto). */
+  /** Nome da fonte padrão do pdfmake (Roboto, registada via addFonts). */
   private font(): string {
-    return 'Helvetica';
+    return 'Roboto';
   }
 
-  /** Formata uma string YYYY-MM-DD para "DD/MM. YYYY" (sem dependência de fuso). */  private formatDatePt(dateStr: string | null): string {
+  /** Formata uma string YYYY-MM-DD para "DD mes. YYYY" (pt-PT, sem dependência de fuso). */
+  private formatDatePt(dateStr: string | null): string {
     if (!dateStr) return '';
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
-    return `${parts[2]}/${parts[1]}. ${parts[0]}`;
+    const mesPt = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+    const mesIdx = parseInt(parts[1], 10) - 1;
+    return `${parts[2]} ${mesPt[mesIdx] ?? parts[1]} ${parts[0]}`;
   }
 
   /** Formata ISO 8601 para "DD/MM/YYYY HH:mm" (sem dependência de fuso). */
   private formatDateTimePt(iso: string): string {
     const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
     if (!m) return iso;
-    return `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}`;
+    const mesPt = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+    const mesIdx = parseInt(m[2], 10) - 1;
+    return `${m[3]} ${mesPt[mesIdx] ?? m[2]} ${m[1]} ${m[4]}:${m[5]}`;
   }
 
   /** Traduz um enum usando o ficheiro de labels. */
@@ -73,23 +90,16 @@ export class RelatorioPdfService {
     return map[value] ?? value;
   }
 
-  /** Caractere Unicode para usar como ícone. */
-  private iconChar(tipo: 'project' | 'task' | 'date' | 'time' | 'progress' | 'check' | 'folder'): string {
-    switch (tipo) {
-      case 'project': return '📁';
-      case 'task': return '✅';
-      case 'date': return '📅';
-      case 'time': return '⏱️';
-      case 'progress': return '📊';
-      case 'check': return '✔';
-      case 'folder': return '📂';
-      default: return '•';
-    }
-  }
-
-  /** Retângulo preenchido (canvas) para etiquetas coloridas. */
-  private rect(x: number, y: number, w: number, h: number, color: string, r = 0): any {
-    return { type: 'rect', x, y, w, h, r, color };
+  /** Badge (etiqueta) como tabela de célula única com preenchimento colorido. */
+  private badge(text: string, bg: string, fg: string): any {
+    return {
+      width: 'auto',
+      table: {
+        body: [[{ text, fontSize: 9, bold: true, color: fg, fillColor: bg, alignment: 'center', margin: [6, 1.5, 6, 1.5] }]],
+      },
+      layout: 'noBorders',
+      margin: [0, 0, 4, 0],
+    };
   }
 
   /** Barra de progresso (canvas): fundo + preenchimento. */
@@ -103,80 +113,26 @@ export class RelatorioPdfService {
     ];
   }
 
+  /** Caractere Unicode simples para usar como ícone (sem imagens). */
+  private iconChar(tipo: 'project' | 'task' | 'date' | 'time' | 'progress' | 'check' | 'folder'): string {
+    switch (tipo) {
+      case 'project': return '■';
+      case 'task': return '●';
+      case 'date': return '◐';
+      case 'time': return '↻';
+      case 'progress': return '▬';
+      case 'check': return '✓';
+      case 'folder': return '▭';
+      default: return '•';
+    }
+  }
+
   // ========================================================================
   // Blocos de construção do documento
   // ========================================================================
 
-  private coverBlock(report: ProductivityReportResponse['data']): any {
-    const { report: meta, user } = report;
-    const theme = RELATORIO_THEME;
-    const labels = RELATORIO_LABELS;
-
-    return {
-      stack: [
-        {
-          columns: [
-            {
-              width: '60%',
-              stack: [
-                {
-                  text: 'Foco',
-                  fontSize: 32,
-                  bold: true,
-                  color: theme.brand,
-                  margin: [0, 0, 0, 10],
-                },
-                {
-                  text: labels.title,
-                  fontSize: theme.fontSize.title,
-                  bold: true,
-                  color: theme.ink,
-                  margin: [0, 0, 0, 8],
-                },
-                {
-                  text: meta.period.label,
-                  fontSize: theme.fontSize.h3,
-                  color: theme.ink500,
-                  margin: [0, 0, 0, 24],
-                },
-                {
-                  stack: [
-                    { text: `${labels.userLabel}:`, fontSize: 10, color: theme.ink500, font: 'Helvetica-Bold' },
-                    { text: user.name, fontSize: 13, color: theme.ink, margin: [0, 2, 0, 10] },
-                    { text: `${labels.generatedAtLabel}:`, fontSize: 10, color: theme.ink500, font: 'Helvetica-Bold' },
-                    { text: this.formatDateTimePt(meta.generated_at), fontSize: 13, color: theme.ink },
-                  ],
-                },
-              ],
-            },
-            {
-              width: '40%',
-              stack: [
-                {
-                  canvas: [
-                    { type: 'rect', x: 0, y: 0, w: 220, h: 110, r: 12, color: theme.brandLight },
-                    { type: 'rect', x: 150, y: 30, w: 60, h: 60, r: 30, color: '#FFFFFF', opacity: 0.6 },
-                  ],
-                  margin: [0, 0, 0, 0],
-                },
-                {
-                  text: 'Grandes resultados nascem de pequenos passos consistentes.',
-                  fontSize: 11,
-                  color: theme.ink700,
-                  margin: [0, 16, 0, 0],
-                  alignment: 'center',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      margin: [theme.spacing.pageMargin, theme.spacing.pageMargin],
-      pageBreak: 'after',
-    };
-  }
-
-  private headerBlock(report: ProductivityReportResponse['data'], currentPage: number): any[] {
+  /** Cabeçalho completo (página 1 e repetido nas páginas seguintes). */
+  private headerBlock(report: ProductivityReportResponse['data']): any {
     const { report: meta, user } = report;
     const theme = RELATORIO_THEME;
     const labels = RELATORIO_LABELS;
@@ -248,6 +204,7 @@ export class RelatorioPdfService {
     ];
   }
 
+  /** Faixa de 7 indicadores com caracteres simples como ícones. */
   private indicatorsBlock(summary: ProductivityReportResponse['data']['summary']): any {
     const labels = RELATORIO_LABELS;
     const theme = RELATORIO_THEME;
@@ -268,7 +225,8 @@ export class RelatorioPdfService {
         stack: [
           {
             text: ind.icon,
-            fontSize: 20,
+            fontSize: 16,
+            color: theme.brand,
             alignment: 'center',
             margin: [0, 0, 0, 6],
           },
@@ -292,6 +250,7 @@ export class RelatorioPdfService {
     };
   }
 
+  /** Cabeçalho de secção com caractere simples como ícone. */
   private sectionHeader(title: string, subtitle: string, count: number, tipoIcone: 'project' | 'task'): any {
     const theme = RELATORIO_THEME;
     return {
@@ -300,7 +259,8 @@ export class RelatorioPdfService {
           stack: [
             {
               text: this.iconChar(tipoIcone),
-              fontSize: 20,
+              fontSize: 16,
+              color: theme.brand,
               margin: [0, 0, 0, 6],
             },
             {
@@ -342,7 +302,7 @@ export class RelatorioPdfService {
               stack: [
                 {
                   text: this.iconChar('project'),
-                  fontSize: 28,
+                  fontSize: 24,
                   color: theme.brand,
                   alignment: 'center',
                   margin: [0, 0, 0, 4],
@@ -364,19 +324,7 @@ export class RelatorioPdfService {
                     {
                       width: 'auto',
                       stack: [
-                        {
-                          canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 66, h: 16, r: 4, color: projectStatusColor(project.status) },
-                          ],
-                          margin: [0, 0, 0, 0],
-                        },
-                        {
-                          text: statusLabel,
-                          fontSize: theme.fontSize.tiny,
-                          color: projectStatusFg(project.status),
-                          alignment: 'center',
-                          margin: [1, 0, 1, 0],
-                        },
+                        this.badge(statusLabel, projectStatusColor(project.status), projectStatusFg(project.status)),
                       ],
                     },
                   ],
@@ -392,41 +340,29 @@ export class RelatorioPdfService {
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectDeadline, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
+                        { text: labels.projectDeadline, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
                         { text: deadline || '—', fontSize: theme.fontSize.body, color: theme.ink, margin: [0, 1, 0, 6] },
                       ],
                     },
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectUrgency, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
-                        {
-                          canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 54, h: 14, r: 3, color: urgencyColor(project.urgency) },
-                          ],
-                          margin: [0, 0, 0, 0],
-                        },
-                        {
-                          text: urgencyLabel,
-                          fontSize: theme.fontSize.tiny,
-                          color: urgencyFg(project.urgency),
-                          alignment: 'center',
-                          margin: [1, 0, 1, 0],
-                        },
+                        { text: labels.projectUrgency, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        this.badge(urgencyLabel, urgencyColor(project.urgency), urgencyFg(project.urgency)),
                       ],
                     },
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectProgress, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
-                        { text: `${project.progress}%`, fontSize: theme.fontSize.body, font: 'Helvetica-Bold', color: theme.brand, margin: [0, 1, 0, 6] },
+                        { text: labels.projectProgress, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        { text: `${project.progress}%`, fontSize: theme.fontSize.body, bold: true, color: theme.brand, margin: [0, 1, 0, 6] },
                         { stack: [{ canvas: this.progressBar(project.progress) }], margin: [0, 0, 0, 6] },
                       ],
                     },
                     {
                       width: '25%',
                       stack: [
-                        { text: labels.projectNextStep, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
+                        { text: labels.projectNextStep, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
                         { text: nextStep || '—', fontSize: theme.fontSize.body, color: theme.ink, margin: [0, 1, 0, 0] },
                       ],
                     },
@@ -466,7 +402,7 @@ export class RelatorioPdfService {
               stack: [
                 {
                   text: this.iconChar('task'),
-                  fontSize: 20,
+                  fontSize: 16,
                   color: theme.brand,
                   alignment: 'center',
                   margin: [0, 0, 0, 2],
@@ -488,19 +424,7 @@ export class RelatorioPdfService {
                     {
                       width: 'auto',
                       stack: [
-                        {
-                          canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 50, h: 14, r: 3, color: taskStatusColor(task.status) },
-                          ],
-                          margin: [0, 0, 0, 0],
-                        },
-                        {
-                          text: statusLabel,
-                          fontSize: theme.fontSize.tiny,
-                          color: taskStatusFg(task.status),
-                          alignment: 'center',
-                          margin: [1, 0, 1, 0],
-                        },
+                        this.badge(statusLabel, taskStatusColor(task.status), taskStatusFg(task.status)),
                       ],
                     },
                   ],
@@ -510,26 +434,14 @@ export class RelatorioPdfService {
                     {
                       width: '20%',
                       stack: [
-                        { text: categoryLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
+                        { text: categoryLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
                       ],
                     },
                     {
                       width: '20%',
                       stack: [
-                        { text: priorityLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, font: 'Helvetica-Bold' },
-                        {
-                          canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 44, h: 12, r: 3, color: urgencyColor(task.priority) },
-                          ],
-                          margin: [0, 0, 0, 0],
-                        },
-                        {
-                          text: priorityLabel,
-                          fontSize: theme.fontSize.tiny,
-                          color: urgencyFg(task.priority),
-                          alignment: 'center',
-                          margin: [1, 0, 1, 0],
-                        },
+                        { text: priorityLabel, fontSize: theme.fontSize.tiny, color: theme.ink500, bold: true },
+                        this.badge(priorityLabel, urgencyColor(task.priority), urgencyFg(task.priority)),
                       ],
                     },
                     {
@@ -549,7 +461,7 @@ export class RelatorioPdfService {
                       stack: [
                         {
                           text: this.iconChar('time'),
-                          fontSize: 12,
+                          fontSize: 10,
                           color: theme.ink500,
                           alignment: 'center',
                           margin: [0, 0, 0, 0],
@@ -579,7 +491,7 @@ export class RelatorioPdfService {
           stack: [
             {
               text: this.iconChar(tipoIcone),
-              fontSize: 28,
+              fontSize: 24,
               color: theme.brand,
               alignment: 'center',
               margin: [0, 0, 0, 8],
@@ -636,15 +548,13 @@ export class RelatorioPdfService {
 
     const docDefinition: any = {
       pageSize: 'A4',
-      pageMargins: [theme.spacing.pageMargin, 80, theme.spacing.pageMargin, 60],
+      pageMargins: [theme.spacing.pageMargin, 40, theme.spacing.pageMargin, 60],
       header: (currentPage: number) => {
         if (currentPage === 1) return null;
-        return this.headerBlock(data, currentPage);
+        return this.headerBlock(data);
       },
       footer: (currentPage: number, pageCount: number) => {
         if (currentPage === 1) return null;
-        const reportPage = currentPage - 1;
-        const totalReportPages = pageCount - 1;
 
         return {
           columns: [
@@ -667,7 +577,7 @@ export class RelatorioPdfService {
             },
             {
               width: '40%',
-              text: RELATORIO_LABELS.pageXofY.replace('{0}', String(reportPage)).replace('{1}', String(totalReportPages)),
+              text: RELATORIO_LABELS.pageXofY.replace('{0}', String(currentPage)).replace('{1}', String(pageCount)),
               fontSize: theme.fontSize.tiny,
               color: theme.ink400,
               alignment: 'right',
@@ -678,23 +588,14 @@ export class RelatorioPdfService {
         };
       },
       content: [
-        this.coverBlock(data),
+        ...this.headerBlock(data),
         this.indicatorsBlock(data.summary),
         ...this.projectsBlock(data.projects),
         ...this.tasksBlock(data.tasks),
       ],
-      vfs: this.vfs,
-      fontMap: {
-        Helvetica: {
-          normal: 'Helvetica',
-          bold: 'Helvetica-Bold',
-          italics: 'Helvetica-Oblique',
-          bolditalics: 'Helvetica-BoldOblique',
-        },
-      },
       styles: {},
       defaultStyle: {
-        font: 'Helvetica',
+        font: this.font(),
         fontSize: theme.fontSize.body,
         color: theme.ink,
       },
@@ -706,8 +607,6 @@ export class RelatorioPdfService {
   /** Gera o PDF e dispara o download no navegador. */
   async exportPdf(report: ProductivityReportResponse): Promise<void> {
     await this.ensureLoaded();
-    // Garante que o vfs está disponível na instância do pdfMake no momento da criação.
-    (this.pdfMake as any).vfs = this.vfs;
     const docDefinition = await this.buildDocument(report);
     const pdfDoc = this.pdfMake.createPdf(docDefinition);
     const fileName = this.fileName(report.data.report.period.type);
